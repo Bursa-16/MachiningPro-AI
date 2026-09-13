@@ -4,23 +4,25 @@
 <div style="max-width:76rem; margin:0 auto; padding:0 var(--mp-sp-6);">
 
 <!-- ===== HERO ===== -->
-<section style="padding:var(--mp-sp-10) 0 var(--mp-sp-8); display:flex; gap:var(--mp-sp-8); align-items:center; flex-wrap:wrap;">
-  <div style="flex:1; min-width:280px;">
-    <h1 style="font-size:2rem; font-weight:700; line-height:1.2; color:var(--mp-text); margin:0;">
-      Manufacturing engineering intelligence,<br>
-      deterministic-first.
+<section class="mp-hero-dark" style="display:flex; gap:var(--mp-sp-8); align-items:center; flex-wrap:wrap;">
+  <div class="mp-hero-dark__grid"></div>
+  <div class="mp-hero-dark__scanline"></div>
+  <div style="flex:1; min-width:280px; position:relative; z-index:1;">
+    <h1>
+      Manufacturing intelligence,<br>
+      <span>deterministic-first.</span>
     </h1>
-    <p style="font-size:var(--mp-text-md); color:var(--mp-text-secondary); margin-top:var(--mp-sp-4); line-height:1.6; max-width:40rem;">
-      MachineryPro AI combines authoritative engineering calculations with AI-assisted
+    <p style="font-size:var(--mp-text-md); margin-top:var(--mp-sp-4); line-height:1.6;">
+      MachiningPro AI combines authoritative engineering calculations with AI-assisted
       decision support for CNC machining, process planning, and design-for-manufacturability.
       Every result is traceable. AI suggestions are always clearly labelled.
     </p>
     <div style="display:flex; gap:var(--mp-sp-3); margin-top:var(--mp-sp-6); flex-wrap:wrap;">
-      <a href="/app" class="mp-btn mp-btn--primary">Start MachineryPro AI</a>
-      <a href="#contact" class="mp-btn mp-btn--secondary">Request Demo</a>
+      <a href="/app" class="mp-btn mp-btn--primary mp-btn--lg">Start MachiningPro AI</a>
+      <a href="#contact" class="mp-btn mp-btn--secondary mp-btn--lg">Request Demo</a>
     </div>
   </div>
-  <div id="mp-hero-visual" style="flex:0 0 auto; max-width:480px; width:100%;"></div>
+  <div id="mp-hero-visual" style="flex:0 0 auto; max-width:480px; width:100%; position:relative; z-index:1;"></div>
 </section>
 
 <!-- ===== HOW IT WORKS ===== -->
@@ -150,12 +152,44 @@
       <button class="mp-process-tab" data-process="milling" role="tab" aria-selected="true">Milling</button>
       <button class="mp-process-tab" data-process="turning" role="tab" aria-selected="false">Turning</button>
       <button class="mp-process-tab" data-process="drilling" role="tab" aria-selected="false">Drilling</button>
+      <button class="mp-process-tab" data-process="cam" role="tab" aria-selected="false">CAM</button>
       <button class="mp-process-tab" data-process="validation" role="tab" aria-selected="false">Validation</button>
     </div>
     <div style="margin-top:var(--mp-sp-4);">
       <div class="mp-process-visual" data-process-visual></div>
       <h3 data-process-title style="font-size:var(--mp-text-md); font-weight:600; margin-top:var(--mp-sp-3);"></h3>
       <p data-process-desc style="font-size:var(--mp-text-sm); color:var(--mp-text-secondary);"></p>
+    </div>
+  </div>
+
+  <!-- Process Library gallery -->
+  <div style="margin-top:var(--mp-sp-8);">
+    <h3 style="font-size:var(--mp-text-md); font-weight:600; margin-bottom:var(--mp-sp-4); color:var(--mp-text-secondary);">Process Library</h3>
+    <div class="mp-card-grid mp-card-grid--4">
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/milling-face-cut.svg" alt="Face milling with indexable insert cutter showing toolpath and feed direction" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/turning-external.svg" alt="External longitudinal turning with CNMG insert showing depth of cut" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/drilling-through.svg" alt="Through-hole drilling with twist drill and axial feed" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/threading-external.svg" alt="External V-profile threading with pitch marking" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/cam-toolpath.svg" alt="CAM zigzag pocket clearing toolpath with approach and retract" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/validation-contour.svg" alt="Validation contour visualization with pass and review indicators" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/tooling-insert-holder.svg" alt="Turning tool holder with CNMG insert and nose radius" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
+      <div class="mp-card" style="padding:var(--mp-sp-3);">
+        <img src="/static/media/machining/hole-finishing-reaming.svg" alt="Reaming to H7 tolerance for hole finishing" loading="lazy" decoding="async" style="width:100%; border-radius:var(--mp-radius);">
+      </div>
     </div>
   </div>
 </section>

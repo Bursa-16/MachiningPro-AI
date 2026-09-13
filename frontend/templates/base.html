@@ -150,13 +150,12 @@
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- Main Content -->
     <main class="mp-main">
-      <div class="mp-content">
+      <div class="{% block content_class %}mp-content{% endblock %}">
         {% block content %}{% endblock %}
       </div>
     </main>
-
   </div>
 </body>
 </html>

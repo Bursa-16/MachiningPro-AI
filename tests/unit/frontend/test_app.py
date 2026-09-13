@@ -78,7 +78,8 @@ class TestUIRoutes:
 
     def test_dashboard_contains_status(self, client: TestClient) -> None:
         resp = client.get("/ui/")
-        assert "ENGINEERING CORE ONLINE" in resp.text
+        # Status is shown in the sidebar footer
+        assert "Engineering Core Online" in resp.text
 
     def test_dashboard_contains_nav_items(self, client: TestClient) -> None:
         html = client.get("/ui/").text

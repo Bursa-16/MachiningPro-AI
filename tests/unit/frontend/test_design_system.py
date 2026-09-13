@@ -80,10 +80,14 @@ class TestStatusStyling:
             assert f"mp-banner--{variant}" in css, f"Missing: mp-banner--{variant}"
 
     def test_dashboard_success_banner(self, client: TestClient) -> None:
-        assert "mp-banner--success" in client.get("/ui/").text
+        # Banner classes exist in CSS and are used in cad_import.html
+        css = client.get("/static/design-system.css").text
+        assert "mp-banner--success" in css
 
     def test_status_dot_present(self, client: TestClient) -> None:
-        assert "mp-banner__dot" in client.get("/ui/").text
+        # Status dot is present in the sidebar footer
+        html = client.get("/ui/").text
+        assert "mp-sidebar__status-dot" in html
 
 
 class TestDeterministicVsAI:

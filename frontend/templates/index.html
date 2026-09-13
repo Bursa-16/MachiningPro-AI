@@ -1,46 +1,304 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard · MachineryPro AI{% endblock %}
+{% block title %}MachiningPro AI — Workspace{% endblock %}
+
+{% block content_class %}mp-content--workstation{% endblock %}
 
 {% block content %}
-<div class="mp-page-header">
-  <h1 class="mp-page-title">Dashboard</h1>
-  <p class="mp-page-subtitle">MachineryPro AI — deterministic-first machining intelligence platform.</p>
-</div>
+<div class="mp-workstation">
 
-<div class="mp-banner mp-banner--success mp-section-gap">
-  <span class="mp-banner__dot"></span>
-  <div>
-    <div class="mp-banner__title">ENGINEERING CORE ONLINE</div>
-    <div class="mp-banner__detail">All deterministic calculation modules loaded. AI layer is advisory-only and clearly labelled.</div>
+  <!-- Context Bar -->
+  <header class="mp-context-bar">
+    <div class="mp-context-item"><span class="mp-context-label">PART</span><span class="mp-context-value mp-context-value--muted">—</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">REVISION</span><span class="mp-context-value mp-context-value--muted">—</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">MATERIAL</span><span class="mp-context-value mp-context-value--muted">Awaiting analysis</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">MACHINE</span><span class="mp-context-value mp-context-value--muted">—</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">SETUP</span><span class="mp-context-value mp-context-value--cyan">Turning Op.1</span></div>
+    <div class="mp-context-item mp-context-item--right">
+      <span class="mp-context-label">STATUS</span>
+      <span class="mp-badge mp-badge--unavail">Awaiting analysis</span>
+    </div>
+  </header>
+
+  <!-- Command Strip -->
+  <nav class="mp-command-strip">
+    <div class="mp-command-group">
+      <span class="mp-command-label">Actions</span>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 0 1 .5.5v6h6a.5.5 0 0 1 0 1h-6v6a.5.5 0 0 1-1 0v-6h-6a.5.5 0 0 1 0-1h6v-6A.5.5 0 0 1 8 1z"/></svg>
+        New Setup
+      </button>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+        Import CAD
+      </button>
+      <button class="mp-cmd-btn mp-cmd-btn--active">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/></svg>
+        Calculate
+      </button>
+    </div>
+    <div class="mp-command-group">
+      <span class="mp-command-label">View</span>
+      <button class="mp-cmd-btn mp-cmd-btn--active">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1.5A.5.5 0 0 1 1.5 1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 1 6.5v-5zm6 0A.5.5 0 0 1 7.5 1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 7 6.5v-5zm-6 6A.5.5 0 0 1 1.5 7h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 1 12.5v-5zm6 0A.5.5 0 0 1 7.5 7h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 7 12.5v-5z"/></svg>
+        Isometric
+      </button>
+      <button class="mp-cmd-btn">Front</button>
+      <button class="mp-cmd-btn">Top</button>
+    </div>
+  </nav>
+
+  <!-- Main Grid Area -->
+      <!-- Operation Ribbon -->
+    <nav class="mp-operation-ribbon" aria-label="Operations">
+      <a href="#" class="mp-operation-item mp-operation-item--active">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2"/></svg>
+        Turning
+      </a>
+      <a href="#" class="mp-operation-item">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="6" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="6" x2="5" y2="2" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="6" x2="8" y2="2" stroke="currentColor" stroke-width="1.5"/><line x1="11" y1="6" x2="11" y2="2" stroke="currentColor" stroke-width="1.5"/></svg>
+        Milling
+      </a>
+      <a href="#" class="mp-operation-item">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1 L12 8 L8 15 L4 8 Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        Drilling
+      </a>
+      <a href="#" class="mp-operation-item">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 8 Q5 3 8 8 T13 8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        Threading
+      </a>
+      <a href="#" class="mp-operation-item">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+        Hole Finishing
+      </a>
+      <a href="#" class="mp-operation-item mp-operation-item--planned">CAM <span class="mp-badge-planned">Planned</span></a>
+      <a href="#" class="mp-operation-item mp-operation-item--planned">Validation <span class="mp-badge-planned">Planned</span></a>
+    </nav>
+
+    <!-- Engineering Viewport -->
+    <section class="mp-engineering-viewport" aria-label="Engineering Viewport">
+      <div class="mp-viewport-grid"></div>
+      <div class="mp-viewport-overlay">
+        <span class="mp-viewport-label">TURNING &#183; LONGITUDINAL</span>
+      </div>
+      <svg class="mp-engineering-svg" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <rect x="4" y="4" width="632" height="412" rx="3" stroke="rgba(255,255,255,0.06)" stroke-width="1" fill="#060a12"/>
+        <rect x="12" y="12" width="616" height="396" rx="2" stroke="rgba(59,130,246,0.1)" stroke-width="1" stroke-dasharray="6 3"/>
+        <!-- Axes -->
+        <g opacity="0.4">
+          <line x1="50" y1="380" x2="580" y2="380" stroke="#3b82f6" stroke-width="1"/>
+          <polygon points="580,380 572,376 572,384" fill="#3b82f6"/>
+          <text x="590" y="384" font-family="JetBrains Mono,monospace" font-size="9" fill="#3b82f6">X</text>
+          <line x1="50" y1="380" x2="50" y2="40" stroke="#3b82f6" stroke-width="1"/>
+          <polygon points="50,40 46,48 54,48" fill="#3b82f6"/>
+          <text x="44" y="34" font-family="JetBrains Mono,monospace" font-size="9" fill="#3b82f6">Z</text>
+        </g>
+        <!-- Datum -->
+        <circle cx="50" cy="380" r="3" fill="none" stroke="#06b6d4" stroke-width="1" opacity="0.6"/>
+        <!-- Chuck -->
+        <rect x="60" y="140" width="50" height="120" rx="3" fill="#2a3548" stroke="#4a5568" stroke-width="1.2"/>
+        <rect x="110" y="155" width="8" height="15" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+        <rect x="110" y="215" width="8" height="15" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+        <!-- Workpiece -->
+        <rect x="118" y="170" width="380" height="80" rx="2" fill="#1a2332" stroke="#3d5a7a" stroke-width="1.2"/>
+        <line x1="118" y1="210" x2="498" y2="210" stroke="rgba(59,130,246,0.3)" stroke-width="0.5" stroke-dasharray="4 2"/>
+        <rect x="240" y="180" width="40" height="60" rx="1" fill="#0f1a2a" stroke="#3d5a7a" stroke-width="0.8"/>
+        <!-- Tailstock -->
+        <rect x="498" y="175" width="40" height="70" rx="2" fill="#2a3548" stroke="#4a5568" stroke-width="1"/>
+        <!-- Tool -->
+        <g transform="translate(300,130)">
+          <rect x="-12" y="-40" width="24" height="45" rx="2" fill="#3d4f6a" stroke="#5a7090" stroke-width="1"/>
+          <polygon points="-7,-44 7,-44 0,-36" fill="#f59e0b" stroke="#d97706" stroke-width="0.8"/>
+        </g>
+        <!-- Toolpath -->
+        <path d="M130 200 L470 200" stroke="#06b6d4" stroke-width="1.5" class="mp-anim-toolpath"/>
+        <polygon points="200,200 194,196 194,204" fill="#06b6d4" class="mp-anim-feed"/>
+        <polygon points="350,200 344,196 344,204" fill="#06b6d4" class="mp-anim-feed"/>
+        <!-- Spindle -->
+        <g transform="translate(300,115)">
+          <circle cx="0" cy="0" r="10" fill="none" stroke="#06b6d4" stroke-width="0.8" opacity="0.5"/>
+          <g class="mp-anim-spindle">
+            <line x1="0" y1="-10" x2="0" y2="-6" stroke="#06b6d4" stroke-width="1"/>
+            <line x1="0" y1="6" x2="0" y2="10" stroke="#06b6d4" stroke-width="1"/>
+          </g>
+        </g>
+        <!-- Depth -->
+        <line x1="300" y1="170" x2="300" y2="165" stroke="#f59e0b" stroke-width="0.8" opacity="0.6"/>
+        <line x1="295" y1="170" x2="305" y2="170" stroke="#f59e0b" stroke-width="0.8" opacity="0.6"/>
+        <text x="310" y="168" font-family="JetBrains Mono,monospace" font-size="8" fill="#f59e0b">ap</text>
+      </svg>
+    </section>
+
+    <!-- Properties Panel -->
+    <aside class="mp-properties-panel" aria-label="Properties">
+      <div class="mp-prop-section">
+        <div class="mp-prop-header">OPERATION</div>
+        <div class="mp-prop-body">
+          <div class="mp-prop-row"><span class="mp-prop-key">Type</span><span class="mp-prop-val mp-prop-val--cyan">Turning</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">Mode</span><span class="mp-prop-val">Longitudinal</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">Cycle</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+        </div>
+      </div>
+      <div class="mp-prop-section">
+        <div class="mp-prop-header">TOOL</div>
+        <div class="mp-prop-body">
+          <div class="mp-prop-row"><span class="mp-prop-key">Insert</span><span class="mp-prop-val">CNMG 120408</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">Holder</span><span class="mp-prop-val">PCLNR 2525</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">Edge</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+        </div>
+      </div>
+      <div class="mp-prop-section">
+        <div class="mp-prop-header">CUTTING DATA</div>
+        <div class="mp-prop-body">
+          <div class="mp-prop-row"><span class="mp-prop-key">Vc</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">fz</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">n</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">ap</span><span class="mp-prop-val mp-prop-val--amber">Not calculated</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">Vf</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+        </div>
+      </div>
+      <div class="mp-prop-section">
+        <div class="mp-prop-header">VALIDATION</div>
+        <div class="mp-prop-body">
+          <div class="mp-prop-row"><span class="mp-prop-key">Status</span><span class="mp-prop-val mp-prop-val--muted">Awaiting analysis</span></div>
+          <div class="mp-prop-row"><span class="mp-prop-key">Forces</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+        </div>
+      </div>
+    </aside>
   </div>
+
+  <!-- Process Timeline -->
+  <div class="mp-process-timeline" aria-label="Process Timeline">
+    <div class="mp-process-timeline__step mp-process-timeline__step--done"><span class="mp-timeline-dot"></span>CAD</div>
+    <div class="mp-process-timeline__step mp-process-timeline__step--done"><span class="mp-timeline-dot"></span>Geometry</div>
+    <div class="mp-process-timeline__step mp-process-timeline__step--done"><span class="mp-timeline-dot"></span>Feature</div>
+    <div class="mp-process-timeline__step mp-process-timeline__step--active"><span class="mp-timeline-dot"></span>Process</div>
+    <div class="mp-process-timeline__step"><span class="mp-timeline-dot"></span>Tool</div>
+    <div class="mp-process-timeline__step"><span class="mp-timeline-dot"></span>Parameters</div>
+    <div class="mp-process-timeline__step"><span class="mp-timeline-dot"></span>Validation</div>
+  </div>
+
 </div>
 
-<h2 style="font-size:var(--mp-text-md); font-weight:600; color:var(--mp-text-secondary); margin-bottom:var(--mp-sp-3);">Available Capabilities</h2>
+  <div class="mp-action-cards">
+    <a href="/ui/cad-import" class="mp-action-card">
+    <div class="mp-action-card__icon mp-action-card__icon--blue">
+      <span class="icon icon-upload" style="width:20px;height:20px;"></span>
+    </div>
+    <div>
+      <div class="mp-action-card__title">Import CAD</div>
+      <div class="mp-action-card__desc">STEP · IGES · DXF</div>
+    </div>
+  </a>
+  <a href="/ui/geometry" class="mp-action-card">
+    <div class="mp-action-card__icon mp-action-card__icon--green">
+      <span class="icon icon-box" style="width:20px;height:20px;"></span>
+    </div>
+    <div>
+      <div class="mp-action-card__title">Geometry / Topology</div>
+      <div class="mp-action-card__desc">Canonical model</div>
+    </div>
+  </a>
+  <a href="/ui/machining" class="mp-action-card">
+    <div class="mp-action-card__icon mp-action-card__icon--amber">
+      <span class="icon icon-settings" style="width:20px;height:20px;"></span>
+    </div>
+    <div>
+      <div class="mp-action-card__title">Machining</div>
+      <div class="mp-action-card__desc">Process calculations</div>
+    </div>
+  </a>
+  <a href="/ui/validation" class="mp-action-card">
+    <div class="mp-action-card__icon mp-action-card__icon--violet">
+      <span class="icon icon-shield-check" style="width:20px;height:20px;"></span>
+    </div>
+    <div>
+      <div class="mp-action-card__title">Validation</div>
+      <div class="mp-action-card__desc">DFM · Rules · Provenance</div>
+    </div>
+  </a>
+</div>
+
+<!-- Engineering Modules -->
+<h2 style="font-size:var(--mp-text-md); font-weight:600; color:var(--mp-text-secondary); margin-bottom:var(--mp-sp-3);">Engineering Modules</h2>
 <div class="mp-card-grid mp-card-grid--4 mp-section-gap">
   {% for card in cards %}
-  <div class="mp-card">
-    <div class="mp-card__header">
-      <span class="mp-card__section-label">{{ card.stage }}</span>
-      {% if card.status == "READY" %}
-      <span class="mp-badge mp-badge--ready">Ready</span>
+  <div class="mp-module-card {% if card.status == 'READY' %}mp-accent-top{% endif %}">
+    <div class="mp-module-card__visual">
+      {% if card.title == "CAD Interoperability" %}
+      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="45" height="40" rx="2" fill="none" stroke="#64748b" stroke-width="1.2"/>
+        <path d="M35 20 L60 8 L105 8 L105 50 L60 60 L55 58 L55 20" fill="none" stroke="#475569" stroke-width="1"/>
+        <path d="M55 20 L105 8" fill="none" stroke="#94a3b8" stroke-width="0.6"/>
+        <line x1="35" y1="38" x2="80" y2="28" stroke="#2563eb" stroke-width="0.8" stroke-dasharray="3 2"/>
+        <text x="60" y="74" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="Inter,sans-serif">STEP · IGES · DXF</text>
+      </svg>
+      {% elif card.title == "Machining Engineering" %}
+      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="32" width="90" height="28" rx="2" fill="#e2e8f0" stroke="#94a3b8"/>
+        <rect x="52" y="8" width="12" height="26" rx="2" fill="#475569" stroke="#334155"/>
+        <rect x="49" y="2" width="18" height="8" rx="2" fill="#334155"/>
+        <path d="M22 45 H98" fill="none" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <polygon points="95,45 90,42 90,48" fill="#2563eb"/>
+        <circle cx="58" cy="18" r="2" fill="#f59e0b"/>
+        <text x="60" y="74" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="Inter,sans-serif">6 Processes</text>
+      </svg>
+      {% elif card.title == "DFM Validation" %}
+      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="12" width="90" height="45" rx="3" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+        <rect x="20" y="17" width="80" height="10" fill="#3b82f6" opacity="0.08" rx="1"/>
+        <rect x="20" y="29" width="80" height="10" fill="#fbbf24" opacity="0.1" rx="1"/>
+        <rect x="20" y="41" width="80" height="10" fill="#ef4444" opacity="0.06" rx="1"/>
+        <path d="M38 62 L42 66 L50 58" fill="none" stroke="#10b981" stroke-width="2"/>
+        <text x="56" y="65" font-size="8" fill="#10b981" font-family="Inter,sans-serif">Pass</text>
+        <circle cx="82" cy="62" r="5" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="82" y="65" text-anchor="middle" font-size="8" fill="#f59e0b" font-weight="bold" font-family="Inter,sans-serif">!</text>
+        <text x="60" y="78" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="Inter,sans-serif">8 Rules</text>
+      </svg>
+      {% elif card.title == "Process Planning" %}
+      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="32" r="10" fill="none" stroke="#64748b" stroke-width="1.2"/>
+        <circle cx="60" cy="32" r="10" fill="#dbeafe" stroke="#2563eb" stroke-width="1.2"/>
+        <circle cx="95" cy="32" r="10" fill="none" stroke="#64748b" stroke-width="1.2"/>
+        <line x1="35" y1="32" x2="50" y2="32" stroke="#2563eb" stroke-width="1.5"/>
+        <polygon points="48,32 44,29 44,35" fill="#2563eb"/>
+        <line x1="70" y1="32" x2="85" y2="32" stroke="#2563eb" stroke-width="1.5"/>
+        <polygon points="83,32 79,29 79,35" fill="#2563eb"/>
+        <text x="25" y="35" text-anchor="middle" font-size="8" fill="#475569" font-family="Inter,sans-serif">1</text>
+        <text x="60" y="35" text-anchor="middle" font-size="8" fill="#1d4ed8" font-family="Inter,sans-serif" font-weight="600">2</text>
+        <text x="95" y="35" text-anchor="middle" font-size="8" fill="#475569" font-family="Inter,sans-serif">3</text>
+        <text x="60" y="60" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="Inter,sans-serif">DAG Validated</text>
+      </svg>
       {% else %}
-      <span class="mp-badge mp-badge--partial">{{ card.status }}</span>
+      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="15" width="70" height="40" rx="3" fill="none" stroke="#94a3b8" stroke-dasharray="4 3"/>
+        <text x="60" y="40" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Inter,sans-serif">Planned</text>
+      </svg>
       {% endif %}
     </div>
-    <h3 class="mp-card__title">{{ card.title }}</h3>
-    <p class="mp-card__body" style="margin-top:var(--mp-sp-2)">{{ card.description }}</p>
+    <div class="mp-module-card__body">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--mp-sp-1);">
+        <span style="font-size:var(--mp-text-xs); color:var(--mp-text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.04em;">{{ card.stage }}</span>
+        {% if card.status == "READY" %}
+        <span class="mp-badge mp-badge--ready">Ready</span>
+        {% else %}
+        <span class="mp-badge mp-badge--unavail">{{ card.status }}</span>
+        {% endif %}
+      </div>
+      <div class="mp-module-card__title">{{ card.title }}</div>
+      <p class="mp-module-card__desc">{{ card.description }}</p>
+    </div>
   </div>
   {% endfor %}
 </div>
 
-<div class="mp-card">
+<!-- Architecture -->
+<div class="mp-card mp-cap-card">
   <h3 style="font-size:var(--mp-text-sm); font-weight:600; color:var(--mp-text-secondary)">Architecture Principle</h3>
   <p class="mp-card__body" style="margin-top:var(--mp-sp-1)">
     Deterministic engineering calculations are <strong style="color:var(--mp-text)">authoritative</strong>.
     AI-generated suggestions are always labelled as advisory drafts, never silently merged into
-    validated results. Every computed value carries traceable provenance back to its source rule,
-    version, and engineering reference.
+    validated results. Every computed value carries traceable provenance.
   </p>
 </div>
 {% endblock %}

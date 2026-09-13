@@ -213,13 +213,35 @@
     }
   }
 
+  /* ── CAM TOOLPATH VISUAL ──────────────────────────────────────────── */
+
+  function buildCamVisual() {
+    const g = el("g");
+    g.appendChild(el("rect", { x:40, y:30, width:220, height:130, rx:3, fill:C.workpiece, stroke:C.steel, "stroke-width":1 }));
+    g.appendChild(el("rect", { x:60, y:45, width:180, height:100, rx:4, fill:C.bg, stroke:C.steelLt, "stroke-width":0.8 }));
+    g.appendChild(el("path", { d:"M70 55 H230 V65 H70 V75 H230 V85 H70 V95 H230 V105 H70 V115 H230 V125 H70 V135 H230", fill:"none", stroke:C.brand, "stroke-width":1.8, "stroke-linecap":"round" }));
+    g.appendChild(el("path", { d:"M30 20 L70 50", fill:"none", stroke:C.success, "stroke-width":1.5, "stroke-dasharray":"3 2" }));
+    g.appendChild(el("circle", { cx:30, cy:20, r:3, fill:C.success }));
+    g.appendChild(el("path", { d:"M230 135 L270 20", fill:"none", stroke:C.cut, "stroke-width":1.5, "stroke-dasharray":"3 2" }));
+    g.appendChild(el("circle", { cx:270, cy:20, r:3, fill:C.cut }));
+    g.appendChild(el("line", { x1:40, y1:170, x2:55, y2:170, stroke:C.success, "stroke-width":1.5, "stroke-dasharray":"3 2" }));
+    g.appendChild(el("text", { x:60, y:173, "font-size":"8", fill:C.steel, "font-family":"Inter,sans-serif" }, "Approach"));
+    g.appendChild(el("line", { x1:110, y1:170, x2:125, y2:170, stroke:C.brand, "stroke-width":1.5 }));
+    g.appendChild(el("text", { x:130, y:173, "font-size":"8", fill:C.steel, "font-family":"Inter,sans-serif" }, "Cut"));
+    g.appendChild(el("line", { x1:160, y1:170, x2:175, y2:170, stroke:C.cut, "stroke-width":1.5, "stroke-dasharray":"3 2" }));
+    g.appendChild(el("text", { x:180, y:173, "font-size":"8", fill:C.steel, "font-family":"Inter,sans-serif" }, "Retract"));
+    g.appendChild(el("text", { x:150, y:190, "text-anchor":"middle", "font-size":"10", fill:C.steel, "font-family":"Inter,sans-serif" }, "CAM Toolpath — Zigzag Pocket Clearing"));
+    return svg("100%", "100%", "0 0 300 198", g);
+  }
+
   /* ── PROCESS SELECTOR ───────────────────────────────────────────── */
 
   const PROCESSES = {
-    milling:    { title:"Milling",    desc:"End mill face cutting with programmed toolpath, spindle speed, and feed rate.", build: buildMillingVisual },
-    turning:    { title:"Turning",    desc:"External longitudinal turning with controlled depth of cut and feed direction.", build: buildTurningVisual },
-    drilling:   { title:"Drilling",   desc:"Through-hole drilling with axial feed, spindle rotation, and chip evacuation.", build: buildDrillingVisual },
-    validation: { title:"Validation", desc:"Thermal/stress-inspired contour visualization for engineering verification.", build: buildValidationVisual },
+    milling:    { title:"Milling",      desc:"End mill face cutting with programmed toolpath, spindle speed, and feed rate.", build: buildMillingVisual },
+    turning:    { title:"Turning",      desc:"External longitudinal turning with controlled depth of cut and feed direction.", build: buildTurningVisual },
+    drilling:   { title:"Drilling",     desc:"Through-hole drilling with axial feed, spindle rotation, and chip evacuation.", build: buildDrillingVisual },
+    cam:        { title:"CAM Toolpath", desc:"Zigzag pocket clearing strategy with approach, cutting, and retract paths.", build: buildCamVisual },
+    validation: { title:"Validation",   desc:"Thermal/stress-inspired contour visualization for engineering verification.", build: buildValidationVisual },
   };
 
   function initProcessSelector() {
