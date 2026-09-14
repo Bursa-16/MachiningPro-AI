@@ -9,11 +9,12 @@
 
   <!-- Context Bar -->
   <header class="mp-context-bar">
+    <div class="mp-context-item"><span class="mp-context-label">PROJECT</span><span class="mp-context-value mp-context-value--muted">—</span></div>
     <div class="mp-context-item"><span class="mp-context-label">PART</span><span class="mp-context-value mp-context-value--muted">—</span></div>
-    <div class="mp-context-item"><span class="mp-context-label">REVISION</span><span class="mp-context-value mp-context-value--muted">—</span></div>
     <div class="mp-context-item"><span class="mp-context-label">MATERIAL</span><span class="mp-context-value mp-context-value--muted">Awaiting analysis</span></div>
     <div class="mp-context-item"><span class="mp-context-label">MACHINE</span><span class="mp-context-value mp-context-value--muted">—</span></div>
     <div class="mp-context-item"><span class="mp-context-label">SETUP</span><span class="mp-context-value mp-context-value--cyan">Turning Op.1</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">OPERATION</span><span class="mp-context-value mp-context-value--cyan">Rough Turning</span></div>
     <div class="mp-context-item mp-context-item--right">
       <span class="mp-context-label">STATUS</span>
       <span class="mp-badge mp-badge--unavail">Awaiting analysis</span>
@@ -23,7 +24,7 @@
   <!-- Command Strip -->
   <nav class="mp-command-strip">
     <div class="mp-command-group">
-      <span class="mp-command-label">Actions</span>
+      <span class="mp-command-label">Project</span>
       <button class="mp-cmd-btn">
         <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 0 1 .5.5v6h6a.5.5 0 0 1 0 1h-6v6a.5.5 0 0 1-1 0v-6h-6a.5.5 0 0 1 0-1h6v-6A.5.5 0 0 1 8 1z"/></svg>
         New Setup
@@ -32,34 +33,53 @@
         <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
         Import CAD
       </button>
+    </div>
+    <div class="mp-command-group">
+      <span class="mp-command-label">Inspect</span>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+        Measure
+      </button>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/></svg>
+        Info
+      </button>
+    </div>
+    <div class="mp-command-group">
+      <span class="mp-command-label">Process</span>
       <button class="mp-cmd-btn mp-cmd-btn--active">
         <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/></svg>
         Calculate
       </button>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/></svg>
+        Simulate
+      </button>
     </div>
     <div class="mp-command-group">
-      <span class="mp-command-label">View</span>
-      <button class="mp-cmd-btn mp-cmd-btn--active">
-        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1.5A.5.5 0 0 1 1.5 1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 1 6.5v-5zm6 0A.5.5 0 0 1 7.5 1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 7 6.5v-5zm-6 6A.5.5 0 0 1 1.5 7h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 1 12.5v-5zm6 0A.5.5 0 0 1 7.5 7h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 7 12.5v-5z"/></svg>
-        Isometric
+      <span class="mp-command-label">Validate</span>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+        Validate
       </button>
-      <button class="mp-cmd-btn">Front</button>
-      <button class="mp-cmd-btn">Top</button>
+      <button class="mp-cmd-btn">
+        <svg class="mp-cmd-btn__icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1.5A.5.5 0 0 1 1.5 1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 1 6.5v-5zm6 0A.5.5 0 0 1 7.5 1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 7 6.5v-5zm-6 6A.5.5 0 0 1 1.5 7h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 1 12.5v-5zm6 0A.5.5 0 0 1 7.5 7h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 7 12.5v-5z"/></svg>
+        Export
+      </button>
     </div>
   </nav>
 
-  <!-- Main Grid Area -->
-      <!-- Operation Ribbon -->
+  <!-- Operation Ribbon -->
     <nav class="mp-operation-ribbon" aria-label="Operations">
-      <a href="#" class="mp-operation-item mp-operation-item--active">
+      <a href="#" class="mp-operation-item mp-operation-item--active" data-op="turning">
         <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2"/></svg>
         Turning
       </a>
-      <a href="#" class="mp-operation-item">
+      <a href="#" class="mp-operation-item" data-op="milling">
         <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="6" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="6" x2="5" y2="2" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="6" x2="8" y2="2" stroke="currentColor" stroke-width="1.5"/><line x1="11" y1="6" x2="11" y2="2" stroke="currentColor" stroke-width="1.5"/></svg>
         Milling
       </a>
-      <a href="#" class="mp-operation-item">
+      <a href="#" class="mp-operation-item" data-op="drilling">
         <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1 L12 8 L8 15 L4 8 Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
         Drilling
       </a>
@@ -75,11 +95,79 @@
       <a href="#" class="mp-operation-item mp-operation-item--planned">Validation <span class="mp-badge-planned">Planned</span></a>
     </nav>
 
+  <!-- Model / Process Tree -->
+  <aside class="mp-model-tree" data-tree>
+    <div class="mp-tree-header">
+      <span>Model Tree</span>
+    </div>
+    <div class="mp-tree-search">
+      <input type="text" placeholder="Find node..." aria-label="Search tree"/>
+    </div>
+    <div class="mp-tree-scroll">
+      <div class="mp-tree-node" data-node="project">
+        <div class="mp-tree-row" data-tree-row data-target="project">
+          <span class="mp-tree-expand mp-tree-expand--open">▶</span>
+          <span class="mp-tree-icon">📁</span>
+          <span class="mp-tree-label">Project</span>
+        </div>
+        <div class="mp-tree-children mp-tree-children--open">
+          <div class="mp-tree-node" data-node="part">
+            <div class="mp-tree-row mp-tree-depth-1" data-tree-row data-target="part">
+              <span class="mp-tree-expand mp-tree-expand--open">▶</span>
+              <span class="mp-tree-icon">⚙</span>
+              <span class="mp-tree-label">Part</span>
+            </div>
+            <div class="mp-tree-children mp-tree-children--open">
+              <div class="mp-tree-node" data-node="geometry">
+                <div class="mp-tree-row mp-tree-depth-2" data-tree-row data-target="geometry">
+                  <span class="mp-tree-expand">▶</span>
+                  <span class="mp-tree-icon">◻</span>
+                  <span class="mp-tree-label">Geometry</span>
+                </div>
+              </div>
+              <div class="mp-tree-node" data-node="features">
+                <div class="mp-tree-row mp-tree-depth-2 mp-tree-row--active" data-tree-row data-target="features">
+                  <span class="mp-tree-expand mp-tree-expand--open">▶</span>
+                  <span class="mp-tree-icon">★</span>
+                  <span class="mp-tree-label">Features</span>
+                </div>
+                <div class="mp-tree-children mp-tree-children--open">
+                  <div class="mp-tree-node" data-node="face">
+                    <div class="mp-tree-row mp-tree-depth-3" data-tree-row data-target="face">
+                      <span class="mp-tree-expand">▶</span>
+                      <span class="mp-tree-icon">▭</span>
+                      <span class="mp-tree-label">Face</span>
+                    </div>
+                  </div>
+                  <div class="mp-tree-node" data-node="groove">
+                    <div class="mp-tree-row mp-tree-depth-3" data-tree-row data-target="groove">
+                      <span class="mp-tree-expand">▶</span>
+                      <span class="mp-tree-icon">⊓</span>
+                      <span class="mp-tree-label">Groove</span>
+                      <span class="mp-tree-badge mp-tree-badge--active">Active</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
     <!-- Engineering Viewport -->
     <section class="mp-engineering-viewport" aria-label="Engineering Viewport">
       <div class="mp-viewport-grid"></div>
       <div class="mp-viewport-overlay">
         <span class="mp-viewport-label">TURNING &#183; LONGITUDINAL</span>
+      </div>
+      <div class="mp-viewport-toolbar" data-viewport-toolbar>
+        <button class="mp-vp-tool-btn mp-vp-tool-btn--active" data-vp-tool="axes">Axes</button>
+        <button class="mp-vp-tool-btn mp-vp-tool-btn--active" data-vp-tool="toolpath">Path</button>
+        <button class="mp-vp-tool-btn" data-vp-tool="dims">Dims</button>
+        <button class="mp-vp-tool-btn" data-vp-tool="section">Section</button>
+        <button class="mp-vp-tool-btn" data-vp-tool="fit">Fit</button>
       </div>
       <svg class="mp-engineering-svg" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
         <rect x="4" y="4" width="632" height="412" rx="3" stroke="rgba(255,255,255,0.06)" stroke-width="1" fill="#060a12"/>
@@ -129,53 +217,94 @@
       </svg>
     </section>
 
-    <!-- Properties Panel -->
-    <aside class="mp-properties-panel" aria-label="Properties">
-      <div class="mp-prop-section">
-        <div class="mp-prop-header">OPERATION</div>
-        <div class="mp-prop-body">
-          <div class="mp-prop-row"><span class="mp-prop-key">Type</span><span class="mp-prop-val mp-prop-val--cyan">Turning</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">Mode</span><span class="mp-prop-val">Longitudinal</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">Cycle</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+    <!-- Right Panel: Properties + AI Assistant -->
+    <aside class="mp-right-panel">
+      <div class="mp-tabs" data-panel-tabs>
+        <button class="mp-tab mp-tab--active" data-tab="properties">Properties</button>
+        <button class="mp-tab" data-tab="ai-assistant">AI Assistant</button>
+      </div>
+
+      <!-- Properties Tab -->
+      <div class="mp-tab-content mp-tab-content--active" data-tab-panel="properties">
+        <div class="mp-prop-section">
+          <div class="mp-prop-header">OPERATION</div>
+          <div class="mp-prop-body">
+            <div class="mp-prop-row"><span class="mp-prop-key">Type</span><span class="mp-prop-val mp-prop-val--cyan">Turning</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">Mode</span><span class="mp-prop-val">Longitudinal</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">Cycle</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          </div>
+        </div>
+        <div class="mp-prop-section">
+          <div class="mp-prop-header">TOOL</div>
+          <div class="mp-prop-body">
+            <div class="mp-prop-row"><span class="mp-prop-key">Insert</span><span class="mp-prop-val">CNMG 120408</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">Holder</span><span class="mp-prop-val">PCLNR 2525</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">Edge</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          </div>
+        </div>
+        <div class="mp-prop-section">
+          <div class="mp-prop-header">CUTTING DATA</div>
+          <div class="mp-prop-body">
+            <div class="mp-prop-row"><span class="mp-prop-key">Vc</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">fz</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">n</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">ap</span><span class="mp-prop-val mp-prop-val--amber">Not calculated</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">Vf</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          </div>
+        </div>
+        <div class="mp-prop-section">
+          <div class="mp-prop-header">VALIDATION</div>
+          <div class="mp-prop-body">
+            <div class="mp-prop-row"><span class="mp-prop-key">Status</span><span class="mp-prop-val mp-prop-val--muted">Awaiting analysis</span></div>
+            <div class="mp-prop-row"><span class="mp-prop-key">Forces</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+          </div>
         </div>
       </div>
-      <div class="mp-prop-section">
-        <div class="mp-prop-header">TOOL</div>
-        <div class="mp-prop-body">
-          <div class="mp-prop-row"><span class="mp-prop-key">Insert</span><span class="mp-prop-val">CNMG 120408</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">Holder</span><span class="mp-prop-val">PCLNR 2525</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">Edge</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
-        </div>
-      </div>
-      <div class="mp-prop-section">
-        <div class="mp-prop-header">CUTTING DATA</div>
-        <div class="mp-prop-body">
-          <div class="mp-prop-row"><span class="mp-prop-key">Vc</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">fz</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">n</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">ap</span><span class="mp-prop-val mp-prop-val--amber">Not calculated</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">Vf</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
-        </div>
-      </div>
-      <div class="mp-prop-section">
-        <div class="mp-prop-header">VALIDATION</div>
-        <div class="mp-prop-body">
-          <div class="mp-prop-row"><span class="mp-prop-key">Status</span><span class="mp-prop-val mp-prop-val--muted">Awaiting analysis</span></div>
-          <div class="mp-prop-row"><span class="mp-prop-key">Forces</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
+
+      <!-- AI Assistant Tab -->
+      <div class="mp-tab-content" data-tab-panel="ai-assistant">
+        <div class="mp-ai-panel">
+          <div class="mp-ai-header">
+            <div class="mp-ai-title">AI Engineering Assistant</div>
+            <div class="mp-ai-subtitle">Advisory recommendations only</div>
+          </div>
+          <div class="mp-ai-scroll">
+            <div class="mp-ai-rec">
+              <div class="mp-ai-rec-header">
+                <span class="mp-ai-rec-label">Recommendation</span>
+                <span class="mp-ai-rec-confidence">High</span>
+              </div>
+              <div class="mp-ai-rec-param">Cutting Speed (Vc)</div>
+              <div class="mp-ai-rec-values">
+                <div class="mp-ai-rec-row"><span class="mp-ai-rec-key">Baseline</span><span class="mp-ai-rec-val mp-ai-rec-val--baseline">180 m/min</span></div>
+                <div class="mp-ai-rec-row"><span class="mp-ai-rec-key">Recommended</span><span class="mp-ai-rec-val mp-ai-rec-val--recommended">195 m/min</span></div>
+              </div>
+              <div class="mp-ai-rec-impact">Expected: -7% cycle time</div>
+              <div class="mp-ai-rec-evidence">ISO P group carbide insert compatibility</div>
+              <div class="mp-ai-rec-actions">
+                <button class="mp-ai-btn mp-ai-btn--review">Review</button>
+                <button class="mp-ai-btn mp-ai-btn--accept">Accept</button>
+                <button class="mp-ai-btn mp-ai-btn--dismiss">Dismiss</button>
+              </div>
+            </div>
+          </div>
+          <div class="mp-ai-baseline-note">
+            <strong>Engineering Baseline is authoritative.</strong> AI recommendations are advisory.
+          </div>
         </div>
       </div>
     </aside>
   </div>
 
   <!-- Process Timeline -->
-  <div class="mp-process-timeline" aria-label="Process Timeline">
-    <div class="mp-process-timeline__step mp-process-timeline__step--done"><span class="mp-timeline-dot"></span>CAD</div>
-    <div class="mp-process-timeline__step mp-process-timeline__step--done"><span class="mp-timeline-dot"></span>Geometry</div>
-    <div class="mp-process-timeline__step mp-process-timeline__step--done"><span class="mp-timeline-dot"></span>Feature</div>
-    <div class="mp-process-timeline__step mp-process-timeline__step--active"><span class="mp-timeline-dot"></span>Process</div>
-    <div class="mp-process-timeline__step"><span class="mp-timeline-dot"></span>Tool</div>
-    <div class="mp-process-timeline__step"><span class="mp-timeline-dot"></span>Parameters</div>
-    <div class="mp-process-timeline__step"><span class="mp-timeline-dot"></span>Validation</div>
+  <div class="mp-process-timeline" aria-label="Process Timeline" data-timeline>
+    <div class="mp-process-timeline__step mp-process-timeline__step--done" data-step="cad"><span class="mp-timeline-dot"></span>CAD</div>
+    <div class="mp-process-timeline__step mp-process-timeline__step--done" data-step="geometry"><span class="mp-timeline-dot"></span>Geometry</div>
+    <div class="mp-process-timeline__step mp-process-timeline__step--done" data-step="feature"><span class="mp-timeline-dot"></span>Feature</div>
+    <div class="mp-process-timeline__step mp-process-timeline__step--active" data-step="process"><span class="mp-timeline-dot"></span>Process</div>
+    <div class="mp-process-timeline__step" data-step="tool"><span class="mp-timeline-dot"></span>Tool</div>
+    <div class="mp-process-timeline__step" data-step="parameters"><span class="mp-timeline-dot"></span>Parameters</div>
+    <div class="mp-process-timeline__step" data-step="validation"><span class="mp-timeline-dot"></span>Validation</div>
   </div>
 
 </div>

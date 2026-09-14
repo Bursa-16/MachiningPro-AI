@@ -278,11 +278,127 @@
     select("milling");
   }
 
-  /* ── INIT ───────────────────────────────────────────────────────── */
+  const WS = { activeOp: 'turning', activeNode: 'rough-turning', propsMode: 'properties', overlays: { axes: true, toolpath: true, dims: false, section: false }, activeStep: 'process' };
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const heroContainer = document.getElementById("mp-hero-visual");
-    if (heroContainer) buildHeroVisual(heroContainer);
+  function setActiveTimelineStep(step) {
+    document.querySelectorAll('.mp-process-timeline__step').forEach(function(el) {
+      el.classList.remove('mp-process-timeline__step--active');
+      if (el.dataset.step === step) el.classList.add('mp-process-timeline__step--active');
+    });
+  }
+
+  function initModelTree() {
+    var tree = document.querySelector('[data-tree]');
+    if (!tree) return;
+    tree.addEventListener('click', function(e) {
+      var expand = e.target.closest('.mp-tree-expand');
+      if (expand) {
+        var node = expand.closest('.mp-tree-node');
+        var children = node.querySelector('.mp-tree-children');
+        if (children) { children.classList.toggle('mp-tree-children--open'); expand.classList.toggle('mp-tree-expand--open'); }
+        return;
+      }
+      var row = e.target.closest('[data-tree-row]');
+      if (row) {
+        tree.querySelectorAll('.mp-tree-row--active').forEach(function(r) { r.classList.remove('mp-tree-row--active'); });
+        row.classList.add('mp-tree-row--active');
+        WS.activeNode = row.dataset.target;
+        var label = document.querySelector('.mp-viewport-label');
+        if (label) { var m = { 'rough-turning': 'TURNING \xb7 ROUGHING', 'groove': 'FEATURE \xb7 GROOVE', 'face': 'FEATURE \xb7 FACE', 'drilling': 'DRILLING \xb7 THROUGH' }; if (m[row.dataset.target]) label.textContent = m[row.dataset.target]; }
+        var sm = { 'rough-turning': 'process', 'groove': 'feature', 'drilling': 'tool', 'face': 'feature' };
+        if (sm[row.dataset.target]) setActiveTimelineStep(sm[row.dataset.target]);
+      }
+    });
+  }
+
+  function initViewportToolbar() {
+    var tb = document.querySelector('[data-viewport-toolbar]');
+    if (!tb) return;
+    tb.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-vp-tool]');
+      if (!btn) return;
+      btn.classList.toggle('mp-vp-tool-btn--active');
+      WS.overlays[btn.dataset.vpTool] = btn.classList.contains('mp-vp-tool-btn--active');
+      var svg = document.querySelector('.mp-engineering-svg');
+      if (!svg) return;
+      var tp = svg.querySelector('.mp-anim-toolpath');
+      if (tp) tp.style.opacity = WS.overlays.toolpath ? '0.8' : '0';
+    });
+  }
+
+  function initPanelTabs() {
+    var tabs = document.querySelector('[data-panel-tabs]');
+    if (!tabs) return;
+    tabs.addEventListener('click', function(e) {
+      var tab = e.target.closest('[data-tab]');
+      if (!tab) return;
+      WS.propsMode = tab.dataset.tab;
+      tabs.querySelectorAll('.mp-tab').forEach(function(t) { t.classList.remove('mp-tab--active'); });
+      tab.classList.add('mp-tab--active');
+      document.querySelectorAll('[data-tab-panel]').forEach(function(p) { p.classList.toggle('mp-tab-content--active', p.dataset.tabPanel === tab.dataset.tab); });
+    });
+  }
+
+  function initOperationRibbon() {
+    var ribbon = document.querySelector('.mp-operation-ribbon');
+    if (!ribbon) return;
+    ribbon.addEventListener('click', function(e) {
+      var item = e.target.closest('[data-op]');
+      if (!item || item.classList.contains('mp-operation-item--planned')) return;
+      e.preventDefault();
+      ribbon.querySelectorAll('.mp-operation-item--active').forEach(function(i) { i.classList.remove('mp-operation-item--active'); });
+      item.classList.add('mp-operation-item--active');
+      WS.activeOp = item.dataset.op;
+      var label = document.querySelector('.mp-viewport-label');
+      if (label) { var m = { turning: 'TURNING \xb7 ROUGHING', milling: 'MILLING \xb7 FACE', drilling: 'DRILLING \xb7 THROUGH', cam: 'CAM TOOLPATH', validation: 'VALIDATION \xb7 CHECK' }; if (m[item.dataset.op]) label.textContent = m[item.dataset.op]; }
+    });
+  }
+
+  function initTimeline() {
+    var tl = document.querySelector('[data-timeline]');
+    if (!tl) return;
+    tl.addEventListener('click', function(e) {
+      var step = e.target.closest('[data-step]');
+      if (!step) return;
+      setActiveTimelineStep(step.dataset.step);
+      WS.activeStep = step.dataset.step;
+      var tree = document.querySelector('[data-tree]');
+      if (!tree) return;
+      var m = { cad: 'project', geometry: 'geometry', feature: 'features', process: 'rough-turning', tool: 'drilling', parameters: 'rough-turning', validation: 'validation' };
+      if (m[step.dataset.step]) {
+        tree.querySelectorAll('.mp-tree-row--active').forEach(function(r) { r.classList.remove('mp-tree-row--active'); });
+        var row = tree.querySelector('[data-target="' + m[step.dataset.step] + '"]');
+        if (row) row.classList.add('mp-tree-row--active');
+      }
+    });
+  }
+
+  function initAIAssistant() {
+    document.querySelectorAll('.mp-ai-rec-actions').forEach(function(c) {
+      c.addEventListener('click', function(e) {
+        var btn = e.target.closest('.mp-ai-btn');
+        if (!btn) return;
+        var rec = btn.closest('.mp-ai-rec');
+        if (btn.classList.contains('mp-ai-btn--accept')) {
+          rec.style.opacity = '0.5'; rec.style.pointerEvents = 'none';
+          var ev = rec.querySelector('.mp-ai-rec-evidence');
+          if (ev) ev.textContent = 'Accepted for scenario comparison.';
+        } else if (btn.classList.contains('mp-ai-btn--dismiss')) {
+          rec.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var hero = document.getElementById("mp-hero-visual");
+    if (hero) buildHeroVisual(hero);
     initProcessSelector();
+    initModelTree();
+    initViewportToolbar();
+    initPanelTabs();
+    initOperationRibbon();
+    initTimeline();
+    initAIAssistant();
   });
 })();
