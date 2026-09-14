@@ -45,8 +45,8 @@ def test_subpackages_importable_and_documented() -> None:
 def test_source_material_present_and_untouched() -> None:
     # Stage 0 guarantee: existing material must remain in place, read-only.
     assert (ROOT / "Machinery_Article").is_dir(), "Machinery_Article folder missing"
-    assert (ROOT / "Progamlar").is_dir(), "Progamlar folder missing"
-    assert any((ROOT / "Progamlar").glob("*.md")), "Progamlar markdown reports missing"
+    assert (ROOT / "Programlar").is_dir(), "Programlar folder missing"
+    assert any((ROOT / "Programlar").glob("*.md")), "Programlar markdown reports missing"
 
 
 def test_foundation_files_present() -> None:
