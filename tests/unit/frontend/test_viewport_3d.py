@@ -85,6 +85,29 @@ class TestViewportEngineCapabilities:
         assert "showFallback" in viewport_js
         assert "WebGLRenderingContext" in viewport_js
 
+    def test_bootstrap_survives_deferred_script_evaluation(self, viewport_js: str) -> None:
+        """Regression: v0.1.0-alpha.4 shipped a bootstrap that checked
+        ``window.MP3D`` before the namespace was exported, so under
+        ``<script defer>`` (readyState "interactive", not "loading") the
+        immediate bootstrap call silently skipped ``init()`` and the
+        workstation rendered an empty viewport. The export must therefore
+        appear before the bootstrap block, and the bootstrap must call the
+        in-scope ``MP3D`` closure reference rather than ``window.MP3D``.
+        """
+        export_pos = viewport_js.find("window.MP3D = MP3D;")
+        bootstrap_pos = viewport_js.find("function bootstrapMP3D")
+        assert export_pos != -1, "window.MP3D export missing"
+        assert bootstrap_pos != -1, "bootstrapMP3D missing"
+        assert export_pos < bootstrap_pos, (
+            "window.MP3D must be exported BEFORE the bootstrap block: "
+            "deferred scripts evaluate in readyState 'interactive', so the "
+            "bootstrap runs immediately at evaluation time"
+        )
+        assert "window.MP3D.init" not in viewport_js, (
+            "bootstrap must call the in-scope MP3D closure, not window.MP3D"
+        )
+        assert 'MP3D.init(mount.id' in viewport_js
+
     def test_orbit_interaction(self, viewport_js: str) -> None:
         assert "onPointerDown" in viewport_js
         assert "orbitBy" in viewport_js

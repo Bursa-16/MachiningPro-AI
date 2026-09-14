@@ -772,11 +772,18 @@
     }
   };
 
-  // Self-bootstrap when the engineering viewport container is present
+  // Public export BEFORE bootstrap: deferred scripts evaluate in
+  // readyState "interactive" (not "loading"), so the bootstrap below runs
+  // synchronously at evaluation time and the namespace must already exist.
+  window.MP3D = MP3D;
+
+  // Self-bootstrap when the engineering viewport container is present.
+  // Uses the in-scope MP3D closure reference (not window.MP3D) so that
+  // bootstrap ordering can never silently skip initialization.
   function bootstrapMP3D() {
     var mount = document.querySelector("[data-3d-viewport]");
-    if (mount && window.MP3D) {
-      window.MP3D.init(mount.id || mount.getAttribute("data-3d-viewport"));
+    if (mount) {
+      MP3D.init(mount.id || mount.getAttribute("data-3d-viewport") || "mp-3d-viewport");
     }
   }
   if (document.readyState === "loading") {
@@ -784,6 +791,4 @@
   } else {
     bootstrapMP3D();
   }
-
-  window.MP3D = MP3D;
 })();
