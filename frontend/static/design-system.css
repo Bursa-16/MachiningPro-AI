@@ -1821,3 +1821,145 @@ body {
 }
 .mp-cap-card--green { border-left-color: #10b981; }
 .mp-cap-card--amber { border-left-color: #f59e0b; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   UI-VISUAL-1E — Interactive 3D Engineering Viewport
+   ====================================================================== */
+.mp-3d-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  background: var(--mp-ws-viewport);
+}
+.mp-3d-viewport.is-dragging {
+  cursor: grabbing;
+}
+.mp-3d-viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mp-3d-viewport--active ~ .mp-engineering-svg {
+  display: none;
+}
+
+/* HUD (operation label) */
+.mp-3d-viewport__hud {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* Dimensions overlay (Dims toggle) */
+.mp-3d-viewport__dims {
+  position: absolute;
+  left: 12px;
+  bottom: 46px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--mp-font-mono);
+  font-size: 9px;
+  color: var(--mp-amber, #fbbf24);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  padding: 5px 9px;
+  border-radius: 2px;
+  pointer-events: none;
+  letter-spacing: 0.03em;
+}
+
+/* View Cube */
+.mp-view-cube {
+  position: absolute;
+  top: 46px;
+  right: 8px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, 38px);
+  grid-template-rows: repeat(3, 22px);
+  gap: 2px;
+  background: rgba(10, 15, 26, 0.85);
+  border: 1px solid var(--mp-ws-border);
+  border-radius: var(--mp-radius-sm, 4px);
+  padding: 4px;
+}
+.mp-vp-view {
+  font-family: var(--mp-font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--mp-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1;
+  transition: all 120ms ease;
+}
+.mp-vp-view:hover {
+  color: var(--mp-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+.mp-vp-view--active {
+  color: var(--mp-cyan);
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.25);
+}
+
+/* Toolbar separator */
+.mp-vp-sep {
+  width: 1px;
+  background: var(--mp-ws-border);
+  margin: 0 2px;
+  align-self: stretch;
+  display: inline-block;
+}
+
+/* WebGL fallback */
+.mp-viewport-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  pointer-events: none;
+  text-align: center;
+}
+.mp-viewport-fallback__icon {
+  font-size: 28px;
+  line-height: 1;
+}
+.mp-viewport-fallback__title {
+  font-family: var(--mp-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mp-text-secondary);
+}
+.mp-viewport-fallback__desc {
+  font-size: 10px;
+  color: var(--mp-text-muted);
+  max-width: 300px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-3d-viewport,
+  .mp-vp-view,
+  .mp-vp-tool-btn {
+    transition: none;
+  }
+}

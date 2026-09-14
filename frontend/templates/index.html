@@ -162,12 +162,40 @@
       <div class="mp-viewport-overlay">
         <span class="mp-viewport-label">TURNING &#183; LONGITUDINAL</span>
       </div>
+
+      <!-- Interactive 3D Viewport (UI-VISUAL-1E) -->
+      <div id="mp-3d-viewport" class="mp-3d-viewport" data-3d-viewport aria-label="Interactive 3D Engineering Viewport">
+        <!-- Three.js canvas and WebGL fallback mount here -->
+      </div>
+      <div class="mp-3d-viewport__hud" data-3d-hud>
+        <span class="mp-viewport-label">TURNING &#183; 3D</span>
+      </div>
+      <div class="mp-3d-viewport__dims" data-3d-dims style="display:none">
+        <span>DIMENSIONS &#183; WORKPIECE</span>
+        <span>&#216;18/28 &#215; 40 mm</span>
+      </div>
+
       <div class="mp-viewport-toolbar" data-viewport-toolbar>
         <button class="mp-vp-tool-btn mp-vp-tool-btn--active" data-vp-tool="axes">Axes</button>
         <button class="mp-vp-tool-btn mp-vp-tool-btn--active" data-vp-tool="toolpath">Path</button>
         <button class="mp-vp-tool-btn" data-vp-tool="dims">Dims</button>
         <button class="mp-vp-tool-btn" data-vp-tool="section">Section</button>
         <button class="mp-vp-tool-btn" data-vp-tool="fit">Fit</button>
+        <button class="mp-vp-tool-btn" data-vp-tool="reset">Reset</button>
+        <span class="mp-vp-sep"></span>
+        <button class="mp-vp-tool-btn mp-vp-tool-btn--active" data-vp-mode="shaded">Shaded</button>
+        <button class="mp-vp-tool-btn" data-vp-mode="edges">Edges</button>
+        <button class="mp-vp-tool-btn" data-vp-mode="wireframe">Wire</button>
+        <button class="mp-vp-tool-btn" data-vp-mode="transparent">X-Ray</button>
+      </div>
+      <div class="mp-view-cube" data-view-cube aria-label="Standard Views">
+        <button class="mp-vp-view mp-vp-view--active" data-vp-view="iso" title="Isometric">ISO</button>
+        <button class="mp-vp-view" data-vp-view="top" title="Top">Top</button>
+        <button class="mp-vp-view" data-vp-view="front" title="Front">Front</button>
+        <button class="mp-vp-view" data-vp-view="right" title="Right">Right</button>
+        <button class="mp-vp-view" data-vp-view="back" title="Back">Back</button>
+        <button class="mp-vp-view" data-vp-view="left" title="Left">Left</button>
+        <button class="mp-vp-view" data-vp-view="bottom" title="Bottom">Bottom</button>
       </div>
       <svg class="mp-engineering-svg" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
         <rect x="4" y="4" width="632" height="412" rx="3" stroke="rgba(255,255,255,0.06)" stroke-width="1" fill="#060a12"/>
@@ -430,4 +458,10 @@
     validated results. Every computed value carries traceable provenance.
   </p>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <!-- Interactive 3D Engineering Viewport (UI-VISUAL-1E) -->
+  <script src="/static/js/vendor/three.min.js" defer></script>
+  <script src="/static/js/machining-3d-viewport.js" defer></script>
 {% endblock %}
