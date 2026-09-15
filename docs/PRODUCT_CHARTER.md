@@ -1,15 +1,19 @@
-# Product Charter — Machinery AI
+# Product Charter — MachiningPro AI
 
-**Status:** Draft v0.1 (Stage 1 deliverable)
-**Sources:** `Progamlar\Talasli_Imalat_Zeka_Platformu_Arastirma_Raporu.md`,
-`Progamlar\Talasli_Imalat_Manufacturing_Intelligence_Platform_Raporu.md` (Stage 0 inventory).
+**Status:** Active
+**Sources:** Stage 0 platform research reports (Programlar/), updated through v0.1.0-alpha.4.
+
+---
 
 ## 1. Mission
 
-Build an **independent, closed-loop machining intelligence platform** covering the engineering
-decision chain from CAD/technical-drawing understanding to profitable delivery. The product is
-explicitly *not* a module of any existing system (TorqPro or otherwise); it reuses their proven
-principles — deterministic, explainable, traceable, fail-closed — as an independent platform.
+Build an **independent, closed-loop machining intelligence platform** covering the engineering decision chain from CAD/technical-drawing understanding to profitable delivery.
+
+MachiningPro AI is a standalone product. It has its own repository, architecture, roadmap, versioning, documentation, and product identity. It is not a module of, derivative of, or dependent on any other system.
+
+The platform's governing engineering principles — deterministic authority, explainability, traceability, fail-closed behavior — are fundamental to sound machining engineering and are applied here as first-principles design decisions, not inherited from any external system.
+
+---
 
 ## 2. The eleven disciplines on one part record
 
@@ -25,9 +29,9 @@ principles — deterministic, explainable, traceable, fail-closed — as an inde
 10. Quoting & predicted cost calculation
 11. Actual cost, deviation & profitability analysis
 
-The value is the **coupling**: tolerance drives sequence → sequence drives setups → setups drive
-fixture/quality cost → machine capacity drives due-date risk → actual cycle time corrects the
-next quote.
+The value is the **coupling**: tolerance drives sequence → sequence drives setups → setups drive fixture/quality cost → machine capacity drives due-date risk → actual cycle time corrects the next quote.
+
+---
 
 ## 3. MVP scope (first sellable slice)
 
@@ -39,6 +43,8 @@ next quote.
 | Outputs | DFM risk list, process-plan draft, tool + cutting-parameter suggestion, estimated cycle time, quote draft |
 | Guarantee | Every decision carries source + revision; engineer approval required |
 
+---
+
 ## 4. Phase-1 non-goals
 
 - Translating native CAD formats with own code.
@@ -46,22 +52,25 @@ next quote.
 - Enabling material / heat-treatment suggestions without design requirement + engineer approval.
 - Closed-loop optimization (later phase after core validation).
 
+---
+
 ## 5. Governing principles
 
-Deterministic calculations are **authoritative** · Explainable · Traceable · Revision-controlled ·
-Human approval gates · Fail-closed on missing/invalid data.
+Deterministic calculations are **authoritative** · Explainable · Traceable · Revision-controlled · Human approval gates · Fail-closed on missing/invalid data.
 
-## 6. Key risks and controls (from the research report)
+---
 
-Scope too large → narrow MVP · Wrong CAD/PMI reading → confidence score, overlay, human
-verification, fail-closed · Unlicensed catalog/web data → licensed APIs + provenance policy ·
-AI hallucination → deterministic engine + rule registry + mandatory sourcing · Post/NC errors →
-mature CAM + virtual validation + signed release · Catalog-vs-real-machine gap → site-specific
-validated capability models · Estimate/accounting confusion → estimated/planned/actual ledger
-separation · Defense-sector security → on-prem option, RBAC, encryption, OT segmentation ·
-Per-customer code drift → configuration + rule registry + adapter architecture.
+## 6. Key risks and controls
 
-## 7. Open items for Stage 2
+Scope too large → narrow MVP · Wrong CAD/PMI reading → confidence score, overlay, human verification, fail-closed · Unlicensed catalog/web data → licensed APIs + provenance policy · AI hallucination → deterministic engine + rule registry + mandatory sourcing · Post/NC errors → mature CAM + virtual validation + signed release · Catalog-vs-real-machine gap → site-specific validated capability models · Estimate/accounting confusion → estimated/planned/actual ledger separation · Defense-sector security → on-prem option, RBAC, encryption, OT segmentation · Per-customer code drift → configuration + rule registry + adapter architecture.
 
-Measurable MVP exit criteria (benchmark part set, quoting accuracy target) — deliberately left
-undefined until the domain model exists.
+---
+
+## 7. Open engineering decisions
+
+- CAD geometry kernel selection
+- Feature recognition approach (rule-based vs. ML-assisted)
+- Material and tooling catalog data sourcing and licensing
+- Deployment model (on-premises vs. cloud-first)
+- CAM system integration priority
+- Measurable MVP exit criteria (benchmark part set, quoting accuracy target)

@@ -1,4 +1,4 @@
-# Machinery AI — Machining Math Foundation (Stage 3A)
+# MachiningPro AI â€” Machining Math Foundation (Stage 3A)
 
 **Status:** implemented
 
@@ -25,11 +25,11 @@ backend/machining/
 
 Two layers, both reusable:
 
-1. **formulas.py** — pure functions returning `Quantity`. Use these when you
+1. **formulas.py** â€” pure functions returning `Quantity`. Use these when you
    just need a value. They validate units and physical bounds, fail closed
    on any violation, and use `Decimal` throughout.
 
-2. **rules.py** — `EngineeringRule` subclasses that wrap each formula and
+2. **rules.py** â€” `EngineeringRule` subclasses that wrap each formula and
    return `EngineeringResult`. Use these for rule-registry participation,
    provenance, and the fail-closed `evaluate()` contract.
 
@@ -111,7 +111,7 @@ Constant 60000 = 60 (s/min) * 1000 (W/kW).
 
 - Pi is a 50-significant-digit `Decimal` literal (far exceeds any
   engineering requirement).
-- All intermediate arithmetic stays in `Decimal` — binary float is never
+- All intermediate arithmetic stays in `Decimal` â€” binary float is never
   introduced inside a formula.
 - Division uses exact `Decimal` arithmetic; callers needing rounded display
   values can quantize the result.
@@ -140,7 +140,7 @@ Nothing is silently clamped, normalized, or guessed.
 - Taylor tool-life equations
 - Surface-roughness prediction
 - Heat generation or chatter analysis
-- Turning MRR (deferred — needs explicit modeling choice)
+- Turning MRR (deferred â€” needs explicit modeling choice)
 - Rapid moves, acceleration, tool changes, dwell, setup time
 - CAM, G-code, AI/RAG, database, API, frontend
 

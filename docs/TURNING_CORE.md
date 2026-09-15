@@ -1,4 +1,4 @@
-# Machinery AI — Turning Core (Stage 3B)
+# MachiningPro AI â€” Turning Core (Stage 3B)
 
 **Status:** implemented
 
@@ -29,7 +29,7 @@ backend/machining/
 ```
 
 Reuses Stage 3A formulas (`feed_rate_from_rpm_feed_per_rev`,
-`machining_time_from_distance_feed_rate`) — no duplication.
+`machining_time_from_distance_feed_rate`) â€” no duplication.
 
 ## External Longitudinal Turning
 
