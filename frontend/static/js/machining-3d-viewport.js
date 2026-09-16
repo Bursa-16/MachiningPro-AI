@@ -101,11 +101,25 @@
         // Respect user motion preferences
         this.reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
-        // Re-measure so the canvas exactly matches the visible viewport
-        this.onResize();
+        // UI-VISUAL-1F: Defer resize+fit into a post-layout rAF so the
+        // DOM has fully painted and getBoundingClientRect() returns real px.
+        var self = this;
+        requestAnimationFrame(function () {
+          self.onResize();
 
-        // Dispatch loaded event
-        window.dispatchEvent(new CustomEvent("mp-3d-viewport-ready"));
+          var rect = self.container.getBoundingClientRect();
+          if (rect.width < 2 || rect.height < 2) {
+            // Container still zero-sized — one more frame after CSS settles
+            requestAnimationFrame(function () {
+              self.onResize();
+              self.fitToScene();
+            });
+          } else {
+            self.fitToScene();
+          }
+
+          window.dispatchEvent(new CustomEvent("mp-3d-viewport-ready"));
+        });
       } catch (err) {
         console.error("Three.js Init Failed:", err);
         this.showFallback();
@@ -144,7 +158,9 @@
       });
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       var rect = this.container.getBoundingClientRect();
-      this.renderer.setSize(rect.width, rect.height);
+      var _rw = Math.max(1, rect.width);
+      var _rh = Math.max(1, rect.height);
+      this.renderer.setSize(_rw, _rh);
       this.renderer.setClearColor(0x060a12, 1); // Exact match for --mp-ws-viewport background
       this.renderer.shadowMap.enabled = true;
     },
@@ -156,7 +172,11 @@
 
     setupCamera: function () {
       var rect = this.container.getBoundingClientRect();
-      this.camera = new THREE.PerspectiveCamera(45, rect.width / rect.height, 0.1, 100);
+      var _cw = Math.max(1, rect.width);
+      var _ch = Math.max(1, rect.height);
+      var _aspect = _cw / _ch;
+      if (!isFinite(_aspect) || _aspect <= 0) { _aspect = 1; }
+      this.camera = new THREE.PerspectiveCamera(45, _aspect, 0.1, 100);
       this.updateCameraPosition();
     },
 
@@ -175,8 +195,13 @@
     },
 
     setupLights: function () {
-      var ambient = new THREE.AmbientLight(0x384252, 0.8);
+      var ambient = new THREE.AmbientLight(0x8fa3bf, 0.85);
       this.scene.add(ambient);
+
+      // Soft industrial studio fill (sky/ground) so metal surfaces read
+      // even without an environment map.
+      var hemi = new THREE.HemisphereLight(0x9fb4cc, 0x1c2530, 0.5);
+      this.scene.add(hemi);
 
       var dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
       dirLight1.position.set(5, 10, 7);
@@ -190,7 +215,7 @@
 
     buildSceneObjects: function () {
       // 1. Grid Helper (Ground)
-      this.grid = new THREE.GridHelper(10, 20, 0x1e293b, 0x0f172a);
+      this.grid = new THREE.GridHelper(10, 20, 0x2c3d55, 0x18233b);
       this.grid.position.y = -2.0;
       this.scene.add(this.grid);
 
@@ -206,9 +231,9 @@
 
       var chuckBodyGeo = new THREE.CylinderGeometry(1.4, 1.4, 0.8, 32);
       var chuckBodyMat = new THREE.MeshStandardMaterial({
-        color: 0x334155,
-        metalness: 0.8,
-        roughness: 0.3
+        color: 0x3b4c63,
+        metalness: 0.3,
+        roughness: 0.45
       });
       var chuckBody = new THREE.Mesh(chuckBodyGeo, chuckBodyMat);
       chuckBody.rotation.z = Math.PI / 2;
@@ -220,9 +245,9 @@
       // 3 Jaws
       var jawGeo = new THREE.BoxGeometry(0.4, 0.5, 0.6);
       var jawMat = new THREE.MeshStandardMaterial({
-        color: 0x475569,
-        metalness: 0.7,
-        roughness: 0.4
+        color: 0x5b6f8a,
+        metalness: 0.3,
+        roughness: 0.5
       });
       for (var i = 0; i < 3; i++) {
         var jaw = new THREE.Mesh(jawGeo, jawMat);
@@ -239,9 +264,9 @@
       this.workpiece.userData = { id: "geometry", label: "Stepped Workpiece" };
 
       var wpMat = new THREE.MeshStandardMaterial({
-        color: 0x64748b, // Steel/Metal color
-        metalness: 0.8,
-        roughness: 0.3
+        color: 0x8a99ad, // Machined steel
+        metalness: 0.35,
+        roughness: 0.4
       });
 
       // Larger Step
@@ -272,9 +297,9 @@
       // Shank / Holder
       var shankGeo = new THREE.BoxGeometry(0.4, 0.4, 1.5);
       var shankMat = new THREE.MeshStandardMaterial({
-        color: 0x1e293b,
-        metalness: 0.6,
-        roughness: 0.5
+        color: 0x2b3a50,
+        metalness: 0.25,
+        roughness: 0.55
       });
       var shank = new THREE.Mesh(shankGeo, shankMat);
       shank.position.set(0.8, 1.2, 0.5);
@@ -283,9 +308,9 @@
       // Golden Carbide Insert
       var insertGeo = new THREE.ConeGeometry(0.15, 0.3, 4);
       var insertMat = new THREE.MeshStandardMaterial({
-        color: 0xf59e0b, // Amber/Gold insert
-        metalness: 0.9,
-        roughness: 0.2
+        color: 0xf0a526, // Amber/Gold insert
+        metalness: 0.45,
+        roughness: 0.3
       });
       var insert = new THREE.Mesh(insertGeo, insertMat);
       insert.rotation.x = Math.PI;
@@ -479,6 +504,11 @@
     },
 
     onTreeRowClick: function (row) {
+      var operation = row.getAttribute("data-operation");
+      if (operation) {
+        this.setOperation(operation);
+        return;
+      }
       var target = row.getAttribute("data-target");
       if (!target) return;
       this.selectObject(target);
@@ -599,11 +629,9 @@
 
     resetView: function () {
       this.state.viewName = "iso";
-      this.target.set(0, 0, 0);
-      this.radius = 7.0;
       this.theta = Math.PI / 4;
       this.phi = Math.PI / 3;
-      this.updateCameraPosition();
+      this.fitToScene(); // deterministic default framing of the machining scene
       this._updateViewCube("iso");
     },
 
@@ -674,11 +702,37 @@
     onOperationClick: function (btn) {
       var op = btn.getAttribute("data-op");
       if (!op) return;
+      this.setOperation(op);
+    },
+
+    _syncOperationUi: function (op) {
       var items = document.querySelectorAll(".mp-operation-item[data-op]");
       for (var i = 0; i < items.length; i++) {
-        items[i].classList.toggle("mp-operation-item--active", items[i] === btn);
+        items[i].classList.toggle("mp-operation-item--active", items[i].getAttribute("data-op") === op);
       }
-      this.setOperation(op);
+
+      var opRows = document.querySelectorAll("[data-tree-row][data-operation]");
+      for (var j = 0; j < opRows.length; j++) {
+        opRows[j].classList.toggle("mp-tree-row--active", opRows[j].getAttribute("data-operation") === op);
+      }
+
+      var specialized = op === "honing" || op === "lapping";
+      var defaults = document.querySelectorAll("[data-default-props]");
+      for (var k = 0; k < defaults.length; k++) defaults[k].hidden = specialized;
+
+      var panels = document.querySelectorAll("[data-op-properties]");
+      for (var p = 0; p < panels.length; p++) {
+        panels[p].hidden = panels[p].getAttribute("data-op-properties") !== op;
+      }
+
+      var label = document.getElementById("mp-viewport-overlay-label");
+      if (label) {
+        var titles = {
+          honing: "HONING \u00b7 INTERNAL BORE",
+          lapping: "LAPPING \u00b7 PLANAR FINISHING"
+        };
+        label.textContent = titles[op] || op.toUpperCase();
+      }
     },
 
     setOperation: function (op) {
@@ -686,6 +740,7 @@
       this.state.activeOp = op;
       if (this.container) this.container.setAttribute("data-operation", op);
 
+      this._syncOperationUi(op);
       this._buildToolpath(op);
       this._positionToolForOp(op);
 
@@ -719,6 +774,28 @@
           z = 0.0;
           points.push(new THREE.Vector3(x, y, z));
         }
+      } else if (op === "honing") {
+        // Visualization only: reciprocating internal-bore finishing path.
+        for (i = 0; i < 8; i++) {
+          angle = i * 0.55;
+          for (t = 0; t <= 1.0001; t += 0.04) {
+            x = (i % 2 === 0) ? (-1.2 + t * 3.2) : (2.0 - t * 3.2);
+            y = Math.cos(angle + t * Math.PI * 2) * 0.38;
+            z = Math.sin(angle + t * Math.PI * 2) * 0.38;
+            points.push(new THREE.Vector3(x, y, z));
+          }
+        }
+      } else if (op === "lapping") {
+        // Visualization only: planar raster illustrating finishing coverage.
+        for (i = 0; i < 7; i++) {
+          z0 = -0.72 + i * 0.24;
+          for (t = 0; t <= 1.0001; t += 0.04) {
+            x = (i % 2 === 0) ? (-1.5 + t * 4.1) : (2.6 - t * 4.1);
+            y = 0.93;
+            z = z0;
+            points.push(new THREE.Vector3(x, y, z));
+          }
+        }
       } else {
         // Turning: helical glide path along the workpiece axis
         for (t = 0; t < 100; t++) {
@@ -742,6 +819,12 @@
         this.tool.rotation.set(Math.PI / 2, 0, 0);
       } else if (op === "drilling") {
         this.tool.position.set(0.2, 1.9, 0);
+        this.tool.rotation.set(Math.PI / 2, 0, 0);
+      } else if (op === "honing") {
+        this.tool.position.set(0.5, 0.0, 0.0);
+        this.tool.rotation.set(0, 0, Math.PI / 2);
+      } else if (op === "lapping") {
+        this.tool.position.set(0.6, 1.45, 0.0);
         this.tool.rotation.set(Math.PI / 2, 0, 0);
       } else {
         this.tool.position.set(0, 0, 0);

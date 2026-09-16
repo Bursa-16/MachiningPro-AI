@@ -164,7 +164,7 @@ body {
     "ribbon ribbon ribbon"
     "tree main props"
     "timeline timeline timeline";
-  height: 100%;
+  flex: 1 1 0;              /* UI-VISUAL-1F: fill flex cell from parent */
   width: 100%;
   background: var(--mp-ws-bg);
   overflow: hidden;
@@ -590,6 +590,41 @@ body {
   font-weight: 400;
 }
 
+.mp-op-properties[hidden] { display: none !important; }
+.mp-prop-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+.mp-authority {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.mp-authority--calculated { color: var(--mp-cyan); background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.25); }
+.mp-authority--measured { color: var(--mp-green); background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); }
+.mp-authority--empirical { color: var(--mp-amber); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); }
+.mp-authority--advisory { color: var(--mp-violet); background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.25); }
+.mp-prop-note {
+  margin-top: 4px;
+  padding: 7px 8px;
+  border: 1px solid var(--mp-ws-border);
+  border-radius: var(--mp-radius-sm);
+  background: rgba(255,255,255,0.02);
+  color: var(--mp-text-muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
 /* ── Right Panel Tabs ── */
 .mp-right-panel {
   grid-area: props;
@@ -1010,6 +1045,7 @@ body {
 .mp-ws-timeline-step--active { color: var(--mp-cyan); }
 .mp-ws-timeline-step--done { color: var(--mp-green); }
 
+/* ==========================================================================
    3. APPLICATION SHELL
    ========================================================================= */
 .mp-shell {
@@ -1115,9 +1151,10 @@ body {
 .mp-content--workstation {
   max-width: none;
   padding: 0;
-  flex: 1;
+  display: flex;           /* UI-VISUAL-1F: flex container for .mp-workstation */
+  flex-direction: column;
+  flex: 1 1 0;
   overflow: hidden;
-  height: 100%;
   min-height: 0;
   box-sizing: border-box;
 }

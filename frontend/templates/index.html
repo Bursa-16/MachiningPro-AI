@@ -13,8 +13,8 @@
     <div class="mp-context-item"><span class="mp-context-label">PART</span><span class="mp-context-value mp-context-value--muted">—</span></div>
     <div class="mp-context-item"><span class="mp-context-label">MATERIAL</span><span class="mp-context-value mp-context-value--muted">Awaiting analysis</span></div>
     <div class="mp-context-item"><span class="mp-context-label">MACHINE</span><span class="mp-context-value mp-context-value--muted">—</span></div>
-    <div class="mp-context-item"><span class="mp-context-label">SETUP</span><span class="mp-context-value mp-context-value--cyan">Turning Op.1</span></div>
-    <div class="mp-context-item"><span class="mp-context-label">OPERATION</span><span class="mp-context-value mp-context-value--cyan">Rough Turning</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">SETUP</span><span class="mp-context-value mp-context-value--cyan" id="mp-ctx-setup">Turning Op.1</span></div>
+    <div class="mp-context-item"><span class="mp-context-label">OPERATION</span><span class="mp-context-value mp-context-value--cyan" id="mp-ctx-operation">Rough Turning</span></div>
     <div class="mp-context-item mp-context-item--right">
       <span class="mp-context-label">STATUS</span>
       <span class="mp-badge mp-badge--unavail">Awaiting analysis</span>
@@ -83,13 +83,21 @@
         <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1 L12 8 L8 15 L4 8 Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
         Drilling
       </a>
-      <a href="#" class="mp-operation-item">
+      <a href="#" class="mp-operation-item" data-op="threading">
         <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 8 Q5 3 8 8 T13 8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
         Threading
       </a>
-      <a href="#" class="mp-operation-item">
+      <a href="#" class="mp-operation-item" data-op="hole-finishing">
         <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1"/></svg>
         Hole Finishing
+      </a>
+      <a href="#" class="mp-operation-item" data-op="honing">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" stroke-width="1"/><line x1="4" y1="12" x2="12" y2="4" stroke="currentColor" stroke-width="1"/></svg>
+        Honing
+      </a>
+      <a href="#" class="mp-operation-item" data-op="lapping">
+        <svg class="mp-op-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="6" width="12" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="8" r="0.7"/><circle cx="8" cy="8" r="0.7"/><circle cx="11" cy="8" r="0.7"/></svg>
+        Lapping
       </a>
       <a href="#" class="mp-operation-item mp-operation-item--planned">CAM <span class="mp-badge-planned">Planned</span></a>
       <a href="#" class="mp-operation-item mp-operation-item--planned">Validation <span class="mp-badge-planned">Planned</span></a>
@@ -107,7 +115,7 @@
       <div class="mp-tree-node" data-node="project">
         <div class="mp-tree-row" data-tree-row data-target="project">
           <span class="mp-tree-expand mp-tree-expand--open">▶</span>
-          <span class="mp-tree-icon">📁</span>
+            <span class="mp-tree-icon">📁</span>
           <span class="mp-tree-label">Project</span>
         </div>
         <div class="mp-tree-children mp-tree-children--open">
@@ -149,6 +157,29 @@
                   </div>
                 </div>
               </div>
+              <div class="mp-tree-node" data-node="operations">
+                <div class="mp-tree-row mp-tree-depth-2" data-tree-row data-target="operations">
+                  <span class="mp-tree-expand mp-tree-expand--open">▶</span>
+                  <span class="mp-tree-icon">⌘</span>
+                  <span class="mp-tree-label">Operations</span>
+                </div>
+                <div class="mp-tree-children mp-tree-children--open">
+                  <div class="mp-tree-node" data-node="operation-honing">
+                    <div class="mp-tree-row mp-tree-depth-3" data-tree-row data-operation="honing">
+                      <span class="mp-tree-expand">▶</span>
+            <span class="mp-tree-icon">◎</span>
+                      <span class="mp-tree-label">Honing</span>
+                    </div>
+                  </div>
+                  <div class="mp-tree-node" data-node="operation-lapping">
+                    <div class="mp-tree-row mp-tree-depth-3" data-tree-row data-operation="lapping">
+                      <span class="mp-tree-expand">▶</span>
+                      <span class="mp-tree-icon">▰</span>
+                      <span class="mp-tree-label">Lapping</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -160,7 +191,7 @@
     <section class="mp-engineering-viewport" aria-label="Engineering Viewport">
       <div class="mp-viewport-grid"></div>
       <div class="mp-viewport-overlay">
-        <span class="mp-viewport-label">TURNING &#183; LONGITUDINAL</span>
+        <span class="mp-viewport-label" id="mp-viewport-overlay-label">TURNING &#183; LONGITUDINAL</span>
       </div>
 
       <!-- Interactive 3D Viewport (UI-VISUAL-1E) -->
@@ -254,7 +285,7 @@
 
       <!-- Properties Tab -->
       <div class="mp-tab-content mp-tab-content--active" data-tab-panel="properties">
-        <div class="mp-prop-section">
+        <div class="mp-prop-section" data-default-props>
           <div class="mp-prop-header">OPERATION</div>
           <div class="mp-prop-body">
             <div class="mp-prop-row"><span class="mp-prop-key">Type</span><span class="mp-prop-val mp-prop-val--cyan">Turning</span></div>
@@ -262,7 +293,7 @@
             <div class="mp-prop-row"><span class="mp-prop-key">Cycle</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
           </div>
         </div>
-        <div class="mp-prop-section">
+        <div class="mp-prop-section" data-default-props>
           <div class="mp-prop-header">TOOL</div>
           <div class="mp-prop-body">
             <div class="mp-prop-row"><span class="mp-prop-key">Insert</span><span class="mp-prop-val">CNMG 120408</span></div>
@@ -270,7 +301,7 @@
             <div class="mp-prop-row"><span class="mp-prop-key">Edge</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
           </div>
         </div>
-        <div class="mp-prop-section">
+        <div class="mp-prop-section" data-default-props>
           <div class="mp-prop-header">CUTTING DATA</div>
           <div class="mp-prop-body">
             <div class="mp-prop-row"><span class="mp-prop-key">Vc</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
@@ -280,13 +311,137 @@
             <div class="mp-prop-row"><span class="mp-prop-key">Vf</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
           </div>
         </div>
-        <div class="mp-prop-section">
+        <div class="mp-prop-section" data-default-props>
           <div class="mp-prop-header">VALIDATION</div>
           <div class="mp-prop-body">
             <div class="mp-prop-row"><span class="mp-prop-key">Status</span><span class="mp-prop-val mp-prop-val--muted">Awaiting analysis</span></div>
             <div class="mp-prop-row"><span class="mp-prop-key">Forces</span><span class="mp-prop-val mp-prop-val--muted">—</span></div>
           </div>
         </div>
+        <div class="mp-op-properties" data-op-properties="honing" hidden>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">HONING · PROCESS</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Operation</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--cyan">Honing</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Subtype</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Internal bore</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">WORKPIECE</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Material</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Hardness</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Bore diameter</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Bore length</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Initial diameter</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Final diameter</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">CALCULATED VALUES</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Diametral stock</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Awaiting backend</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Radial stock</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Awaiting backend</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Spindle RPM</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Peripheral speed</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Stroke speed</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Resultant speed</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Crosshatch included angle</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">TOOL / PROCESS</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Abrasive</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Grit / stone spec</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Honing stone</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Fluid / lubricant</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">SURFACE / QUALITY</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Ra / Rz</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Rk / Rpk / Rvk</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Mr1 / Mr2</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-note"><span class="mp-authority mp-authority--empirical">EMPIRICAL</span> Overtravel is manufacturer/process dependent; no universal deterministic value is shown.</div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">VALIDATION / PROVENANCE</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Status</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--amber">Awaiting backend analysis</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Authority</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Deterministic backend</span></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mp-op-properties" data-op-properties="lapping" hidden>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">LAPPING · PROCESS</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Operation</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--cyan">Lapping</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Subtype</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Planar finishing</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">WORKPIECE</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Material</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Surface area</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Initial thickness</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Target thickness</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Removed thickness</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Awaiting backend</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">QUALITY TARGETS</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Flatness</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Parallelism</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Surface roughness</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">PLATE / ABRASIVE</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Lapping plate</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Abrasive</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Particle size</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Slurry / compound</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--advisory">ADVISORY</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">PROCESS VALUES</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Applied force</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Contact pressure</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Awaiting backend</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Plate speed</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Relative speed</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Cycle time</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Removed volume</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Awaiting backend</span><span class="mp-authority mp-authority--calculated">CALCULATED</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Measured MRR</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">—</span><span class="mp-authority mp-authority--measured">MEASURED</span></span></div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">PRESTON MODEL</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Classification</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--amber">EMPIRICAL</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Coefficient K</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--amber">Unavailable</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Provenance</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Not verified</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Estimated MRR</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Insufficient data</span></span></div>
+              <div class="mp-prop-note">No default Preston coefficient is supplied by the UI. Empirical estimation remains unavailable until a provenance-backed coefficient is provided by the engineering backend.</div>
+            </div>
+          </div>
+          <div class="mp-prop-section">
+            <div class="mp-prop-header">VALIDATION / PROVENANCE</div>
+            <div class="mp-prop-body">
+              <div class="mp-prop-row"><span class="mp-prop-key">Status</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--amber">Awaiting backend analysis</span></span></div>
+              <div class="mp-prop-row"><span class="mp-prop-key">Authority</span><span class="mp-prop-meta"><span class="mp-prop-val mp-prop-val--muted">Deterministic backend</span></span></div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- AI Assistant Tab -->
