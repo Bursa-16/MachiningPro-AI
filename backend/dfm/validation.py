@@ -486,6 +486,13 @@ _PROCESS_FEATURE_COMPAT: dict[OperationType, frozenset[FeatureType]] = {
     OperationType.GRINDING: frozenset({
         FeatureType.CYLINDRICAL_SURFACE, FeatureType.PLANAR_FACE,
     }),
+    OperationType.HONING: frozenset({
+        FeatureType.HOLE,
+        FeatureType.CYLINDRICAL_SURFACE,
+    }),
+    OperationType.LAPPING: frozenset({
+        FeatureType.PLANAR_FACE,
+    }),
 }
 
 

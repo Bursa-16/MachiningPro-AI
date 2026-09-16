@@ -56,6 +56,8 @@ class OperationType(StrEnum):
     REAMING = "reaming"
     TAPPING = "tapping"
     THREADING = "threading"
+    HONING = "honing"      # Stage 3K — bore-wall honing
+    LAPPING = "lapping"    # Stage 3L — flat/cylindrical lapping
     GRINDING = "grinding"
     DEBURRING = "deburring"
     INSPECTION = "inspection"
