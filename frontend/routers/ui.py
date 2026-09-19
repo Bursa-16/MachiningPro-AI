@@ -34,52 +34,13 @@ router = APIRouter(tags=["ui"])
 NAV_ITEMS: list[dict[str, str]] = [
     {"label": "Dashboard", "href": "/ui/", "icon": "home", "badge": ""},
     {"label": "CAD Import", "href": "/ui/cad-import", "icon": "upload", "badge": ""},
-    {"label": "Geometry / Topology", "href": "/ui/geometry", "icon": "box", "badge": ""},
-    {"label": "Machining", "href": "/ui/machining", "icon": "settings", "badge": ""},
-    {"label": "Tools & Parameters", "href": "/ui/tools", "icon": "wrench", "badge": ""},
+    {"label": "Geometry / Topology", "href": "/ui/geometry", "icon": "box", "badge": "PLANNED"},
+    {"label": "Machining", "href": "/ui/machining", "icon": "settings", "badge": "PLANNED"},
+    {"label": "Tools & Parameters", "href": "/ui/tools", "icon": "wrench", "badge": "PLANNED"},
     {"label": "Materials", "href": "/ui/materials", "icon": "layers", "badge": "PLANNED"},
-    {"label": "Validation", "href": "/ui/validation", "icon": "shield-check", "badge": ""},
+    {"label": "Validation", "href": "/ui/validation", "icon": "shield-check", "badge": "PLANNED"},
     {"label": "AI Assistant", "href": "/ui/ai-assistant", "icon": "sparkles", "badge": "PLANNED"},
 ]
-
-# -- Dashboard capability cards --------------------------------------------
-
-DASHBOARD_CARDS: list[dict[str, str]] = [
-    {
-        "title": "CAD Interoperability",
-        "description": "STEP · DXF · IGES import with canonical geometry and topology extraction.",
-        "status": "READY",
-        "stage": "Stage 4A–4F",
-    },
-    {
-        "title": "Machining Engineering",
-        "description": (
-            "Turning · Drilling · Milling · Threading · Hole Finishing "
-            "with deterministic formulas and engineering rules."
-        ),
-        "status": "READY",
-        "stage": "Stage 3",
-    },
-    {
-        "title": "DFM Validation",
-        "description": (
-            "Design-for-manufacturability checks: hole-tool diameter, corner radius, "
-            "slot width, pocket access, depth/diameter ratio."
-        ),
-        "status": "READY",
-        "stage": "Stage 3",
-    },
-    {
-        "title": "Process Planning",
-        "description": (
-            "Deterministic plan builder with acyclicity validation, "
-            "predecessor checks, and aggregate status."
-        ),
-        "status": "READY",
-        "stage": "Stage 3J",
-    },
-]
-
 
 def _context(*, active_href: str, **extra: object) -> dict[str, object]:
     """Build the standard template context (without request)."""
@@ -127,7 +88,7 @@ async def dashboard(request: Request) -> HTMLResponse:
     return _render(
         request,
         "index.html",
-        _context(active_href="/ui/", cards=DASHBOARD_CARDS),
+        _context(active_href="/ui/"),
     )
 
 
@@ -278,3 +239,42 @@ async def cad_import_post(request: Request, file: UploadFile | None = None) -> H
     return _render(request, "cad_import.html", _context(
         **ctx_base, result=display, error=None,
     ))
+
+
+def _planned(request: Request, href: str, page_label: str) -> HTMLResponse:
+    """Render a deliberate placeholder for an upcoming engineering module."""
+    return _render(
+        request,
+        "planned.html",
+        _context(active_href=href, page_label=page_label),
+    )
+
+
+@router.get("/ui/geometry", response_class=HTMLResponse)
+async def geometry(request: Request) -> HTMLResponse:
+    return _planned(request, "/ui/geometry", "Geometry / Topology")
+
+
+@router.get("/ui/machining", response_class=HTMLResponse)
+async def machining(request: Request) -> HTMLResponse:
+    return _planned(request, "/ui/machining", "Machining")
+
+
+@router.get("/ui/tools", response_class=HTMLResponse)
+async def tools(request: Request) -> HTMLResponse:
+    return _planned(request, "/ui/tools", "Tools & Parameters")
+
+
+@router.get("/ui/materials", response_class=HTMLResponse)
+async def materials(request: Request) -> HTMLResponse:
+    return _planned(request, "/ui/materials", "Materials")
+
+
+@router.get("/ui/validation", response_class=HTMLResponse)
+async def validation(request: Request) -> HTMLResponse:
+    return _planned(request, "/ui/validation", "Validation")
+
+
+@router.get("/ui/ai-assistant", response_class=HTMLResponse)
+async def ai_assistant(request: Request) -> HTMLResponse:
+    return _planned(request, "/ui/ai-assistant", "AI Assistant")

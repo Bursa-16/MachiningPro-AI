@@ -95,15 +95,17 @@ class TestUIRoutes:
         ]:
             assert label in html, f"Missing nav item: {label}"
 
-    def test_dashboard_contains_capability_cards(self, client: TestClient) -> None:
+    def test_dashboard_modules_are_in_sidebar(self, client: TestClient) -> None:
         html = client.get("/ui/").text
-        for card_title in [
-            "CAD Interoperability",
-            "Machining Engineering",
-            "DFM Validation",
-            "Process Planning",
+        for module_label in [
+            "CAD Import",
+            "Geometry / Topology",
+            "Machining",
+            "Validation",
         ]:
-            assert card_title in html, f"Missing card: {card_title}"
+            assert module_label in html, f"Missing sidebar module: {module_label}"
+        assert "mp-action-cards" not in html
+        assert "Engineering Modules" not in html
 
     def test_planned_badges_visible(self, client: TestClient) -> None:
         html = client.get("/ui/").text

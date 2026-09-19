@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_label }} — Planned — MachineryPro AI{% endblock %}
+
+{% block content %}
+<section class="mp-planned-page" aria-labelledby="planned-title">
+  <span class="mp-badge-planned">PLANNED</span>
+  <h1 id="planned-title">{{ page_label }}</h1>
+  <p>This engineering module is planned and is not implemented yet.</p>
+  <div>
+    <a class="mp-btn mp-btn--primary" href="/ui/">Return to Workstation</a>
+    <a class="mp-btn" href="/ui/cad-import">CAD Import</a>
+  </div>
+</section>
+{% endblock %}

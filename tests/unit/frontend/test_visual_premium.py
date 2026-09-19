@@ -116,8 +116,8 @@ class TestWorkspacePremium:
     def test_status_pulse(self, css: str) -> None:
         assert "mp-pulse" in css
 
-    def test_accent_border(self, dashboard: str) -> None:
-        assert "mp-accent-top" in dashboard or "mp-cap-card" in dashboard
+    def test_active_operation_accent(self, dashboard: str) -> None:
+        assert "mp-operation-item--active" in dashboard
 
 
 class TestCSSComponents:
