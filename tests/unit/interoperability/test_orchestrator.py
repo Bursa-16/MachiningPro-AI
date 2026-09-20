@@ -15,6 +15,8 @@ Covers:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from backend.domain.exceptions import ValidationError
@@ -805,6 +807,69 @@ class TestCustomRegistry:
 
         assert step_result.status is not ImportStatus.UNSUPPORTED
         assert dxf_result.status is ImportStatus.UNSUPPORTED
+
+
+class TestStagedFileOrchestration:
+    def test_header_bytes_and_exact_path_reach_file_adapter(self, tmp_path: Path) -> None:
+        from backend.interoperability.adapters.step import StepTokenAdapter
+        from backend.interoperability.registry import AdapterRegistry
+
+        class RecordingStepAdapter(StepTokenAdapter):
+            received_path: Path | None = None
+
+            def ingest_file(self, source, format_descriptor, content_path):  # type: ignore[override]
+                self.received_path = content_path
+                return super().ingest_file(source, format_descriptor, content_path)
+
+        path = tmp_path / "complete.step"
+        path.write_text(_STEP_AP242, encoding="utf-8")
+        adapter = RecordingStepAdapter()
+        registry = AdapterRegistry()
+        registry.register(adapter)
+        source = EngineeringSource(
+            source_id="SRC-STAGED",
+            file_name="complete.step",
+            notes=None,
+        )
+
+        result = CadImportOrchestrator(registry=registry).import_source(
+            source,
+            content_path=path,
+            header_bytes=_STEP_AP242.encode("utf-8")[:512],
+        )
+
+        assert adapter.received_path == path
+        assert result.document is not None
+        assert result.document.source.notes is None
+        assert result.diagnostics.format_detection.detection_method == "content_magic_bytes"
+
+    def test_staged_adapter_exception_is_sanitized(self, tmp_path: Path) -> None:
+        from backend.interoperability.adapters.step import StepTokenAdapter
+        from backend.interoperability.registry import AdapterRegistry
+
+        marker = "RAW_MARKER_AFTER_512"
+
+        class RaisingStepAdapter(StepTokenAdapter):
+            def ingest_file(self, source, format_descriptor, content_path):  # type: ignore[override]
+                raise RuntimeError(f"{marker}:{content_path}")
+
+        path = tmp_path / "secret.step"
+        path.write_text(_STEP_AP242 + marker, encoding="utf-8")
+        registry = AdapterRegistry()
+        registry.register(RaisingStepAdapter())
+        source = EngineeringSource(source_id="SRC-RAISE", file_name="secret.step")
+
+        result = CadImportOrchestrator(registry=registry).import_source(
+            source,
+            content_path=path,
+            header_bytes=_STEP_AP242.encode("utf-8")[:512],
+        )
+
+        serialized = repr(result.as_dict())
+        assert result.status is ImportStatus.FAILED
+        assert result.error_message == "Adapter execution failed"
+        assert marker not in serialized
+        assert str(path) not in serialized
 
 
 # Monkey-patch helper for OCCT detection test

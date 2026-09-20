@@ -55,6 +55,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 
 from backend.domain.base import (
     Provenance,
@@ -82,13 +83,13 @@ from backend.interoperability.models import (
 from backend.interoperability.registry import AdapterRegistry
 
 __all__ = [
-    "ImportStatus",
-    "FormatDetectionResult",
+    "CadImportOrchestrator",
     "CapabilityRecord",
+    "FormatDetectionResult",
     "ImportDiagnostics",
     "ImportProvenance",
     "ImportResult",
-    "CadImportOrchestrator",
+    "ImportStatus",
     "detect_format",
 ]
 
@@ -386,7 +387,10 @@ class ImportResult:
 # Format detection helper
 # ---------------------------------------------------------------------------
 
-def detect_format(source: EngineeringSource) -> FormatDetectionResult:
+def detect_format(
+    source: EngineeringSource,
+    header_bytes: bytes | None = None,
+) -> FormatDetectionResult:
     """Attempt to identify the format of an engineering source.
 
     Uses content sniffing (via source.notes) and file-extension hints.
@@ -398,9 +402,12 @@ def detect_format(source: EngineeringSource) -> FormatDetectionResult:
     Returns:
         FormatDetectionResult with detected_format_id and confidence.
     """
-    # Content-based detection (high confidence)
-    if source.notes:
-        content_bytes = source.notes.encode("utf-8", errors="replace")[:512]
+    # Content-based detection (high confidence).  The explicit sample keeps
+    # upload bytes out of EngineeringSource; notes remains a compatibility path.
+    content_bytes = header_bytes
+    if content_bytes is None and source.notes:
+        content_bytes = source.notes.encode("utf-8", errors="replace")
+    if content_bytes:
         sniffed = ContentSniffer.sniff(content_bytes)
         if sniffed:
             return FormatDetectionResult(
@@ -513,6 +520,8 @@ class CadImportOrchestrator:
         *,
         adapter_id: str | None = None,
         requested_level: CapabilityLevel | None = None,
+        content_path: Path | None = None,
+        header_bytes: bytes | None = None,
     ) -> ImportResult:
         """Orchestrate a full CAD import pipeline for *source*.
 
@@ -542,7 +551,7 @@ class CadImportOrchestrator:
             ImportResult — always.
         """
         # --- Step 1: format detection ---
-        detection = detect_format(source)
+        detection = detect_format(source, header_bytes=header_bytes)
 
         # --- Step 2: resolve format descriptor ---
         resolved_descriptor = format_descriptor or self._resolve_descriptor(
@@ -571,7 +580,8 @@ class CadImportOrchestrator:
 
         if selected_adapter is None:
             return self._build_unsupported_result(
-                source, detection, candidate_ids, format_id_to_query, requested_level
+                source, detection, candidate_ids, format_id_to_query, requested_level,
+                selection_reason=selection_reason,
             )
 
         # --- Step 5: execute adapter ---
@@ -579,13 +589,41 @@ class CadImportOrchestrator:
             format_id_to_query or selected_adapter.metadata().format_ids[0]
         )
 
+        # Confirm the selected adapter can handle this specific source.
+        # can_handle() must be called after format resolution so the adapter
+        # receives the confirmed descriptor.  An exception from can_handle is
+        # deterministically recorded — it never propagates to the caller.
         try:
-            document = selected_adapter.ingest(source, actual_descriptor)
-        except Exception as exc:  # noqa: BLE001
+            if not selected_adapter.can_handle(source, actual_descriptor):
+                return self._build_unsupported_result(
+                    source, detection, candidate_ids, format_id_to_query,
+                    requested_level,
+                    selection_reason=(
+                        f"can_handle_rejected:{selected_adapter.metadata().adapter_id}"
+                    ),
+                )
+        except Exception as can_exc:  # noqa: BLE001
+            return self._build_unsupported_result(
+                source, detection, candidate_ids, format_id_to_query,
+                requested_level,
+                selection_reason=(
+                    f"can_handle_raised:{selected_adapter.metadata().adapter_id}"
+                    f":{can_exc}"
+                ),
+            )
+
+        try:
+            if content_path is None:
+                document = selected_adapter.ingest(source, actual_descriptor)
+            else:
+                document = selected_adapter.ingest_file(
+                    source, actual_descriptor, content_path
+                )
+        except Exception:  # noqa: BLE001
             return self._build_error_result(
                 source, detection, candidate_ids,
                 selected_adapter, actual_descriptor, requested_level,
-                error=str(exc),
+                error="Adapter execution failed",
             )
 
         # --- Step 6: build result ---
@@ -660,12 +698,14 @@ class CadImportOrchestrator:
         candidate_ids: tuple[str, ...],
         format_id: str,
         requested_level: CapabilityLevel | None,
+        *,
+        selection_reason: str = "no_matching_adapter",
     ) -> ImportResult:
         diag = ImportDiagnostics(
             format_detection=detection,
             adapter_candidates=candidate_ids,
             selected_adapter_id=None,
-            selection_reason="no_matching_adapter",
+            selection_reason=selection_reason,
             fidelity_adverse_count=0,
             has_unsupported_content=True,
             has_loss=False,
@@ -798,14 +838,22 @@ class CadImportOrchestrator:
             document.normalization_status,
         )
 
-        # Determine import status
-        if document.normalization_status is NormalizationStatus.FAILED:
+        # Determine import status.
+        # Priority: FAILED > INSUFFICIENT_DATA > UNSUPPORTED > PARTIAL > DEGRADED > SUCCESS
+        norm_status = document.normalization_status
+        if norm_status is NormalizationStatus.FAILED:
             status = ImportStatus.FAILED
+        elif norm_status is NormalizationStatus.INSUFFICIENT_DATA:
+            # Adapter could not extract required metadata — treat as FAILED
+            status = ImportStatus.FAILED
+        elif norm_status is NormalizationStatus.UNSUPPORTED:
+            # Format recognized but not supported at this capability level
+            status = ImportStatus.UNSUPPORTED
         elif has_loss:
             status = ImportStatus.PARTIAL
         elif was_degraded or has_unsup:
             status = ImportStatus.DEGRADED
-        elif document.normalization_status is NormalizationStatus.PARTIAL:
+        elif norm_status is NormalizationStatus.PARTIAL:
             status = ImportStatus.PARTIAL
         else:
             status = ImportStatus.SUCCESS

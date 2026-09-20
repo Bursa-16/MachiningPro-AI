@@ -6,6 +6,8 @@ propagation.  No real file I/O occurs — all adapters are synthetic stubs.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from backend.interoperability.adapter import FormatAdapter
@@ -153,6 +155,14 @@ class TestFormatAdapterABC:
         adapter = _StubAdapter()
         doc = adapter.ingest(_source(), _descriptor())
         assert doc.fidelity_report is not None
+
+    def test_ingest_file_is_fail_closed_by_default(self, tmp_path: Path) -> None:
+        adapter = _StubAdapter()
+        path = tmp_path / "part.stub"
+        path.write_text("complete staged content", encoding="utf-8")
+
+        with pytest.raises(NotImplementedError, match="staged file ingestion"):
+            adapter.ingest_file(_source(), _descriptor(), path)
 
 
 # ---------------------------------------------------------------------------

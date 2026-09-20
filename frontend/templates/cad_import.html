@@ -84,6 +84,7 @@
         <div class="mp-props__row"><span class="mp-props__key">Detected Format</span><span class="mp-props__value">{{ result.detected_format }}</span></div>
         <div class="mp-props__row"><span class="mp-props__key">Confidence</span><span class="mp-props__value">{{ result.detection_confidence }}</span></div>
         <div class="mp-props__row"><span class="mp-props__key">Method</span><span class="mp-props__value">{{ result.detection_method }}</span></div>
+        <div class="mp-props__row"><span class="mp-props__key">SHA-256</span><span class="mp-props__value">{{ result.sha256 }}</span></div>
       </div>
     </div>
     <div class="mp-card">
@@ -91,6 +92,7 @@
       <div class="mp-props">
         <div class="mp-props__row"><span class="mp-props__key">Level</span><span class="mp-props__value">{{ result.capability_level }}</span></div>
         <div class="mp-props__row"><span class="mp-props__key">Normalization</span><span class="mp-props__value">{{ result.normalization_status }}</span></div>
+        <div class="mp-props__row"><span class="mp-props__key">Parse Status</span><span class="mp-props__value">{{ result.parse_status }}</span></div>
         <div class="mp-props__row"><span class="mp-props__key">Degraded</span><span class="mp-props__value">{{ "Yes" if result.was_degraded else "No" }}</span></div>
       </div>
     </div>
@@ -100,6 +102,8 @@
         <div class="mp-props__row"><span class="mp-props__key">Kind</span><span class="mp-props__value">{{ result.canonical_kind }}</span></div>
         <div class="mp-props__row"><span class="mp-props__key">Entity Refs</span><span class="mp-props__value">{{ result.entity_ref_count }}</span></div>
         <div class="mp-props__row"><span class="mp-props__key">Schema</span><span class="mp-props__value">{{ result.schema_version }}</span></div>
+        <div class="mp-props__row"><span class="mp-props__key">Geometry</span><span class="mp-props__value">{{ result.geometry_summary or "Unavailable" }}</span></div>
+        <div class="mp-props__row"><span class="mp-props__key">Topology</span><span class="mp-props__value">{{ result.topology_summary or "Unavailable" }}</span></div>
       </div>
     </div>
   </div>
@@ -113,6 +117,7 @@
           <div class="mp-card__section-label" style="margin-bottom:var(--mp-sp-3)">Adapter</div>
           <div class="mp-props">
             <div class="mp-props__row"><span class="mp-props__key">Selected</span><span class="mp-props__value">{{ result.adapter_id }}</span></div>
+            <div class="mp-props__row"><span class="mp-props__key">Adapter Status</span><span class="mp-props__value">{{ result.adapter_status }}</span></div>
             <div class="mp-props__row"><span class="mp-props__key">Candidates</span><span class="mp-props__value">{{ result.adapter_candidates }}</span></div>
             <div class="mp-props__row"><span class="mp-props__key">Selection</span><span class="mp-props__value">{{ result.selection_reason }}</span></div>
           </div>
@@ -143,6 +148,16 @@
           <li style="padding:2px 0">· {{ note }}</li>
           {% endfor %}
         </ul>
+      </div>
+      {% endif %}
+      {% if result.diagnostics %}
+      <div class="mp-card" style="margin-top:var(--mp-sp-4)">
+        <div class="mp-card__section-label" style="margin-bottom:var(--mp-sp-2)">Safe Diagnostics</div>
+        <div class="mp-props">
+          {% for key, value in result.diagnostics.items() %}
+          <div class="mp-props__row"><span class="mp-props__key">{{ key }}</span><span class="mp-props__value">{{ value }}</span></div>
+          {% endfor %}
+        </div>
       </div>
       {% endif %}
     </div>

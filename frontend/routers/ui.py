@@ -10,13 +10,16 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Request, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
+from backend.interoperability.enums import CapabilityLevel
 from backend.interoperability.models import EngineeringSource
 from backend.interoperability.orchestrator import (
     CadImportOrchestrator,
     ImportResult,
+    ImportStatus,
 )
+from frontend.cad_upload import StagedCadUpload, UploadRejected, stage_cad_upload
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +162,110 @@ def _result_to_display(result: ImportResult) -> dict[str, object]:
     return display
 
 
+def _adapter_status(result: ImportResult) -> str:
+    """Report adapter availability independently from parse outcome."""
+    if result.diagnostics.selected_adapter_id is None:
+        return "UNAVAILABLE"
+    if result.status is ImportStatus.FAILED:
+        return "LIVE"
+    levels = list(CapabilityLevel)
+    below_geometry = levels.index(result.capability.achieved_level) < levels.index(
+        CapabilityLevel.LEVEL_2_NORMALIZED
+    )
+    if (
+        below_geometry
+        or result.capability.was_degraded
+        or result.diagnostics.has_unsupported_content
+    ):
+        return "CONDITIONAL"
+    return "LIVE"
+
+
+def _entity_summaries(
+    result: ImportResult,
+) -> tuple[dict[str, object] | None, dict[str, object] | None]:
+    if result.document is None:
+        return None, None
+    kinds = tuple(ref.entity_kind for ref in result.document.entity_refs)
+    geometry = tuple(
+        kind for kind in kinds
+        if kind == "OCCTShape" or kind.startswith("DxfEntity_")
+    )
+    topology = tuple(
+        kind for kind in kinds
+        if any(token in kind for token in ("Topology", "Shell", "Solid", "Body"))
+    )
+    geometry_summary = (
+        {"entity_count": len(geometry), "entity_kinds": sorted(set(geometry))}
+        if geometry else None
+    )
+    topology_summary = (
+        {"entity_count": len(topology), "entity_kinds": sorted(set(topology))}
+        if topology else None
+    )
+    return geometry_summary, topology_summary
+
+
+def _result_to_safe_summary(
+    result: ImportResult,
+    staged: StagedCadUpload,
+) -> dict[str, object]:
+    """Build an allowlisted summary without recursively serializing domain data."""
+    display = _result_to_display(result)
+    geometry_summary, topology_summary = _entity_summaries(result)
+    diagnostics = {
+        "detection_confidence": result.diagnostics.format_detection.detection_confidence,
+        "detection_method": result.diagnostics.format_detection.detection_method,
+        "adapter_candidates": list(result.diagnostics.adapter_candidates),
+        "selected_adapter_id": result.diagnostics.selected_adapter_id,
+        "selection_reason": result.diagnostics.selection_reason,
+        "fidelity_adverse_count": result.diagnostics.fidelity_adverse_count,
+        "has_unsupported_content": result.diagnostics.has_unsupported_content,
+        "has_loss": result.diagnostics.has_loss,
+    }
+    display.update({
+        "filename": staged.filename,
+        "detected_format": staged.detected_format,
+        "file_size": staged.file_size,
+        "sha256": staged.sha256,
+        "adapter_status": _adapter_status(result),
+        "parse_status": result.status.value,
+        "diagnostics": diagnostics,
+        "geometry_summary": geometry_summary,
+        "topology_summary": topology_summary,
+    })
+    return display
+
+
+async def _execute_cad_import(file: UploadFile) -> dict[str, object]:
+    async with stage_cad_upload(file) as staged:
+        source = EngineeringSource(
+            source_id=f"upload::{staged.filename}",
+            file_name=staged.filename,
+            media_type=staged.content_type,
+            checksum=f"sha256:{staged.sha256}",
+        )
+        result = CadImportOrchestrator().import_source(
+            source,
+            content_path=staged.path,
+            header_bytes=staged.header_bytes,
+        )
+        return _result_to_safe_summary(result, staged)
+
+
+_API_RESULT_FIELDS = (
+    "filename",
+    "detected_format",
+    "file_size",
+    "sha256",
+    "adapter_status",
+    "parse_status",
+    "diagnostics",
+    "geometry_summary",
+    "topology_summary",
+)
+
+
 @router.get("/ui/cad-import", response_class=HTMLResponse)
 async def cad_import_get(request: Request) -> HTMLResponse:
     """CAD Import upload form."""
@@ -181,64 +288,66 @@ async def cad_import_post(request: Request, file: UploadFile | None = None) -> H
                 "accepted_extensions": ", ".join(sorted(ACCEPTED_EXTENSIONS))}
 
     # --- Validate upload presence ---
-    if file is None or file.filename is None or file.filename.strip() == "":
+    if file is None:
         return _render(request, "cad_import.html", _context(
             **ctx_base, result=None, error="No file was uploaded.",
         ))
 
-    filename = file.filename.strip()
-    ext = _extension_of(filename)
-
-    # --- Validate extension ---
-    if ext not in ACCEPTED_EXTENSIONS:
-        return _render(request, "cad_import.html", _context(
-            **ctx_base, result=None,
-            error=f"Unsupported file extension: '{ext}'. Accepted: {', '.join(sorted(ACCEPTED_EXTENSIONS))}",  # noqa: E501
-        ))
-
-    # --- Read file content (in memory — no permanent storage) ---
     try:
-        content_bytes = await file.read()
-    except Exception:
-        logger.exception("Failed to read uploaded file")
-        return _render(request, "cad_import.html", _context(
-            **ctx_base, result=None, error="Failed to read the uploaded file.",
+        display = await _execute_cad_import(file)
+    except UploadRejected as exc:
+        response = _render(request, "cad_import.html", _context(
+            **ctx_base, result=None, error=exc.safe_message,
         ))
-
-    if len(content_bytes) == 0:
-        return _render(request, "cad_import.html", _context(
-            **ctx_base, result=None, error="The uploaded file is empty.",
-        ))
-
-    file_size = len(content_bytes)
-
-    # --- Build EngineeringSource ---
-    # Pass first 512 bytes as notes for content sniffing by detect_format().
-    header_text = content_bytes[:512].decode("utf-8", errors="replace")
-    source = EngineeringSource(
-        source_id=f"upload::{filename}",
-        file_name=filename,
-        notes=header_text,
-    )
-
-    # --- Run orchestrator ---
-    try:
-        orchestrator = CadImportOrchestrator()
-        result: ImportResult = orchestrator.import_source(source)
+        if exc.status_code == 413:
+            response.status_code = 413
+        return response
     except Exception:
-        logger.exception("CAD import orchestrator raised an unexpected exception")
+        logger.error("CAD import failed with an unexpected internal error")
         return _render(request, "cad_import.html", _context(
             **ctx_base, result=None,
             error="An internal error occurred during CAD import. No traceback is exposed.",
         ))
 
-    display = _result_to_display(result)
-    display["filename"] = filename
-    display["file_size"] = file_size
-
     return _render(request, "cad_import.html", _context(
         **ctx_base, result=display, error=None,
     ))
+
+    # --- Read file content (in memory — no permanent storage) ---
+@router.post("/api/cad-import", response_class=JSONResponse)
+async def cad_import_api(file: UploadFile | None = None) -> JSONResponse:
+    """Import CAD data and return an explicitly allowlisted JSON summary."""
+    if file is None:
+        return JSONResponse(
+            {
+                "detail": "No file was uploaded.",
+                "adapter_status": "UNAVAILABLE",
+                "parse_status": "REJECTED",
+            },
+            status_code=400,
+        )
+    try:
+        summary = await _execute_cad_import(file)
+    except UploadRejected as exc:
+        return JSONResponse(
+            {
+                "detail": exc.safe_message,
+                "adapter_status": "UNAVAILABLE",
+                "parse_status": "REJECTED",
+            },
+            status_code=exc.status_code,
+        )
+    except Exception:
+        logger.error("CAD import API failed with an unexpected internal error")
+        return JSONResponse(
+            {
+                "detail": "An internal error occurred during CAD import.",
+                "adapter_status": "UNAVAILABLE",
+                "parse_status": "FAILED",
+            },
+            status_code=500,
+        )
+    return JSONResponse({field: summary[field] for field in _API_RESULT_FIELDS})
 
 
 def _planned(request: Request, href: str, page_label: str) -> HTMLResponse:

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import logging
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -22,6 +26,18 @@ from backend.interoperability.orchestrator import (
     ImportStatus,
 )
 from frontend.app import app
+from frontend.cad_upload import MAX_CAD_UPLOAD_BYTES
+
+_STEP_UPLOAD = b"""ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('CAD upload test'),'2;1');
+FILE_SCHEMA(('AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF'));
+ENDSEC;
+DATA;
+#1=PRODUCT('Part','Part','',());
+ENDSEC;
+END-ISO-10303-21;
+"""
 
 
 @pytest.fixture()
@@ -195,7 +211,7 @@ class TestCadImportOrchestration:
             mock_cls.return_value.import_source.return_value = fake
             resp = client.post(
                 "/ui/cad-import",
-                files={"file": ("test.step", b"ISO-10303-21;", "application/octet-stream")},
+                files={"file": ("test.step", _STEP_UPLOAD, "application/octet-stream")},
             )
         assert resp.status_code == 200
         html = resp.text
@@ -211,7 +227,7 @@ class TestCadImportOrchestration:
             mock_cls.return_value.import_source.return_value = fake
             resp = client.post(
                 "/ui/cad-import",
-                files={"file": ("bad.step", b"garbage", "application/octet-stream")},
+                files={"file": ("bad.step", _STEP_UPLOAD, "application/octet-stream")},
             )
         assert resp.status_code == 200
         html = resp.text
@@ -225,7 +241,7 @@ class TestCadImportOrchestration:
             mock_cls.return_value.import_source.side_effect = RuntimeError("boom")
             resp = client.post(
                 "/ui/cad-import",
-                files={"file": ("test.step", b"data", "application/octet-stream")},
+                files={"file": ("test.step", _STEP_UPLOAD, "application/octet-stream")},
             )
         assert resp.status_code == 200
         html = resp.text
@@ -241,7 +257,7 @@ class TestCadImportOrchestration:
             mock_cls.return_value.import_source.return_value = fake
             resp = client.post(
                 "/ui/cad-import",
-                files={"file": ("test.step", b"ISO-10303-21;", "application/octet-stream")},
+                files={"file": ("test.step", _STEP_UPLOAD, "application/octet-stream")},
             )
         html = resp.text
         # All these are real fields from ImportResult
@@ -258,10 +274,254 @@ class TestCadImportOrchestration:
             mock_cls.return_value.import_source.return_value = fake
             resp = client.post(
                 "/ui/cad-import",
-                files={"file": ("test.step", b"data", "application/octet-stream")},
+                files={"file": ("test.step", _STEP_UPLOAD, "application/octet-stream")},
             )
         html = resp.text
         # Should NOT contain fabricated data
         assert "Loading" not in html
         assert "progress" not in html.lower() or "progress" in html.lower()
         assert "3D" not in html
+
+
+class TestCadImportApi:
+    def test_success_response_uses_strict_safe_allowlist(self, client: TestClient) -> None:
+        response = client.post(
+            "/api/cad-import",
+            files={"file": ("part.step", _STEP_UPLOAD, "application/octet-stream")},
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert set(payload) == {
+            "filename",
+            "detected_format",
+            "file_size",
+            "sha256",
+            "adapter_status",
+            "parse_status",
+            "diagnostics",
+            "geometry_summary",
+            "topology_summary",
+        }
+        assert payload["sha256"] == hashlib.sha256(_STEP_UPLOAD).hexdigest()
+        forbidden = {"document", "source", "notes", "content_path"}
+        assert forbidden.isdisjoint(payload)
+
+    def test_level1_step_parser_is_conditional_without_occt(
+        self, client: TestClient
+    ) -> None:
+        with patch(
+            "backend.interoperability.adapters.step.StepTokenAdapter._occt_available",
+            return_value=False,
+        ):
+            response = client.post(
+                "/api/cad-import",
+                files={"file": ("part.step", _STEP_UPLOAD, "model/step")},
+            )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["adapter_status"] == "CONDITIONAL"
+        assert payload["parse_status"] in {"DEGRADED", "PARTIAL", "SUCCESS"}
+        assert payload["geometry_summary"] is None
+        assert payload["topology_summary"] is None
+
+    def test_available_level2_result_is_live_without_fabricated_geometry(
+        self, client: TestClient
+    ) -> None:
+        fake = _fake_success_result()
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = fake
+            response = client.post(
+                "/api/cad-import",
+                files={"file": ("part.step", _STEP_UPLOAD, "application/octet-stream")},
+            )
+
+        payload = response.json()
+        assert payload["adapter_status"] == "LIVE"
+        assert payload["parse_status"] == "SUCCESS"
+        assert payload["geometry_summary"] is None
+        assert payload["topology_summary"] is None
+
+    def test_failed_parse_does_not_hide_live_adapter(self, client: TestClient) -> None:
+        fake = _fake_failed_result()
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = fake
+            response = client.post(
+                "/api/cad-import",
+                files={"file": ("bad.step", _STEP_UPLOAD, "application/octet-stream")},
+            )
+
+        payload = response.json()
+        assert payload["adapter_status"] == "LIVE"
+        assert payload["parse_status"] == "FAILED"
+
+    def test_binary_dxf_reports_unavailable_without_parser_claim(
+        self, client: TestClient
+    ) -> None:
+        response = client.post(
+            "/api/cad-import",
+            files={"file": ("binary.dxf", b"AutoCAD Binary DXF\r\n", "application/dxf")},
+        )
+
+        assert response.status_code == 415
+        payload = response.json()
+        assert payload["adapter_status"] == "UNAVAILABLE"
+        assert payload["parse_status"] == "REJECTED"
+
+    def test_html_displays_hash_and_explicit_statuses(self, client: TestClient) -> None:
+        fake = _fake_success_result()
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = fake
+            response = client.post(
+                "/ui/cad-import",
+                files={"file": ("part.step", _STEP_UPLOAD, "application/octet-stream")},
+            )
+
+        html = response.text
+        assert hashlib.sha256(_STEP_UPLOAD).hexdigest() in html
+        assert "Adapter Status" in html
+        assert "Parse Status" in html
+
+
+class TestCadImportFailClosed:
+    @pytest.mark.parametrize(
+        ("filename", "content", "content_type", "expected_status"),
+        [
+            ("empty.step", b"", "application/octet-stream", 400),
+            ("model.stl", b"solid test", "application/octet-stream", 415),
+            ("wrong.step", b"A" * 72 + b"S      1\n", "application/octet-stream", 415),
+            ("wrong.dxf", _STEP_UPLOAD, "application/octet-stream", 415),
+            ("wrong.step", _STEP_UPLOAD, "application/pdf", 415),
+            ("binary.dxf", b"AutoCAD Binary DXF\r\n", "application/dxf", 415),
+        ],
+    )
+    def test_rejected_upload_does_not_construct_orchestrator(
+        self,
+        client: TestClient,
+        filename: str,
+        content: bytes,
+        content_type: str,
+        expected_status: int,
+    ) -> None:
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            response = client.post(
+                "/api/cad-import",
+                files={"file": (filename, content, content_type)},
+            )
+
+        assert response.status_code == expected_status
+        mock_cls.assert_not_called()
+
+    def test_limit_plus_one_is_rejected_before_orchestrator(
+        self, client: TestClient
+    ) -> None:
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            response = client.post(
+                "/api/cad-import",
+                files={
+                    "file": (
+                        "oversized.step",
+                        b"x" * (MAX_CAD_UPLOAD_BYTES + 1),
+                        "application/octet-stream",
+                    )
+                },
+            )
+
+        assert response.status_code == 413
+        mock_cls.assert_not_called()
+
+    def test_rejected_and_failed_requests_clean_staged_paths(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        paths: list[Path] = []
+        original_factory = tempfile.NamedTemporaryFile
+
+        def recording_factory(*args: object, **kwargs: object):
+            handle = original_factory(*args, **kwargs)
+            paths.append(Path(handle.name))
+            return handle
+
+        monkeypatch.setattr(
+            "frontend.cad_upload.tempfile.NamedTemporaryFile", recording_factory
+        )
+
+        fake = _fake_success_result()
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = fake
+            assert client.post(
+                "/api/cad-import",
+                files={"file": ("ok.step", _STEP_UPLOAD, "application/octet-stream")},
+            ).status_code == 200
+
+        assert client.post(
+            "/api/cad-import",
+            files={"file": ("bad.stl", b"solid", "application/octet-stream")},
+        ).status_code == 415
+
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = _fake_failed_result()
+            assert client.post(
+                "/api/cad-import",
+                files={"file": ("failed.step", _STEP_UPLOAD, "application/octet-stream")},
+            ).status_code == 200
+
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.side_effect = RuntimeError("secret")
+            assert client.post(
+                "/api/cad-import",
+                files={"file": ("raised.step", _STEP_UPLOAD, "application/octet-stream")},
+            ).status_code == 500
+
+        with patch(
+            "frontend.routers.ui._result_to_safe_summary",
+            side_effect=RuntimeError("render secret"),
+        ), patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = fake
+            assert client.post(
+                "/api/cad-import",
+                files={"file": ("render.step", _STEP_UPLOAD, "application/octet-stream")},
+            ).status_code == 500
+
+        assert paths
+        assert all(not path.exists() for path in paths)
+
+    def test_adapter_exception_does_not_leak_upload_marker_or_path(
+        self,
+        client: TestClient,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        marker = "RAW_MARKER_AFTER_512"
+        paths: list[Path] = []
+        original_factory = tempfile.NamedTemporaryFile
+
+        def recording_factory(*args: object, **kwargs: object):
+            handle = original_factory(*args, **kwargs)
+            paths.append(Path(handle.name))
+            return handle
+
+        monkeypatch.setattr(
+            "frontend.cad_upload.tempfile.NamedTemporaryFile", recording_factory
+        )
+        caplog.set_level(logging.ERROR)
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.side_effect = RuntimeError(
+                f"{marker}:{paths!r}"
+            )
+            response = client.post(
+                "/api/cad-import",
+                files={
+                    "file": (
+                        "secret.step",
+                        _STEP_UPLOAD + marker.encode(),
+                        "application/octet-stream",
+                    )
+                },
+            )
+
+        assert response.status_code == 500
+        assert marker not in response.text
+        assert marker not in caplog.text
+        assert paths and all(str(path) not in response.text for path in paths)
+        assert all(not path.exists() for path in paths)

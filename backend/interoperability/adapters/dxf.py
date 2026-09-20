@@ -18,6 +18,7 @@ DXF R12 fixed-format specification (public domain)
 from __future__ import annotations
 
 from collections import Counter
+from pathlib import Path
 
 from backend.interoperability.adapter import FormatAdapter
 from backend.interoperability.adapters._base import (
@@ -186,9 +187,26 @@ class DxfTokenAdapter(FormatAdapter):
         source: EngineeringSource,
         format_descriptor: FormatDescriptor,
     ) -> CanonicalDocument:
+        return self._ingest_text(source, format_descriptor, source.notes)
+
+    def ingest_file(
+        self,
+        source: EngineeringSource,
+        format_descriptor: FormatDescriptor,
+        content_path: Path,
+    ) -> CanonicalDocument:
+        """Ingest the complete bounded upload from its staged path."""
+        text = content_path.read_text(encoding="utf-8", errors="replace")
+        return self._ingest_text(source, format_descriptor, text)
+
+    def _ingest_text(
+        self,
+        source: EngineeringSource,
+        format_descriptor: FormatDescriptor,
+        text: str | None,
+    ) -> CanonicalDocument:
         session = AdapterSession(source, format_descriptor, self.metadata())
 
-        text = source.notes
         if not text:
             session.mark_failed()
             session.record(FidelityClass.LOST, "No DXF content provided")

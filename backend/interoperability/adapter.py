@@ -21,6 +21,7 @@ Design principles
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from backend.interoperability.models import (
     AdapterMetadata,
@@ -123,6 +124,18 @@ class FormatAdapter(ABC):
             CanonicalDocument with appropriate normalization_status and
             fidelity_report.
         """
+
+    def ingest_file(
+        self,
+        source: EngineeringSource,
+        format_descriptor: FormatDescriptor,
+        content_path: Path,
+    ) -> CanonicalDocument:
+        """Parse a staged file without embedding its content in the source."""
+        raise NotImplementedError(
+            f"adapter {self.metadata().adapter_id!r} does not support "
+            "staged file ingestion"
+        )
 
     def can_export(self, target_format_id: str) -> bool:
         """Return True when this adapter supports export to *target_format_id*.

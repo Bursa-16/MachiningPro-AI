@@ -29,6 +29,7 @@ ISO 10303-1:1994 (Product Data Representation and Exchange)
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 from backend.interoperability.adapter import FormatAdapter
@@ -282,10 +283,26 @@ class StepTokenAdapter(FormatAdapter):
         separately; the adapter reads them via the FormatAdapter
         content protocol (not yet defined — uses notes fallback here).
         """
+        return self._ingest_text(source, format_descriptor, self._obtain_text(source))
+
+    def ingest_file(
+        self,
+        source: EngineeringSource,
+        format_descriptor: FormatDescriptor,
+        content_path: Path,
+    ) -> CanonicalDocument:
+        """Ingest the complete bounded upload from its staged path."""
+        text = content_path.read_text(encoding="utf-8", errors="replace")
+        return self._ingest_text(source, format_descriptor, text)
+
+    def _ingest_text(
+        self,
+        source: EngineeringSource,
+        format_descriptor: FormatDescriptor,
+        text: str | None,
+    ) -> CanonicalDocument:
         session = AdapterSession(source, format_descriptor, self.metadata())
 
-        # Attempt to obtain content text
-        text = self._obtain_text(source)
         if text is None:
             session.mark_failed()
             session.record(

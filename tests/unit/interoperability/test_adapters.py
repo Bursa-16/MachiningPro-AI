@@ -11,6 +11,8 @@ Level 1 parsing.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from backend.interoperability.adapters._base import ContentSniffer
@@ -428,6 +430,84 @@ class TestDxfTokenAdapter:
         doc = self._adapter().ingest(self._source(_DXF_MINIMAL), DXF_DESCRIPTOR)
         header_ref = next(r for r in doc.entity_refs if r.entity_kind == "DxfHeader")
         assert header_ref.metadata["layer_count"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# E. Complete staged-file ingestion (regression for 512-byte truncation)
+# ---------------------------------------------------------------------------
+
+class TestCompleteFileIngestion:
+    def test_step_parser_reads_entity_after_byte_512(self, tmp_path: Path) -> None:
+        text = _STEP_AP242_MINIMAL.replace(
+            "ENDSEC;\nEND-ISO-10303-21;",
+            f"/*{'X' * 600}*/\n#999=PRODUCT('POST_512_STEP','','',());\n"
+            "ENDSEC;\nEND-ISO-10303-21;",
+        )
+        path = tmp_path / "complete.step"
+        path.write_text(text, encoding="utf-8")
+        source = EngineeringSource(
+            source_id="SRC-STAGED-STEP",
+            source_format_id="STEP-AP242",
+            file_name=path.name,
+        )
+
+        doc = StepTokenAdapter().ingest_file(source, STEP_AP242, path)
+
+        header = next(ref for ref in doc.entity_refs if ref.entity_kind == "StepHeader")
+        assert header.metadata["entity_count"] == 4
+        assert doc.source.notes is None
+
+    def test_iges_parser_reads_entity_after_byte_512(self, tmp_path: Path) -> None:
+        def record(payload: str, section: str, sequence: int) -> str:
+            return f"{payload[:72]:<72}{section}{sequence:7d}\n"
+
+        padding = "".join(record(f"PADDING-{index}", "S", index) for index in range(1, 8))
+        text = (
+            padding
+            + record("1H;,1H;,POST_512_IGES;", "G", 1)
+            + record("     314       1       0       0       0       0       0       0", "D", 1)
+            + record("     314       0       0       1       0       0       0", "D", 2)
+            + record("314,POST_512_IGES;", "P", 1)
+            + record("S      7G      1D      2P      1", "T", 1)
+        )
+        assert text.index("314") > 512
+        path = tmp_path / "complete.iges"
+        path.write_text(text, encoding="utf-8")
+        source = EngineeringSource(
+            source_id="SRC-STAGED-IGES",
+            source_format_id="IGES",
+            file_name=path.name,
+        )
+
+        doc = IgesTokenAdapter().ingest_file(source, IGES_DESCRIPTOR, path)
+
+        header = next(ref for ref in doc.entity_refs if ref.entity_kind == "IgesHeader")
+        assert header.metadata["entity_type_summary"]["Color Definition"] == 1
+        assert doc.source.notes is None
+
+    def test_dxf_parser_reads_entity_after_byte_512(self, tmp_path: Path) -> None:
+        padding = "999\n" + ("X" * 600) + "\n"
+        text = (
+            "  0\nSECTION\n  2\nENTITIES\n"
+            + padding
+            + "  0\nHELIX\n  8\nPOST_512_DXF\n"
+            "  0\nENDSEC\n  0\nEOF\n"
+        )
+        assert text.index("HELIX") > 512
+        path = tmp_path / "complete.dxf"
+        path.write_text(text, encoding="utf-8")
+        source = EngineeringSource(
+            source_id="SRC-STAGED-DXF",
+            source_format_id="DXF",
+            file_name=path.name,
+        )
+
+        doc = DxfTokenAdapter().ingest_file(source, DXF_DESCRIPTOR, path)
+
+        header = next(ref for ref in doc.entity_refs if ref.entity_kind == "DxfHeader")
+        assert header.metadata["entity_type_summary"]["HELIX"] == 1
+        assert header.metadata["layer_count"] == 1
+        assert doc.source.notes is None
 
 
 # ---------------------------------------------------------------------------
