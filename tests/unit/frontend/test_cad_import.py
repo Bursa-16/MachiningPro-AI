@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import patch
 
@@ -38,6 +39,40 @@ DATA;
 ENDSEC;
 END-ISO-10303-21;
 """
+
+
+class _AdvancedDetailsParser(HTMLParser):
+    """Capture the rendered accordion contract without depending on formatting."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.trigger: dict[str, str | None] = {}
+        self.panel: dict[str, str | None] = {}
+        self.panel_text: list[str] = []
+        self.script_sources: list[str] = []
+        self._panel_depth = 0
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        attributes = dict(attrs)
+        if tag == "button" and attributes.get("id") == "cad-import-advanced-trigger":
+            self.trigger = attributes
+        if tag == "div" and attributes.get("id") == "cad-import-advanced-panel":
+            self.panel = attributes
+            self._panel_depth = 1
+        elif self._panel_depth:
+            self._panel_depth += 1
+        if tag == "script" and attributes.get("src"):
+            self.script_sources.append(attributes["src"] or "")
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._panel_depth:
+            self._panel_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._panel_depth:
+            self.panel_text.append(data.strip())
 
 
 @pytest.fixture()
@@ -148,6 +183,19 @@ def _fake_failed_result(source_id: str = "upload::bad.step") -> ImportResult:
         capability=cap,
         error_message="malformed content",
     )
+
+
+@pytest.fixture()
+def successful_import_html(client: TestClient) -> str:
+    fake = _fake_success_result()
+    with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+        mock_cls.return_value.import_source.return_value = fake
+        response = client.post(
+            "/ui/cad-import",
+            files={"file": ("test.step", _STEP_UPLOAD, "application/octet-stream")},
+        )
+    assert response.status_code == 200
+    return response.text
 
 
 # -- GET /ui/cad-import ----------------------------------------------------
@@ -281,6 +329,39 @@ class TestCadImportOrchestration:
         assert "Loading" not in html
         assert "progress" not in html.lower() or "progress" in html.lower()
         assert "3D" not in html
+
+
+class TestCadImportAdvancedDetails:
+    def test_trigger_is_an_accessible_collapsed_button(
+        self, successful_import_html: str
+    ) -> None:
+        parser = _AdvancedDetailsParser()
+        parser.feed(successful_import_html)
+
+        assert parser.trigger["type"] == "button"
+        assert parser.trigger["aria-expanded"] == "false"
+        assert parser.trigger["aria-controls"] == "cad-import-advanced-panel"
+        assert "data-cad-import-accordion" in parser.trigger
+
+    def test_controlled_panel_starts_hidden_with_all_detail_cards(
+        self, successful_import_html: str
+    ) -> None:
+        parser = _AdvancedDetailsParser()
+        parser.feed(successful_import_html)
+
+        assert "hidden" in parser.panel
+        panel_text = " ".join(parser.panel_text)
+        assert "Adapter" in panel_text
+        assert "Fidelity" in panel_text
+        assert "Provenance" in panel_text
+
+    def test_page_loads_the_accordion_behavior(
+        self, successful_import_html: str
+    ) -> None:
+        parser = _AdvancedDetailsParser()
+        parser.feed(successful_import_html)
+
+        assert "/static/js/cad-import.js" in parser.script_sources
 
 
 class TestCadImportApi:

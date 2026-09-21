@@ -140,6 +140,12 @@
 /* =========================================================================
    2. GLOBAL RESET & BASE
    ========================================================================= */
+html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0; padding: 0;
   background-color: var(--mp-bg);
@@ -147,7 +153,12 @@ body {
   font-family: var(--mp-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 100vh; overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 /* =========================================================================
@@ -156,7 +167,7 @@ body {
    ========================================================================= */
 .mp-workstation {
   display: grid;
-  grid-template-columns: 220px 1fr 280px;
+  grid-template-columns: 220px minmax(0, 1fr) 280px;
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     "context context context"
@@ -169,6 +180,7 @@ body {
   background: var(--mp-ws-bg);
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -348,6 +360,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
 }
 .mp-tree-header {
   padding: 8px 12px;
@@ -385,8 +398,10 @@ body {
 .mp-tree-scroll {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 4px 0;
   min-height: 0;
+  min-width: 0;
 }
 .mp-tree-node {
   position: relative;
@@ -466,10 +481,13 @@ body {
   grid-area: main;
   background: var(--mp-ws-viewport);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 .mp-viewport-grid {
   position: absolute;
@@ -634,6 +652,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  min-width: 0;
 }
 .mp-tabs {
   display: flex;
@@ -667,8 +686,10 @@ body {
 .mp-tab-content {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: none;
   min-height: 0;
+  min-width: 0;
 }
 .mp-tab-content--active {
   display: flex;
@@ -680,6 +701,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  min-width: 0;
 }
 .mp-ai-header {
   padding: 10px 14px;
@@ -704,10 +727,13 @@ body {
 .mp-ai-scroll {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
+  min-width: 0;
 }
 .mp-ai-rec {
   background: var(--mp-ai-bg);
@@ -1052,13 +1078,21 @@ body {
   display: flex;
   width: 100%;
   height: 100vh;
-  overflow: hidden;
+  height: 100dvh;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 /* --- Sidebar --- */
 .mp-sidebar {
   display: flex; flex-direction: column;
   width: 15rem; min-width: 15rem;
+  min-height: 0;
+  flex-shrink: 0;
+  overflow: hidden;
   background: var(--mp-bg-sidebar);
   color: var(--mp-text-sidebar);
   border-right: 1px solid var(--mp-border-sidebar);
@@ -1143,10 +1177,18 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 .mp-content {
-  max-width: 76rem; margin: 0 auto;
+  width: 100%; max-width: 76rem; margin: 0 auto;
   padding: var(--mp-sp-6) var(--mp-sp-8);
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 .mp-content--workstation {
   max-width: none;
@@ -1157,6 +1199,55 @@ body {
   overflow: hidden;
   min-height: 0;
   box-sizing: border-box;
+}
+
+.mp-content,
+.mp-sidebar__nav,
+.mp-tree-scroll,
+.mp-engineering-viewport,
+.mp-tab-content,
+.mp-ai-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.55) rgba(10, 15, 26, 0.35);
+}
+
+.mp-content::-webkit-scrollbar,
+.mp-sidebar__nav::-webkit-scrollbar,
+.mp-tree-scroll::-webkit-scrollbar,
+.mp-engineering-viewport::-webkit-scrollbar,
+.mp-tab-content::-webkit-scrollbar,
+.mp-ai-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.mp-content::-webkit-scrollbar-track,
+.mp-sidebar__nav::-webkit-scrollbar-track,
+.mp-tree-scroll::-webkit-scrollbar-track,
+.mp-engineering-viewport::-webkit-scrollbar-track,
+.mp-tab-content::-webkit-scrollbar-track,
+.mp-ai-scroll::-webkit-scrollbar-track {
+  background: rgba(10, 15, 26, 0.35);
+}
+
+.mp-content::-webkit-scrollbar-thumb,
+.mp-sidebar__nav::-webkit-scrollbar-thumb,
+.mp-tree-scroll::-webkit-scrollbar-thumb,
+.mp-engineering-viewport::-webkit-scrollbar-thumb,
+.mp-tab-content::-webkit-scrollbar-thumb,
+.mp-ai-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.55);
+  border: 2px solid rgba(10, 15, 26, 0.35);
+  border-radius: 999px;
+}
+
+.mp-content::-webkit-scrollbar-thumb:hover,
+.mp-sidebar__nav::-webkit-scrollbar-thumb:hover,
+.mp-tree-scroll::-webkit-scrollbar-thumb:hover,
+.mp-engineering-viewport::-webkit-scrollbar-thumb:hover,
+.mp-tab-content::-webkit-scrollbar-thumb:hover,
+.mp-ai-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 213, 225, 0.7);
 }
 
 /* =========================================================================
@@ -1401,13 +1492,12 @@ body {
    14. ADVANCED TOGGLE
    ========================================================================= */
 .mp-advanced-toggle { margin-top: var(--mp-sp-4); }
-.mp-advanced-toggle summary {
+.mp-advanced-toggle__button {
   cursor: pointer; font-size: var(--mp-text-sm);
   font-weight: 500; color: var(--mp-text-secondary);
   list-style: none; padding: var(--mp-sp-2) 0;
   display: flex; align-items: center; gap: var(--mp-sp-2);
 }
-.mp-advanced-toggle summary::-webkit-details-marker { display: none; }
 .mp-advanced-toggle__body { padding: var(--mp-sp-3) 0; }
 
 .mp-label {
@@ -1538,34 +1628,48 @@ body {
 .mp-form-section--advanced {}
 .mp-form-section--role {}
 
-/* Advanced toggle (details/summary) */
+/* Advanced toggle */
 .mp-advanced-toggle {
   border: 1px solid var(--mp-border);
   border-radius: var(--mp-radius-md);
   margin-top: var(--mp-sp-4);
+  min-width: 0;
+  max-width: 100%;
 }
-.mp-advanced-toggle > summary {
+.mp-advanced-toggle > .mp-advanced-toggle__button {
   display: flex; align-items: center; gap: var(--mp-sp-2);
+  width: 100%;
   padding: var(--mp-sp-3) var(--mp-sp-4);
   font-size: var(--mp-text-sm); font-weight: 500;
   color: var(--mp-text-secondary);
-  cursor: pointer; list-style: none;
+  cursor: pointer;
+  border: 0;
+  text-align: left;
+  font-family: inherit;
+  appearance: none;
   background: var(--mp-bg);
   border-radius: var(--mp-radius-md);
 }
-.mp-advanced-toggle > summary::-webkit-details-marker { display: none; }
-.mp-advanced-toggle > summary::before {
+.mp-advanced-toggle > .mp-advanced-toggle__button::before {
   content: '▸'; font-size: 0.625rem;
   transition: transform 0.15s;
 }
-.mp-advanced-toggle[open] > summary::before { transform: rotate(90deg); }
-.mp-advanced-toggle[open] > summary {
+.mp-advanced-toggle > .mp-advanced-toggle__button[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+.mp-advanced-toggle > .mp-advanced-toggle__button[aria-expanded="true"] {
   border-bottom: 1px solid var(--mp-border);
   border-radius: var(--mp-radius-md) var(--mp-radius-md) 0 0;
 }
+.mp-advanced-toggle > .mp-advanced-toggle__button:focus-visible {
+  outline: 2px solid var(--mp-brand-500);
+  outline-offset: 2px;
+}
 .mp-advanced-toggle__body {
   padding: var(--mp-sp-4);
+  min-width: 0;
 }
+.mp-advanced-toggle__body[hidden] { display: none; }
 
 /* Field groups and unit input */
 .mp-field-group {

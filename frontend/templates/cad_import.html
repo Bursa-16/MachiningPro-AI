@@ -109,9 +109,18 @@
   </div>
 
   <!-- ADVANCED: Technical details (collapsed by default) -->
-  <details class="mp-advanced-toggle mp-section-gap">
-    <summary>Advanced Import Details</summary>
-    <div class="mp-advanced-toggle__body">
+  <div class="mp-advanced-toggle mp-section-gap">
+    <button id="cad-import-advanced-trigger"
+            class="mp-advanced-toggle__button"
+            type="button"
+            aria-expanded="false"
+            aria-controls="cad-import-advanced-panel"
+            data-cad-import-accordion>
+      Advanced Import Details
+    </button>
+    <div id="cad-import-advanced-panel"
+         class="mp-advanced-toggle__body"
+         hidden>
       <div class="mp-card-grid mp-card-grid--3">
         <div class="mp-card">
           <div class="mp-card__section-label" style="margin-bottom:var(--mp-sp-3)">Adapter</div>
@@ -161,7 +170,11 @@
       </div>
       {% endif %}
     </div>
-  </details>
+  </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/cad-import.js" defer></script>
 {% endblock %}
