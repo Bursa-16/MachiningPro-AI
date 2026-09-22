@@ -22,6 +22,7 @@ import pytest
 from backend.domain.exceptions import ValidationError
 from backend.interoperability.enums import (
     CapabilityLevel,
+    NormalizationStatus,
 )
 from backend.interoperability.exchange import (
     CanonicalExchangeDocument,
@@ -37,6 +38,7 @@ from backend.interoperability.orchestrator import (
     ImportStatus,
     detect_format,
 )
+from tests.unit.interoperability.iges_fixtures import EntitySpec, make_iges
 
 # ---------------------------------------------------------------------------
 # Synthetic test content (minimal valid payloads)
@@ -68,14 +70,7 @@ ENDSEC;
 END-ISO-10303-21;
 """
 
-_IGES = (
-    "S" + " " * 71 + "S" + "      1\n"
-    "1H;,1H;,11Htest.iges  ,11Htest.iges  ,8,38,6,308,15,11Htest.iges;G      1\n"
-    "     110       1       0       0       0       0       0       0       0D      1\n"
-    "     110       0       0       1       0       0       0               0D      2\n"
-    "110,0.,0.,0.,1.,0.,0.;                                                 P      1\n"
-    "S      1G      1D      2P      1                                        T      1\n"
-)
+_IGES = make_iges((EntitySpec(110, "110,0,0,0,1,0,0;"),)).decode("ascii")
 
 _DXF = """\
   0
@@ -336,10 +331,32 @@ class TestValidImports:
         assert result.provenance is not None
         assert result.provenance.format_id == "IGES"
 
-    def test_iges_import_records_unsupported_for_geometry(self) -> None:
+    def test_iges_import_propagates_real_level2_geometry(self) -> None:
         orc = self._orc()
         src = _src(_IGES, fmt="IGES")
         result = orc.import_source(src)
+        assert result.status is ImportStatus.SUCCESS
+        assert result.document is not None
+        assert result.document.geometry is not None
+        assert result.document.capability_level is CapabilityLevel.LEVEL_2_NORMALIZED
+        assert result.diagnostics.has_unsupported_content is False
+
+    def test_unsupported_iges_geometry_is_rejected_with_existing_status(self) -> None:
+        orc = self._orc()
+        unsupported = make_iges(
+            (EntitySpec(118, "118,1,3,0,0;"),)
+        ).decode("ascii")
+
+        result = orc.import_source(_src(unsupported, fmt="IGES"))
+
+        assert result.status is ImportStatus.UNSUPPORTED
+        assert result.document is not None
+        assert (
+            result.document.normalization_status
+            is NormalizationStatus.UNSUPPORTED
+        )
+        assert result.document.geometry is None
+        assert result.document.topology is None
         assert result.diagnostics.has_unsupported_content is True
 
     def test_dxf_import_succeeds(self) -> None:
@@ -752,13 +769,12 @@ class TestStage4Regression:
         except ImportError:
             pytest.skip("TopologyContainerError not in testenv stub (live repo only)")
 
-    def test_canonical_document_is_lossless_false_on_partial(self) -> None:
+    def test_supported_iges_document_is_lossless_when_fully_preserved(self) -> None:
         orc = CadImportOrchestrator()
         src = _src(_IGES, fmt="IGES")
         result = orc.import_source(src)
         if result.document:
-            # IGES is always partial (no geometry kernel) → not lossless
-            assert result.document.is_lossless is False
+            assert result.document.is_lossless is True
 
     def test_fidelity_adverse_event_on_unsupported_geometry(self) -> None:
         orc = CadImportOrchestrator()

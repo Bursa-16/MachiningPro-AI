@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from backend.interoperability.enums import CapabilityLevel
+from backend.interoperability.enums import CapabilityLevel, FidelityClass
 from backend.interoperability.models import EngineeringSource
 from backend.interoperability.orchestrator import (
     CadImportOrchestrator,
@@ -115,7 +115,11 @@ def _result_to_display(result: ImportResult) -> dict[str, object]:
         "import_id": result.import_id,
         "status": result.status.value,
         "succeeded": result.succeeded,
-        "error_message": result.error_message,
+        "error_message": (
+            "CAD input was rejected during import validation."
+            if result.error_message
+            else None
+        ),
         # Format detection
         "detected_format": det.detected_format_id or "Unknown",
         "detection_confidence": det.detection_confidence,
@@ -127,12 +131,20 @@ def _result_to_display(result: ImportResult) -> dict[str, object]:
         # Capability
         "achieved_level": result.capability.achieved_level.value,
         "was_degraded": result.capability.was_degraded,
-        "degradation_reason": result.capability.degradation_reason,
+        "degradation_reason": (
+            "Import capability was degraded."
+            if result.capability.degradation_reason
+            else None
+        ),
         # Fidelity
         "fidelity_adverse_count": diag.fidelity_adverse_count,
         "has_loss": diag.has_loss,
         "has_unsupported": diag.has_unsupported_content,
-        "notes": diag.notes,
+        "notes": (
+            ("Additional import diagnostics were recorded.",)
+            if diag.notes
+            else ()
+        ),
     }
 
     if doc is not None:
@@ -186,24 +198,44 @@ def _entity_summaries(
 ) -> tuple[dict[str, object] | None, dict[str, object] | None]:
     if result.document is None:
         return None, None
-    kinds = tuple(ref.entity_kind for ref in result.document.entity_refs)
-    geometry = tuple(
-        kind for kind in kinds
-        if kind == "OCCTShape" or kind.startswith("DxfEntity_")
-    )
-    topology = tuple(
-        kind for kind in kinds
-        if any(token in kind for token in ("Topology", "Shell", "Solid", "Body"))
-    )
-    geometry_summary = (
-        {"entity_count": len(geometry), "entity_kinds": sorted(set(geometry))}
-        if geometry else None
-    )
-    topology_summary = (
-        {"entity_count": len(topology), "entity_kinds": sorted(set(topology))}
-        if topology else None
-    )
+    geometry = result.document.geometry
+    geometry_summary = None
+    if geometry is not None:
+        tolerance = geometry.metadata.get("iges_minimum_resolution_mm")
+        geometry_summary = {
+            "curve_count": len(geometry.curves),
+            "surface_count": len(geometry.surfaces),
+            "has_bounding_box": geometry.bounding_box is not None,
+            "source_unit": geometry.metadata.get("iges_source_unit"),
+            "tolerance_mm": str(tolerance) if tolerance is not None else None,
+        }
+
+    topology = result.document.topology
+    topology_summary = None
+    if topology is not None:
+        topology_summary = {
+            "vertex_count": len(topology.vertices),
+            "edge_count": len(topology.edges),
+            "loop_count": len(topology.loops),
+            "face_count": len(topology.faces),
+            "shell_count": len(topology.shells),
+            "body_count": len(topology.bodies),
+        }
     return geometry_summary, topology_summary
+
+
+def _unsupported_entity_summaries(result: ImportResult) -> list[str]:
+    if result.document is None or result.document.fidelity_report is None:
+        return []
+    summaries = []
+    for event in result.document.fidelity_report.events:
+        if event.fidelity_class is not FidelityClass.UNSUPPORTED:
+            continue
+        safe = " ".join(event.description.split())[:240]
+        summaries.append(safe)
+        if len(summaries) == 20:
+            break
+    return summaries
 
 
 def _result_to_safe_summary(
@@ -222,6 +254,7 @@ def _result_to_safe_summary(
         "fidelity_adverse_count": result.diagnostics.fidelity_adverse_count,
         "has_unsupported_content": result.diagnostics.has_unsupported_content,
         "has_loss": result.diagnostics.has_loss,
+        "unsupported_entities": _unsupported_entity_summaries(result),
     }
     display.update({
         "filename": staged.filename,

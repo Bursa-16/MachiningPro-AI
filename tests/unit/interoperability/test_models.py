@@ -16,6 +16,7 @@ from backend.interoperability.enums import (
     FormatFamily,
     NormalizationStatus,
 )
+from backend.interoperability.geometry import CanonicalGeometry
 from backend.interoperability.models import (
     AdapterMetadata,
     CanonicalDocument,
@@ -25,6 +26,7 @@ from backend.interoperability.models import (
     FidelityEvent,
     FormatDescriptor,
 )
+from backend.interoperability.topology import CanonicalTopology
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -619,3 +621,42 @@ class TestCanonicalDocument:
         d = _document().as_dict()
         assert isinstance(d, dict)
         assert "document_id" in d
+
+    def test_preserves_canonical_geometry_and_topology_payloads(self) -> None:
+        geometry = CanonicalGeometry(geometry_id="geometry-iges")
+        topology = CanonicalTopology(
+            topology_id="topology-iges",
+            geometry=geometry,
+        )
+
+        document = CanonicalDocument(
+            document_id="doc-iges",
+            canonical_kind="CAD_GEOMETRY",
+            source=_source(),
+            format_descriptor=_descriptor(),
+            adapter_id="iges.token",
+            adapter_version="2.0.0",
+            capability_level=CapabilityLevel.LEVEL_2_NORMALIZED,
+            normalization_status=NormalizationStatus.SUCCESS,
+            geometry=geometry,
+            topology=topology,
+        )
+
+        assert document.geometry is geometry
+        assert document.topology is topology
+        assert document.as_dict()["geometry"]["geometry_id"] == "geometry-iges"
+
+    @pytest.mark.parametrize("field_name", ["geometry", "topology"])
+    def test_rejects_invalid_canonical_payload_type(self, field_name: str) -> None:
+        with pytest.raises(ValidationError, match=field_name):
+            CanonicalDocument(
+                document_id="doc-iges",
+                canonical_kind="CAD_GEOMETRY",
+                source=_source(),
+                format_descriptor=_descriptor(),
+                adapter_id="iges.token",
+                adapter_version="2.0.0",
+                capability_level=CapabilityLevel.LEVEL_2_NORMALIZED,
+                normalization_status=NormalizationStatus.SUCCESS,
+                **{field_name: object()},
+            )

@@ -67,6 +67,9 @@ class AdapterSession:
         self._fidelity_completeness = FidelityReportCompleteness.UNKNOWN
         self._source_entity_count: int | None = None
         self._extra_canonical_payloads: dict[str, object] = {}
+        self._geometry: object | None = None
+        self._topology: object | None = None
+        self._built = False
 
     # ------------------------------------------------------------------
     # Capability progression
@@ -84,6 +87,9 @@ class AdapterSession:
 
     def mark_partial(self) -> None:
         self._normalization_status = NormalizationStatus.PARTIAL
+
+    def mark_unsupported(self) -> None:
+        self._normalization_status = NormalizationStatus.UNSUPPORTED
 
     def set_source_entity_count(self, n: int) -> None:
         self._source_entity_count = n
@@ -130,6 +136,24 @@ class AdapterSession:
     def add_entity_ref(self, ref: CanonicalEntityRef) -> None:
         self._entity_refs.append(ref)
 
+    def set_geometry(self, geometry: object) -> None:
+        if self._built:
+            raise RuntimeError("adapter session has already been built")
+        from backend.interoperability.geometry import CanonicalGeometry
+
+        if not isinstance(geometry, CanonicalGeometry):
+            raise TypeError("geometry must be a CanonicalGeometry")
+        self._geometry = geometry
+
+    def set_topology(self, topology: object) -> None:
+        if self._built:
+            raise RuntimeError("adapter session has already been built")
+        from backend.interoperability.topology import CanonicalTopology
+
+        if not isinstance(topology, CanonicalTopology):
+            raise TypeError("topology must be a CanonicalTopology")
+        self._topology = topology
+
     # ------------------------------------------------------------------
     # Build output
     # ------------------------------------------------------------------
@@ -146,7 +170,7 @@ class AdapterSession:
             source_entity_count=self._source_entity_count,
             events=tuple(self._fidelity_events),
         )
-        return CanonicalDocument(
+        document = CanonicalDocument(
             document_id=make_uid("DOC-"),
             canonical_kind=self.descriptor.family.value,
             source=self.source,
@@ -157,7 +181,11 @@ class AdapterSession:
             normalization_status=self._normalization_status,
             entity_refs=tuple(self._entity_refs),
             fidelity_report=report,
+            geometry=self._geometry,
+            topology=self._topology,
         )
+        self._built = True
+        return document
 
 
 class ContentSniffer:

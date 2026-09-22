@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.interoperability.adapters._base import ContentSniffer
+from backend.interoperability.adapters._base import AdapterSession, ContentSniffer
 from backend.interoperability.adapters.dxf import DXF_DESCRIPTOR, DxfTokenAdapter
 from backend.interoperability.adapters.iges import IGES_DESCRIPTOR, IgesTokenAdapter
 from backend.interoperability.adapters.registry_helpers import (
@@ -34,10 +34,13 @@ from backend.interoperability.enums import (
     FidelityReportCompleteness,
     NormalizationStatus,
 )
+from backend.interoperability.geometry import CanonicalGeometry
 from backend.interoperability.models import (
     CanonicalDocument,
     EngineeringSource,
 )
+from backend.interoperability.topology import CanonicalTopology
+from tests.unit.interoperability.iges_fixtures import EntitySpec, make_iges
 
 # ---------------------------------------------------------------------------
 # Synthetic test content
@@ -145,6 +148,22 @@ _DXF_INVALID = "This is not DXF content.\n"
 # ---------------------------------------------------------------------------
 # A. ContentSniffer
 # ---------------------------------------------------------------------------
+
+def test_adapter_session_carries_canonical_payloads_into_document() -> None:
+    geometry = CanonicalGeometry(geometry_id="geometry-iges")
+    topology = CanonicalTopology(topology_id="topology-iges", geometry=geometry)
+    session = AdapterSession(
+        EngineeringSource(source_id="SRC-IGES", source_format_id="IGES"),
+        IGES_DESCRIPTOR,
+        IgesTokenAdapter().metadata(),
+    )
+
+    session.set_geometry(geometry)
+    session.set_topology(topology)
+    document = session.build()
+
+    assert document.geometry is geometry
+    assert document.topology is topology
 
 class TestContentSniffer:
     def test_sniffs_step_ap242(self) -> None:
@@ -298,6 +317,10 @@ class TestIgesTokenAdapter:
             notes=content,
         )
 
+    def _valid_content(self, *entities: EntitySpec) -> str:
+        selected = entities or (EntitySpec(110, "110,0,0,0,1,2,3;"),)
+        return make_iges(tuple(selected)).decode("ascii")
+
     def test_can_handle_igs_extension(self) -> None:
         source = EngineeringSource(source_id="SRC-X", file_name="part.igs")
         assert self._adapter().can_handle(source)
@@ -314,48 +337,141 @@ class TestIgesTokenAdapter:
     def test_metadata_adapter_id(self) -> None:
         assert self._adapter().metadata().adapter_id == "machinerypro-iges-token-v1"
 
-    def test_metadata_max_level_is_parsed(self) -> None:
-        assert self._adapter().metadata().max_capability_level is CapabilityLevel.LEVEL_1_PARSED
+    def test_metadata_max_level_is_normalized(self) -> None:
+        assert (
+            self._adapter().metadata().max_capability_level
+            is CapabilityLevel.LEVEL_2_NORMALIZED
+        )
 
-    def test_ingest_minimal_iges_level1(self) -> None:
-        doc = self._adapter().ingest(self._source(_IGES_MINIMAL), IGES_DESCRIPTOR)
+    def test_ingest_supported_iges_reaches_level2_with_real_geometry(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(self._valid_content()), IGES_DESCRIPTOR
+        )
         assert doc.normalization_status is NormalizationStatus.SUCCESS
-        assert doc.capability_level is CapabilityLevel.LEVEL_1_PARSED
+        assert doc.capability_level is CapabilityLevel.LEVEL_2_NORMALIZED
+        assert doc.geometry is not None
+        assert len(doc.geometry.curves) == 1
 
     def test_ingest_iges_has_header_ref(self) -> None:
-        doc = self._adapter().ingest(self._source(_IGES_MINIMAL), IGES_DESCRIPTOR)
+        doc = self._adapter().ingest(
+            self._source(self._valid_content()), IGES_DESCRIPTOR
+        )
         kinds = [r.entity_kind for r in doc.entity_refs]
         assert "IgesHeader" in kinds
 
     def test_ingest_iges_entity_count(self) -> None:
-        doc = self._adapter().ingest(self._source(_IGES_MINIMAL), IGES_DESCRIPTOR)
+        doc = self._adapter().ingest(
+            self._source(self._valid_content()), IGES_DESCRIPTOR
+        )
         assert doc.fidelity_report.source_entity_count == 1  # one LINE entity
 
-    def test_ingest_iges_records_unsupported_for_geometry(self) -> None:
+    def test_supported_iges_does_not_emit_kernel_dependency_event(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(self._valid_content()), IGES_DESCRIPTOR
+        )
+
+        assert not any(
+            "pythonocc" in event.description.lower()
+            for event in doc.fidelity_report.events
+        )
+
+    def test_independent_annotation_keeps_geometry_and_marks_partial(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(
+                self._valid_content(
+                    EntitySpec(110, "110,0,0,0,1,0,0;"),
+                    EntitySpec(212, "212,0;"),
+                )
+            ),
+            IGES_DESCRIPTOR,
+        )
+
+        assert doc.geometry is not None
+        assert doc.capability_level is CapabilityLevel.LEVEL_2_NORMALIZED
+        assert doc.normalization_status is NormalizationStatus.PARTIAL
+        assert any("type 212" in event.description for event in doc.fidelity_report.events)
+
+    def test_standalone_annotation_is_partial_without_fake_geometry(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(self._valid_content(EntitySpec(212, "212,0;"))),
+            IGES_DESCRIPTOR,
+        )
+
+        assert doc.capability_level is CapabilityLevel.LEVEL_1_PARSED
+        assert doc.normalization_status is NormalizationStatus.PARTIAL
+        assert doc.geometry is None
+        assert doc.topology is None
+        assert any(
+            event.fidelity_class is FidelityClass.UNSUPPORTED
+            and "type 212" in event.description
+            for event in doc.fidelity_report.events
+        )
+
+    def test_unsupported_geometry_is_rejected_without_fake_payloads(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(self._valid_content(EntitySpec(118, "118,1,3,0,0;"))),
+            IGES_DESCRIPTOR,
+        )
+
+        assert doc.geometry is None
+        assert doc.topology is None
+        assert doc.capability_level is CapabilityLevel.LEVEL_1_PARSED
+        assert doc.normalization_status is NormalizationStatus.UNSUPPORTED
+        assert any(
+            "type=118" in event.description and "unsupported" in event.description
+            for event in doc.fidelity_report.events
+        )
+
+    def test_legacy_wrong_column_fixture_fails_structural_validation(self) -> None:
         doc = self._adapter().ingest(self._source(_IGES_MINIMAL), IGES_DESCRIPTOR)
-        unsupported = [
-            e for e in doc.fidelity_report.events
-            if e.fidelity_class is FidelityClass.UNSUPPORTED
-        ]
-        assert unsupported
+
+        assert doc.normalization_status is NormalizationStatus.FAILED
+        assert doc.geometry is None
+        assert doc.topology is None
 
     def test_ingest_invalid_iges_fails_closed(self) -> None:
         doc = self._adapter().ingest(self._source(_IGES_INVALID), IGES_DESCRIPTOR)
         assert doc.normalization_status is NormalizationStatus.FAILED
+
+    def test_malformed_transform_fails_closed_without_escaping_adapter(self) -> None:
+        content = self._valid_content(EntitySpec(124, "124,1;"))
+
+        doc = self._adapter().ingest(self._source(content), IGES_DESCRIPTOR)
+
+        assert doc.normalization_status is NormalizationStatus.FAILED
+        assert doc.geometry is None
+        assert doc.topology is None
+
+    def test_parse_error_does_not_echo_private_source_token(self) -> None:
+        private_token = "RAW_PRIVATE_PAYLOAD_ABC"
+        content = self._valid_content(
+            EntitySpec(110, f"110,{private_token},0,0,1,2,3;")
+        )
+
+        doc = self._adapter().ingest(self._source(content), IGES_DESCRIPTOR)
+
+        assert doc.normalization_status is NormalizationStatus.FAILED
+        assert all(
+            private_token not in event.description
+            for event in doc.fidelity_report.events
+        )
 
     def test_ingest_no_content_fails_closed(self) -> None:
         source = EngineeringSource(source_id="SRC-X", source_format_id="IGES")
         doc = self._adapter().ingest(source, IGES_DESCRIPTOR)
         assert doc.normalization_status is NormalizationStatus.FAILED
 
-    def test_ingest_fidelity_completeness_is_partial(self) -> None:
-        doc = self._adapter().ingest(self._source(_IGES_MINIMAL), IGES_DESCRIPTOR)
-        assert doc.fidelity_report.completeness is FidelityReportCompleteness.PARTIAL
+    def test_ingest_fidelity_completeness_is_complete(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(self._valid_content()), IGES_DESCRIPTOR
+        )
+        assert doc.fidelity_report.completeness is FidelityReportCompleteness.COMPLETE
 
-    def test_ingest_not_lossless(self) -> None:
-        """IGES Level 1 is inherently partial; is_lossless must be False."""
-        doc = self._adapter().ingest(self._source(_IGES_MINIMAL), IGES_DESCRIPTOR)
-        assert doc.fidelity_report.is_lossless is False
+    def test_fully_supported_iges_is_lossless_at_canonical_subset_boundary(self) -> None:
+        doc = self._adapter().ingest(
+            self._source(self._valid_content()), IGES_DESCRIPTOR
+        )
+        assert doc.fidelity_report.is_lossless is True
 
 
 # ---------------------------------------------------------------------------
@@ -458,21 +574,13 @@ class TestCompleteFileIngestion:
         assert doc.source.notes is None
 
     def test_iges_parser_reads_entity_after_byte_512(self, tmp_path: Path) -> None:
-        def record(payload: str, section: str, sequence: int) -> str:
-            return f"{payload[:72]:<72}{section}{sequence:7d}\n"
-
-        padding = "".join(record(f"PADDING-{index}", "S", index) for index in range(1, 8))
-        text = (
-            padding
-            + record("1H;,1H;,POST_512_IGES;", "G", 1)
-            + record("     314       1       0       0       0       0       0       0", "D", 1)
-            + record("     314       0       0       1       0       0       0", "D", 2)
-            + record("314,POST_512_IGES;", "P", 1)
-            + record("S      7G      1D      2P      1", "T", 1)
+        data = make_iges(
+            (EntitySpec(314, "314,10,20,30,5Hcolor;"),),
+            start_record_count=8,
         )
-        assert text.index("314") > 512
+        assert data.index(b"314") > 512
         path = tmp_path / "complete.iges"
-        path.write_text(text, encoding="utf-8")
+        path.write_bytes(data)
         source = EngineeringSource(
             source_id="SRC-STAGED-IGES",
             source_format_id="IGES",

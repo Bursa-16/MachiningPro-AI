@@ -1,29 +1,16 @@
-"""IGES 5.x format adapter (Stage 4C).
+"""Strict IGES 5.x geometry and topology adapter.
 
-Capability roadmap
-------------------
-Pure Python (no external dependencies):
-    Level 0 — RECOGNIZED  (extension / header pattern)
-    Level 1 — PARSED      (section inventory, directory entries, entity type histogram)
-
-Level 2 geometry normalization requires pythonocc-core (same bridge as STEP).
-
-References
-----------
-IGES 5.3 (1996) — Initial Graphics Exchange Specification
+The adapter parses byte-accurate fixed records in pure Python and reaches
+Level 2 only when the declared supported subset produces real canonical
+geometry. Unsupported semantic dependencies are reported explicitly.
 """
 
 from __future__ import annotations
 
-import re
-from collections import Counter
 from pathlib import Path
 
 from backend.interoperability.adapter import FormatAdapter
-from backend.interoperability.adapters._base import (
-    AdapterSession,
-    make_uid,
-)
+from backend.interoperability.adapters._base import AdapterSession, make_uid
 from backend.interoperability.enums import (
     AdapterCapability,
     AdapterLicense,
@@ -32,6 +19,8 @@ from backend.interoperability.enums import (
     FidelityReportCompleteness,
     FormatFamily,
 )
+from backend.interoperability.iges_mapping import map_iges_model
+from backend.interoperability.iges_parser import IgesParseError, parse_iges_bytes
 from backend.interoperability.models import (
     AdapterMetadata,
     CanonicalDocument,
@@ -40,10 +29,10 @@ from backend.interoperability.models import (
     FormatDescriptor,
 )
 
-__all__ = ["IgesTokenAdapter"]
+__all__ = ["IGES_DESCRIPTOR", "IgesTokenAdapter"]
 
 _ADAPTER_ID = "machinerypro-iges-token-v1"
-_ADAPTER_VERSION = "1.0.0"
+_ADAPTER_VERSION = "2.0.0"
 
 IGES_DESCRIPTOR = FormatDescriptor(
     format_id="IGES",
@@ -58,31 +47,17 @@ IGES_DESCRIPTOR = FormatDescriptor(
     notes="ANSI/ASME Y14.26M — Initial Graphics Exchange Specification",
 )
 
-# IGES section codes (column 73)
-_SECTION_CODES = {"S", "G", "D", "P", "T"}
-
-# Directory-entry entity type number is columns 1–8 of the D-section
-_DE_TYPE_RE = re.compile(r"^(.{8})(.{8})", re.MULTILINE)
-
-# Known IGES entity type numbers → descriptive name
 _IGES_ENTITY_NAMES: dict[int, str] = {
     100: "Circular Arc",
-    102: "Composite Curve",
-    104: "Conic Arc",
-    106: "Copious Data",
     108: "Plane",
     110: "Line",
-    112: "Parametric Spline Curve",
-    114: "Parametric Spline Surface",
     116: "Point",
     118: "Ruled Surface",
-    120: "Surface of Revolution",
-    122: "Tabulated Cylinder",
+    123: "Direction",
     124: "Transformation Matrix",
     126: "Rational B-Spline Curve",
     128: "Rational B-Spline Surface",
-    130: "Offset Curve",
-    140: "Offset Surface",
+    141: "Boundary",
     142: "Curve on Parametric Surface",
     143: "Bounded Surface",
     144: "Trimmed Surface",
@@ -92,82 +67,38 @@ _IGES_ENTITY_NAMES: dict[int, str] = {
     194: "Right Circular Conical Surface",
     196: "Spherical Surface",
     198: "Toroidal Surface",
-    308: "Subfigure Definition",
+    212: "General Note",
     314: "Color Definition",
-    402: "Associativity Instance",
-    408: "Singular Subfigure Instance",
-    504: "Edge",
+    502: "Vertex List",
+    504: "Edge List",
     508: "Loop",
     510: "Face",
     514: "Shell",
 }
 
 
-def _parse_iges_sections(text: str) -> dict[str, object]:
-    """Parse an IGES file into section lines and entity histogram."""
-    lines = text.splitlines()
-    result: dict[str, object] = {
-        "sections": set(),
-        "entity_type_counts": {},
-        "global_section_params": None,
-        "line_count": len(lines),
-        "valid": False,
-    }
-
-    d_lines: list[str] = []
-    g_lines: list[str] = []
-    entity_types: list[int] = []
-
-    for line in lines:
-        if len(line) < 73:
-            continue
-        code = line[72]
-        if code not in _SECTION_CODES:
-            continue
-        result["sections"].add(code)  # type: ignore[union-attr]
-        if code == "D":
-            d_lines.append(line)
-        elif code == "G":
-            g_lines.append(line[:72])
-
-    # Extract entity type numbers from D-section (every other line is an entry)
-    for line in d_lines[::2]:  # type 1 lines are even-indexed
-        raw = line[:8].strip()
-        try:
-            entity_types.append(int(raw))
-        except ValueError:
-            pass
-
-    counts = Counter(entity_types)
-    result["entity_type_counts"] = dict(counts)
-    result["valid"] = "S" in result["sections"] and "G" in result["sections"]
-
-    if g_lines:
-        result["global_section_params"] = " ".join(g_lines)
-
-    return result
-
-
 class IgesTokenAdapter(FormatAdapter):
-    """Pure-Python IGES adapter (Level 0–1)."""
+    """Fail-closed IGES adapter for an explicitly supported Level 2 subset."""
 
     def metadata(self) -> AdapterMetadata:
         return AdapterMetadata(
             adapter_id=_ADAPTER_ID,
-            adapter_name="MachineryPro IGES Token Adapter",
+            adapter_name="MachineryPro IGES Canonical Adapter",
             adapter_version=_ADAPTER_VERSION,
             format_ids=("IGES",),
             capabilities=(
                 AdapterCapability.RECOGNIZE,
                 AdapterCapability.PARSE,
                 AdapterCapability.NORMALIZE,
+                AdapterCapability.EXTRACT_GEOMETRY,
+                AdapterCapability.EXTRACT_TOPOLOGY,
             ),
-            max_capability_level=CapabilityLevel.LEVEL_1_PARSED,
+            max_capability_level=CapabilityLevel.LEVEL_2_NORMALIZED,
             adapter_license=AdapterLicense.INTERNAL_PARSER,
             requires_external_dependency=False,
             notes=(
-                "Pure-Python IGES parser reaches Level 1 (section inventory, "
-                "entity type histogram). Level 2 geometry requires pythonocc-core."
+                "Strict fixed-record IGES parser with canonical geometry and "
+                "B-Rep mapping for the declared supported subset."
             ),
         )
 
@@ -182,7 +113,7 @@ class IgesTokenAdapter(FormatAdapter):
             return True
         if source.file_name:
             lower = source.file_name.lower()
-            if lower.endswith(".igs") or lower.endswith(".iges"):
+            if lower.endswith((".igs", ".iges")):
                 return True
         return False
 
@@ -191,7 +122,13 @@ class IgesTokenAdapter(FormatAdapter):
         source: EngineeringSource,
         format_descriptor: FormatDescriptor,
     ) -> CanonicalDocument:
-        return self._ingest_text(source, format_descriptor, source.notes)
+        if source.notes is None:
+            return self._ingest_bytes(source, format_descriptor, None)
+        try:
+            content = source.notes.encode("ascii")
+        except UnicodeEncodeError:
+            content = source.notes.encode("utf-8")
+        return self._ingest_bytes(source, format_descriptor, content)
 
     def ingest_file(
         self,
@@ -200,89 +137,132 @@ class IgesTokenAdapter(FormatAdapter):
         content_path: Path,
     ) -> CanonicalDocument:
         """Ingest the complete bounded upload from its staged path."""
-        text = content_path.read_text(encoding="utf-8", errors="replace")
-        return self._ingest_text(source, format_descriptor, text)
 
-    def _ingest_text(
+        try:
+            content = content_path.read_bytes()
+        except OSError:
+            session = AdapterSession(source, format_descriptor, self.metadata())
+            session.mark_failed()
+            session.record(
+                FidelityClass.LOST,
+                "Unable to read staged IGES content",
+            )
+            session.set_fidelity_completeness(FidelityReportCompleteness.UNKNOWN)
+            return session.build()
+        return self._ingest_bytes(source, format_descriptor, content)
+
+    def _ingest_bytes(
         self,
         source: EngineeringSource,
         format_descriptor: FormatDescriptor,
-        text: str | None,
+        content: bytes | None,
     ) -> CanonicalDocument:
         session = AdapterSession(source, format_descriptor, self.metadata())
-
-        if not text:
+        if not content:
             session.mark_failed()
             session.record(FidelityClass.LOST, "No IGES content provided")
             session.set_fidelity_completeness(FidelityReportCompleteness.UNKNOWN)
             return session.build()
 
-        # Basic validity
-        if not any(
-            len(line) >= 73 and line[72] in _SECTION_CODES
-            for line in text.splitlines()[:10]
-            if len(line) >= 73
-        ):
-            session.mark_failed()
-            session.record(
-                FidelityClass.LOST,
-                "Content does not match IGES 80-column fixed-format structure",
-            )
-            session.set_fidelity_completeness(FidelityReportCompleteness.UNKNOWN)
-            return session.build()
-
-        # Parse sections
         try:
-            meta = _parse_iges_sections(text)
-        except Exception as exc:  # noqa: BLE001
+            model = parse_iges_bytes(content)
+        except IgesParseError as exc:
             session.mark_failed()
-            session.record(FidelityClass.LOST, f"IGES section parse error: {exc}")
+            session.record(FidelityClass.LOST, f"IGES parse error: {exc}")
             session.set_fidelity_completeness(FidelityReportCompleteness.UNKNOWN)
             return session.build()
 
         session.mark_parsed()
-        entity_counts: dict[int, int] = meta["entity_type_counts"]  # type: ignore[assignment]
-        total_entities = sum(entity_counts.values())
-        session.set_source_entity_count(total_entities)
+        session.set_source_entity_count(len(model.entities))
+        entity_counts: dict[int, int] = {}
+        for entity in model.entities:
+            entity_type = entity.directory.entity_type
+            entity_counts[entity_type] = entity_counts.get(entity_type, 0) + 1
 
-        # Header ref
-        header_ref = CanonicalEntityRef(
-            entity_id=make_uid("IGES-HEADER-"),
-            entity_kind="IgesHeader",
-            metadata={
-                "sections": sorted(meta["sections"]),  # type: ignore[arg-type]
-                "entity_count": total_entities,
-                "entity_type_summary": {
-                    _IGES_ENTITY_NAMES.get(k, f"type_{k}"): v
-                    for k, v in entity_counts.items()
+        session.add_entity_ref(
+            CanonicalEntityRef(
+                entity_id=make_uid("IGES-HEADER-"),
+                entity_kind="IgesHeader",
+                metadata={
+                    "sections": tuple(model.section_counts),
+                    "entity_count": len(model.entities),
+                    "entity_type_summary": {
+                        _IGES_ENTITY_NAMES.get(entity_type, f"type_{entity_type}"): count
+                        for entity_type, count in entity_counts.items()
+                    },
+                    "source_unit": model.global_section.unit_name,
+                    "model_scale": model.global_section.model_scale,
+                    "minimum_resolution": model.global_section.minimum_resolution,
+                    "source_file_name": model.global_section.file_name,
+                    "native_system_id": model.global_section.native_system_id,
+                    "preprocessor_version": (
+                        model.global_section.preprocessor_version
+                    ),
+                    "creation_timestamp": (
+                        model.global_section.creation_timestamp
+                    ),
+                    "modified_timestamp": (
+                        model.global_section.modified_timestamp
+                    ),
+                    "iges_version": model.global_section.version,
                 },
-            },
-        )
-        session.add_entity_ref(header_ref)
-
-        # Note unsupported section types
-        if "D" not in meta["sections"]:
-            session.record_unsupported("IGES file lacks a Directory section; no entities found")
-        if "P" not in meta["sections"]:
-            session.record_unsupported(
-                "IGES file lacks a Parameter section; geometry cannot be extracted"
             )
+        )
 
-        # Record unsupported entity types (complex surfaces, PMI, etc.)
-        unsupported = {
-            k: v for k, v in entity_counts.items()
-            if k not in _IGES_ENTITY_NAMES
+        mapping = map_iges_model(model)
+        for ref in mapping.entity_refs:
+            session.add_entity_ref(ref)
+        if mapping.geometry is not None:
+            session.set_geometry(mapping.geometry)
+            session.mark_normalized()
+        if mapping.topology is not None:
+            session.set_topology(mapping.topology)
+
+        refs_by_source = {
+            ref.source_entity_id: ref
+            for ref in mapping.entity_refs
+            if ref.source_entity_id is not None
         }
-        if unsupported:
-            session.record_unsupported(
-                f"IGES file contains {sum(unsupported.values())} entities "
-                f"of unrecognised types: {list(unsupported.keys())}"
+        for issue in mapping.issues:
+            description = (
+                f"IGES DE={issue.de_pointer} type={issue.entity_type} "
+                f"form={issue.form_number}: {issue.reason}"
+            )
+            if "unsupported" in issue.reason.lower():
+                fidelity_class = FidelityClass.UNSUPPORTED
+            elif issue.fatal:
+                fidelity_class = FidelityClass.LOST
+            else:
+                fidelity_class = FidelityClass.PARTIALLY_PRESERVED
+            session.record(
+                fidelity_class,
+                description,
+                source_ref=refs_by_source.get(str(issue.de_pointer)),
             )
 
-        # Geometry requires pythonocc-core
-        session.record_unsupported(
-            "Level 2 geometry normalization requires pythonocc-core "
-            "(not installed). Install via: conda install -c conda-forge pythonocc-core"
+        invalid_fatal_issue = any(
+            issue.fatal and "unsupported" not in issue.reason.lower()
+            for issue in mapping.issues
         )
-        session.set_fidelity_completeness(FidelityReportCompleteness.PARTIAL)
+        unsupported_fatal_issue = any(
+            issue.fatal and "unsupported" in issue.reason.lower()
+            for issue in mapping.issues
+        )
+        if invalid_fatal_issue:
+            session.mark_failed()
+            session.set_fidelity_completeness(FidelityReportCompleteness.PARTIAL)
+        elif unsupported_fatal_issue:
+            session.mark_unsupported()
+            session.set_fidelity_completeness(FidelityReportCompleteness.PARTIAL)
+        elif mapping.issues:
+            session.mark_partial()
+            session.set_fidelity_completeness(FidelityReportCompleteness.PARTIAL)
+        elif mapping.geometry is None:
+            session.record_unsupported(
+                "IGES file contains no supported geometry entities"
+            )
+            session.mark_partial()
+            session.set_fidelity_completeness(FidelityReportCompleteness.PARTIAL)
+        else:
+            session.set_fidelity_completeness(FidelityReportCompleteness.COMPLETE)
         return session.build()

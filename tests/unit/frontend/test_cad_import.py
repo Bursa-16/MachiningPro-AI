@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import tempfile
+from dataclasses import replace
 from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import patch
@@ -28,6 +29,7 @@ from backend.interoperability.orchestrator import (
 )
 from frontend.app import app
 from frontend.cad_upload import MAX_CAD_UPLOAD_BYTES
+from tests.unit.interoperability.iges_fixtures import EntitySpec, make_iges
 
 _STEP_UPLOAD = b"""ISO-10303-21;
 HEADER;
@@ -39,6 +41,33 @@ DATA;
 ENDSEC;
 END-ISO-10303-21;
 """
+
+_IGES_BREP_UPLOAD = make_iges(
+    (
+        EntitySpec(108, "108,0,0,1,0,0,0,0,0,1;"),
+        EntitySpec(110, "110,0,0,0,2,0,0;"),
+        EntitySpec(110, "110,2,0,0,0,2,0;"),
+        EntitySpec(110, "110,0,2,0,0,0,0;"),
+        EntitySpec(502, "502,3,0,0,0,2,0,0,0,2,0;", form_number=1),
+        EntitySpec(
+            504,
+            "504,3,3,9,1,9,2,5,9,2,9,3,7,9,3,9,1;",
+            form_number=1,
+        ),
+        EntitySpec(
+            508,
+            "508,3,0,11,1,1,0,0,11,2,1,0,0,11,3,1,0;",
+            form_number=1,
+        ),
+        EntitySpec(510, "510,1,1,1,13;", form_number=1),
+        EntitySpec(514, "514,1,15,1;", form_number=1),
+        EntitySpec(186, "186,17,1,0;"),
+    )
+)
+
+_IGES_UNSUPPORTED_UPLOAD = make_iges(
+    (EntitySpec(118, "118,1,3,0,0;"),)
+)
 
 
 class _AdvancedDetailsParser(HTMLParser):
@@ -280,7 +309,8 @@ class TestCadImportOrchestration:
         assert resp.status_code == 200
         html = resp.text
         assert "FAILED" in html
-        assert "malformed content" in html
+        assert "rejected during import validation" in html
+        assert "malformed content" not in html
 
     def test_no_traceback_on_exception(self, client: TestClient) -> None:
         with patch(
@@ -388,6 +418,38 @@ class TestCadImportApi:
         forbidden = {"document", "source", "notes", "content_path"}
         assert forbidden.isdisjoint(payload)
 
+    def test_failed_iges_ui_does_not_echo_private_parameter_token(
+        self, client: TestClient
+    ) -> None:
+        private_token = "RAW_PRIVATE_PAYLOAD_ABC"
+        upload = make_iges(
+            (EntitySpec(110, f"110,{private_token},0,0,1,2,3;"),)
+        )
+
+        response = client.post(
+            "/ui/cad-import",
+            files={"file": ("private.igs", upload, "model/iges")},
+        )
+
+        assert response.status_code == 200
+        assert private_token not in response.text
+
+    def test_ui_redacts_untrusted_orchestrator_error_text(
+        self, client: TestClient
+    ) -> None:
+        private_token = "RAW_PRIVATE_PAYLOAD_ABC"
+        failed = replace(_fake_failed_result(), error_message=private_token)
+        with patch("frontend.routers.ui.CadImportOrchestrator") as mock_cls:
+            mock_cls.return_value.import_source.return_value = failed
+            response = client.post(
+                "/ui/cad-import",
+                files={"file": ("private.igs", _IGES_BREP_UPLOAD, "model/iges")},
+            )
+
+        assert response.status_code == 200
+        assert private_token not in response.text
+        assert "rejected during import validation" in response.text
+
     def test_level1_step_parser_is_conditional_without_occt(
         self, client: TestClient
     ) -> None:
@@ -463,6 +525,60 @@ class TestCadImportApi:
         assert hashlib.sha256(_STEP_UPLOAD).hexdigest() in html
         assert "Adapter Status" in html
         assert "Parse Status" in html
+
+    def test_real_iges_upload_reports_canonical_geometry_and_topology_counts(
+        self, client: TestClient
+    ) -> None:
+        response = client.post(
+            "/api/cad-import",
+            files={"file": ("triangle.igs", _IGES_BREP_UPLOAD, "model/iges")},
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["adapter_status"] == "LIVE"
+        assert payload["parse_status"] == "SUCCESS"
+        assert payload["geometry_summary"] == {
+            "curve_count": 3,
+            "surface_count": 1,
+            "has_bounding_box": False,
+            "source_unit": "MM",
+            "tolerance_mm": "0.001",
+        }
+        assert payload["topology_summary"] == {
+            "vertex_count": 3,
+            "edge_count": 3,
+            "loop_count": 1,
+            "face_count": 1,
+            "shell_count": 1,
+            "body_count": 1,
+        }
+
+    def test_unsupported_iges_entity_is_bounded_and_safe_in_diagnostics(
+        self, client: TestClient
+    ) -> None:
+        response = client.post(
+            "/api/cad-import",
+            files={
+                "file": (
+                    "unsupported.iges",
+                    _IGES_UNSUPPORTED_UPLOAD,
+                    "model/iges",
+                )
+            },
+        )
+
+        assert response.status_code == 200
+        payload = response.json()
+        unsupported = payload["diagnostics"]["unsupported_entities"]
+        assert payload["topology_summary"] is None
+        assert len(unsupported) == 1
+        assert "type=118" in unsupported[0]
+        assert "unsupported" in unsupported[0].lower()
+        assert len(unsupported[0]) <= 240
+        serialized = response.text
+        assert "118,1,3,0,0" not in serialized
+        assert tempfile.gettempdir() not in serialized
 
 
 class TestCadImportFailClosed:

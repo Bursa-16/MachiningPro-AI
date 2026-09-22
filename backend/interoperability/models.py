@@ -712,6 +712,8 @@ class CanonicalDocument:
     entity_refs: tuple[CanonicalEntityRef, ...] = ()
     fidelity_report: ConversionFidelityReport | None = None
     provenance: Provenance | None = None
+    geometry: object | None = None
+    topology: object | None = None
     schema_version: str = "4A.0"
     notes: str | None = None
 
@@ -754,6 +756,20 @@ class CanonicalDocument:
             )
         if self.provenance is not None and not isinstance(self.provenance, Provenance):
             raise ValidationError("provenance must be a Provenance or None")
+        if self.geometry is not None:
+            from backend.interoperability.geometry import CanonicalGeometry
+
+            if not isinstance(self.geometry, CanonicalGeometry):
+                raise ValidationError("geometry must be a CanonicalGeometry or None")
+        if self.topology is not None:
+            from backend.interoperability.topology import CanonicalTopology
+
+            if not isinstance(self.topology, CanonicalTopology):
+                raise ValidationError("topology must be a CanonicalTopology or None")
+            if self.geometry is not None and self.topology.geometry is not self.geometry:
+                raise ValidationError(
+                    "topology geometry must reference the document geometry"
+                )
         _set(
             self,
             "schema_version",
