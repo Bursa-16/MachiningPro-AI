@@ -154,6 +154,43 @@ class DrawingNoteCategory(StrEnum):
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
+class DrawingBoundingBox:
+    """A deterministic page-local bounding box measured in PDF points.
+
+    Coordinates use a top-left origin and the ordering ``(x0, top, x1,
+    bottom)``. One PDF point is 1/72 inch. The canonical model stores only
+    these typed values; parser-library objects are never retained.
+    """
+
+    x0: Decimal
+    top: Decimal
+    x1: Decimal
+    bottom: Decimal
+    unit: str = "pt"
+
+    def __post_init__(self) -> None:
+        coordinates = (
+            ("x0", self.x0),
+            ("top", self.top),
+            ("x1", self.x1),
+            ("bottom", self.bottom),
+        )
+        for name, value in coordinates:
+            if not isinstance(value, Decimal):
+                raise TypeError(
+                    f"DrawingBoundingBox.{name} must be Decimal, got {type(value)}"
+                )
+            if not value.is_finite():
+                raise ValueError(f"DrawingBoundingBox.{name} must be finite")
+        if self.x0 > self.x1:
+            raise ValueError("DrawingBoundingBox.x0 must be <= x1")
+        if self.top > self.bottom:
+            raise ValueError("DrawingBoundingBox.top must be <= bottom")
+        if self.unit != "pt":
+            raise ValueError("DrawingBoundingBox.unit must be 'pt'")
+
+
+@dataclass(frozen=True)
 class DrawingSourceLocation:
     """
     Identifies where a piece of information originates within a drawing.
@@ -182,6 +219,10 @@ class DrawingSourceLocation:
         Extraction confidence in [0.0, 1.0]; None if not applicable.
     authority:
         DrawingExtractionAuthority of this item.
+    bounding_box:
+        Optional typed page-local spatial bounds in PDF points.
+    source_object_ids:
+        Ordered identifiers of source objects contributing to this item.
     """
     source_id: str
     sheet_number: int | None = None
@@ -192,6 +233,8 @@ class DrawingSourceLocation:
     adapter_version: str | None = None
     confidence: Decimal | None = None
     authority: DrawingExtractionAuthority = DrawingExtractionAuthority.EXTRACTED
+    bounding_box: DrawingBoundingBox | None = None
+    source_object_ids: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         if not self.source_id or not self.source_id.strip():
@@ -209,6 +252,29 @@ class DrawingSourceLocation:
                 raise ValueError(
                     f"DrawingSourceLocation.confidence must be in [0, 1], got {self.confidence}"
                 )
+        if self.bounding_box is not None and not isinstance(
+            self.bounding_box, DrawingBoundingBox
+        ):
+            raise TypeError(
+                "DrawingSourceLocation.bounding_box must be DrawingBoundingBox or None"
+            )
+        if not isinstance(self.source_object_ids, tuple):
+            raise TypeError("DrawingSourceLocation.source_object_ids must be tuple[str, ...]")
+        seen_object_ids: set[str] = set()
+        for object_id in self.source_object_ids:
+            if not isinstance(object_id, str):
+                raise TypeError(
+                    "DrawingSourceLocation.source_object_ids must contain only strings"
+                )
+            if not object_id.strip():
+                raise ValueError(
+                    "DrawingSourceLocation.source_object_ids must not contain blank IDs"
+                )
+            if object_id in seen_object_ids:
+                raise ValueError(
+                    "DrawingSourceLocation.source_object_ids must contain unique IDs"
+                )
+            seen_object_ids.add(object_id)
 
 
 # ---------------------------------------------------------------------------
@@ -1051,6 +1117,7 @@ __all__ = [
     "DrawingToleranceType",
     "DrawingNoteCategory",
     # Source location / provenance
+    "DrawingBoundingBox",
     "DrawingSourceLocation",
     # Sub-models
     "DrawingTolerance",

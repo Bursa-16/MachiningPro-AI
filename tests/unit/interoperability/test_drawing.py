@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import os
 import sys
+from dataclasses import FrozenInstanceError, asdict
 from decimal import Decimal
 
 import pytest
@@ -39,6 +40,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 from backend.interoperability.drawing import (
     CanonicalDrawing,
+    DrawingBoundingBox,
     DrawingDatumReference,
     DrawingDimension,
     DrawingDimensionType,
@@ -102,6 +104,101 @@ def _valid_result(drawing: CanonicalDrawing | None = None) -> DrawingIngestionRe
 
 
 # ---------------------------------------------------------------------------
+# DrawingBoundingBox
+# ---------------------------------------------------------------------------
+
+class TestDrawingBoundingBox:
+
+    def test_valid_pdf_point_box(self):
+        box = DrawingBoundingBox(
+            x0=Decimal("10.25"),
+            top=Decimal("20.5"),
+            x1=Decimal("110.75"),
+            bottom=Decimal("220.125"),
+        )
+
+        assert box == DrawingBoundingBox(
+            x0=Decimal("10.25"),
+            top=Decimal("20.5"),
+            x1=Decimal("110.75"),
+            bottom=Decimal("220.125"),
+            unit="pt",
+        )
+        assert box.unit == "pt"
+
+    @pytest.mark.parametrize("field_name", ("x0", "top", "x1", "bottom"))
+    def test_non_decimal_coordinate_rejected(self, field_name):
+        coordinates = {
+            "x0": Decimal("10"),
+            "top": Decimal("20"),
+            "x1": Decimal("30"),
+            "bottom": Decimal("40"),
+        }
+        coordinates[field_name] = 10
+
+        with pytest.raises(TypeError, match=field_name):
+            DrawingBoundingBox(**coordinates)
+
+    @pytest.mark.parametrize("invalid_value", ("NaN", "Infinity", "-Infinity"))
+    def test_non_finite_coordinate_rejected(self, invalid_value):
+        with pytest.raises(ValueError, match="finite"):
+            DrawingBoundingBox(
+                x0=Decimal(invalid_value),
+                top=Decimal("20"),
+                x1=Decimal("30"),
+                bottom=Decimal("40"),
+            )
+
+    @pytest.mark.parametrize(
+        ("coordinates", "message"),
+        (
+            (
+                {
+                    "x0": Decimal("31"),
+                    "top": Decimal("20"),
+                    "x1": Decimal("30"),
+                    "bottom": Decimal("40"),
+                },
+                "x0",
+            ),
+            (
+                {
+                    "x0": Decimal("10"),
+                    "top": Decimal("41"),
+                    "x1": Decimal("30"),
+                    "bottom": Decimal("40"),
+                },
+                "top",
+            ),
+        ),
+    )
+    def test_inverted_coordinate_range_rejected(self, coordinates, message):
+        with pytest.raises(ValueError, match=message):
+            DrawingBoundingBox(**coordinates)
+
+    def test_non_point_unit_rejected(self):
+        with pytest.raises(ValueError, match="unit"):
+            DrawingBoundingBox(
+                x0=Decimal("10"),
+                top=Decimal("20"),
+                x1=Decimal("30"),
+                bottom=Decimal("40"),
+                unit="mm",
+            )
+
+    def test_box_is_immutable(self):
+        box = DrawingBoundingBox(
+            x0=Decimal("10"),
+            top=Decimal("20"),
+            x1=Decimal("30"),
+            bottom=Decimal("40"),
+        )
+
+        with pytest.raises(FrozenInstanceError):
+            box.x0 = Decimal("0")  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
 # DrawingSourceLocation
 # ---------------------------------------------------------------------------
 
@@ -113,6 +210,8 @@ class TestDrawingSourceLocation:
         assert loc.sheet_number is None
         assert loc.confidence is None
         assert loc.authority is DrawingExtractionAuthority.EXTRACTED
+        assert loc.bounding_box is None
+        assert loc.source_object_ids == ()
 
     def test_full_construction(self):
         loc = DrawingSourceLocation(
@@ -180,6 +279,98 @@ class TestDrawingSourceLocation:
         loc1 = DrawingSourceLocation(source_id="upload::a.pdf", sheet_number=1)
         loc2 = DrawingSourceLocation(source_id="upload::b.pdf", sheet_number=1)
         assert loc1 != loc2
+
+    def test_spatial_and_object_provenance_retained(self):
+        box = DrawingBoundingBox(
+            x0=Decimal("10.25"),
+            top=Decimal("20.5"),
+            x1=Decimal("110.75"),
+            bottom=Decimal("220.125"),
+        )
+
+        loc = DrawingSourceLocation(
+            source_id="upload::test.pdf",
+            sheet_number=2,
+            page_number=3,
+            bounding_box=box,
+            source_object_ids=("pdf-p0003-text-a1-0001", "pdf-p0003-line-b2-0001"),
+        )
+
+        assert loc.page_number == 3
+        assert loc.bounding_box is box
+        assert loc.source_object_ids == (
+            "pdf-p0003-text-a1-0001",
+            "pdf-p0003-line-b2-0001",
+        )
+
+    def test_raw_bounding_box_mapping_rejected(self):
+        with pytest.raises(TypeError, match="bounding_box"):
+            DrawingSourceLocation(
+                source_id="upload::test.pdf",
+                bounding_box={
+                    "x0": "10",
+                    "top": "20",
+                    "x1": "30",
+                    "bottom": "40",
+                },  # type: ignore[arg-type]
+            )
+
+    def test_mutable_source_object_ids_rejected(self):
+        with pytest.raises(TypeError, match="source_object_ids"):
+            DrawingSourceLocation(
+                source_id="upload::test.pdf",
+                source_object_ids=["pdf-p0001-text-a1-0001"],  # type: ignore[arg-type]
+            )
+
+    @pytest.mark.parametrize(
+        ("source_object_ids", "error_type"),
+        (
+            (("",), ValueError),
+            (("   ",), ValueError),
+            (("object-1", "object-1"), ValueError),
+            (("object-1", 2), TypeError),
+        ),
+    )
+    def test_malformed_source_object_ids_rejected(self, source_object_ids, error_type):
+        with pytest.raises(error_type, match="source_object_ids"):
+            DrawingSourceLocation(
+                source_id="upload::test.pdf",
+                source_object_ids=source_object_ids,
+            )
+
+    def test_spatial_provenance_serializes_deterministically(self):
+        loc = DrawingSourceLocation(
+            source_id="upload::test.pdf",
+            sheet_number=2,
+            page_number=3,
+            bounding_box=DrawingBoundingBox(
+                x0=Decimal("10.25"),
+                top=Decimal("20.5"),
+                x1=Decimal("110.75"),
+                bottom=Decimal("220.125"),
+            ),
+            source_object_ids=("text-1", "line-1"),
+        )
+
+        assert asdict(loc) == {
+            "source_id": "upload::test.pdf",
+            "sheet_number": 2,
+            "page_number": 3,
+            "view_id": None,
+            "original_text": None,
+            "adapter_id": None,
+            "adapter_version": None,
+            "confidence": None,
+            "authority": DrawingExtractionAuthority.EXTRACTED,
+            "bounding_box": {
+                "x0": Decimal("10.25"),
+                "top": Decimal("20.5"),
+                "x1": Decimal("110.75"),
+                "bottom": Decimal("220.125"),
+                "unit": "pt",
+            },
+            "source_object_ids": ("text-1", "line-1"),
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -1080,15 +1271,24 @@ class TestProvenanceIntegration:
     """
 
     def test_dimension_carries_source_location(self):
+        box = DrawingBoundingBox(
+            x0=Decimal("120.25"),
+            top=Decimal("80.5"),
+            x1=Decimal("168.75"),
+            bottom=Decimal("96.25"),
+        )
         loc = DrawingSourceLocation(
             source_id="upload::part.pdf",
             sheet_number=2,
+            page_number=2,
             view_id="v-top",
             original_text="Ø50 ±0.05",
             adapter_id="pdf-adapter",
             adapter_version="1.0.0",
             confidence=Decimal("0.95"),
             authority=DrawingExtractionAuthority.EXTRACTED,
+            bounding_box=box,
+            source_object_ids=("pdf-p0002-text-a1-0001", "pdf-p0002-line-b2-0001"),
         )
         dim = DrawingDimension(
             dimension_id="d-50",
@@ -1102,6 +1302,11 @@ class TestProvenanceIntegration:
         assert dim.source_location.view_id == "v-top"
         assert dim.source_location.confidence == Decimal("0.95")
         assert dim.source_location.authority is DrawingExtractionAuthority.EXTRACTED
+        assert dim.source_location.bounding_box is box
+        assert dim.source_location.source_object_ids == (
+            "pdf-p0002-text-a1-0001",
+            "pdf-p0002-line-b2-0001",
+        )
 
     def test_drawing_source_id_matches_result_source_id(self):
         source_id = "upload::flange-4711.pdf"
