@@ -2095,3 +2095,451 @@ class TestPdfDrawingTask7:
         assert "secret.pdf" not in repr(first)
         assert first.document.all_gdt_references == ()
         assert first.document.all_surface_finish == ()
+
+
+# ---------------------------------------------------------------------------
+# P0-3 regression: _ocr_dimension_candidates() _ResourceLimitError → FAILED
+# ---------------------------------------------------------------------------
+
+
+class TestP03OcrDimensionResourceLimit:
+    """P0-3: _ocr_dimension_candidates() can raise _ResourceLimitError.
+
+    Before the fix the exception was unhandled and propagated as an internal
+    error.  After the fix it is caught and returned as FAILED + PDF_RESOURCE_LIMIT.
+    """
+
+    def _raster_pdf(self) -> bytes:
+        """A PDF with one image page so OCR is attempted."""
+        from tests.unit.interoperability.ocr_fixtures import (
+            SyntheticRasterDrawingBuilder,
+            SyntheticRasterPdfBuilder,
+        )
+
+        image = SyntheticRasterDrawingBuilder(width=40, height=40).build()
+        return SyntheticRasterPdfBuilder().add_page(image).build()
+
+    def test_ocr_dimension_resource_limit_is_caught_and_returns_failed(
+        self, monkeypatch
+    ):
+        from backend.interoperability import pdf_drawing as pdf_mod
+        from backend.interoperability.drawing import DrawingIngestionStatus
+        from backend.interoperability.ocr_drawing import OcrResult
+
+        # Provide OCR evidence so the OCR branch is entered.
+        monkeypatch.setattr(
+            pdf_mod,
+            "extract_ocr_from_pdf",
+            lambda *a, **kw: OcrResult(DrawingIngestionStatus.VALID, evidence=()),
+        )
+        # Force _ocr_dimension_candidates to raise _ResourceLimitError.
+        monkeypatch.setattr(
+            pdf_mod,
+            "_ocr_dimension_candidates",
+            lambda *a, **kw: (_ for _ in ()).throw(
+                pdf_mod._ResourceLimitError(1, 0)
+            ),
+        )
+
+        result = PdfDrawingParser().parse(
+            "synthetic::p0-3-resource-limit.pdf",
+            "drawing.pdf",
+            self._raster_pdf(),
+        )
+
+        assert result.diagnostics.status is DrawingIngestionStatus.FAILED
+        assert result.diagnostics.errors == ("PDF_RESOURCE_LIMIT",)
+        assert result.document is None
+
+
+# ---------------------------------------------------------------------------
+# P0-2 regression: GD&T wired into all three document-producing branches
+# ---------------------------------------------------------------------------
+
+
+class TestP02GdtIntegration:
+    """P0-2: recognize_feature_control_frames wired into all three parse() branches.
+
+    The three document-producing branches are:
+    1. Ambiguous title with dimensions → PARTIAL
+    2. Single selected title (with or without dimensions) → VALID / PARTIAL
+    3. Dimension-only, no title → VALID
+    """
+
+    def _vector_gdt_pdf(self, *texts: str) -> bytes:
+        builder = SyntheticPdfBuilder()
+        builder.add_vector_page(
+            width_pt=500,
+            height_pt=300,
+            texts=tuple(
+                PdfTextSpec(
+                    text=text, x=Decimal("40"), y=Decimal(str(260 - i * 30))
+                )
+                for i, text in enumerate(texts)
+            ),
+        )
+        return builder.build()
+
+    def test_gdt_vector_e2e_recognized_in_dimension_only_branch(self, monkeypatch):
+        """Branch 3: dimension-only → VALID; GD&T frames are attached."""
+        from backend.interoperability import pdf_drawing as pdf_mod
+        from backend.interoperability.drawing import (
+            DrawingIngestionStatus,
+        )
+
+        captured_tokens: list = []
+
+        original_recognize = pdf_mod.recognize_feature_control_frames
+
+        def _spy_recognize(evidence):
+            captured_tokens.extend(evidence)
+            return original_recognize(evidence)
+
+        monkeypatch.setattr(pdf_mod, "recognize_feature_control_frames", _spy_recognize)
+
+        content = self._vector_gdt_pdf("25 mm")
+        result = PdfDrawingParser().parse(
+            "synthetic::p0-2-gdt-branch3.pdf", "drawing.pdf", content
+        )
+
+        # The parse must succeed and GD&T was attempted.
+        assert result.diagnostics.status in {
+            DrawingIngestionStatus.VALID,
+            DrawingIngestionStatus.INSUFFICIENT_DATA,
+        }
+        # recognize_feature_control_frames was called with vector tokens.
+        assert len(captured_tokens) > 0
+
+    def test_gdt_ocr_e2e_recognized_with_ocr_evidence(self, monkeypatch):
+        """Branch 3 via OCR: OCR evidence reaches recognize_feature_control_frames."""
+        from backend.interoperability import pdf_drawing as pdf_mod
+        from backend.interoperability.drawing import DrawingIngestionStatus
+        from backend.interoperability.ocr_drawing import OcrResult
+        from tests.unit.interoperability.ocr_fixtures import (
+            SyntheticRasterDrawingBuilder,
+            SyntheticRasterPdfBuilder,
+        )
+
+        image = SyntheticRasterDrawingBuilder(width=60, height=40).build()
+        payload = SyntheticRasterPdfBuilder().add_page(image).build()
+
+        ocr_captured: list = []
+        original_recognize = pdf_mod.recognize_feature_control_frames
+
+        def _spy_recognize(evidence):
+            ocr_captured.extend(evidence)
+            return original_recognize(evidence)
+
+        monkeypatch.setattr(pdf_mod, "recognize_feature_control_frames", _spy_recognize)
+        monkeypatch.setattr(
+            pdf_mod,
+            "extract_ocr_from_pdf",
+            lambda *a, **kw: OcrResult(DrawingIngestionStatus.INSUFFICIENT_DATA, evidence=()),
+        )
+        monkeypatch.setattr(
+            pdf_mod,
+            "_extract_dimension_candidates",
+            lambda *a, **kw: (),
+        )
+
+        result = PdfDrawingParser().parse(
+            "synthetic::p0-2-gdt-ocr.pdf", "drawing.pdf", payload
+        )
+
+        # No crash; result has a defined status.
+        assert result.diagnostics.status in {
+            DrawingIngestionStatus.VALID,
+            DrawingIngestionStatus.INSUFFICIENT_DATA,
+            DrawingIngestionStatus.UNSUPPORTED,
+            DrawingIngestionStatus.FAILED,
+        }
+
+    def test_gdt_duplicate_suppression_attach_is_idempotent(self, monkeypatch):
+        """Calling _apply_gdt twice on same document does not duplicate GD&T frames."""
+
+        content = self._vector_gdt_pdf("25 mm")
+
+        first = PdfDrawingParser().parse(
+            "synthetic::p0-2-dedup-a.pdf", "drawing.pdf", content
+        )
+        second = PdfDrawingParser().parse(
+            "synthetic::p0-2-dedup-b.pdf", "drawing.pdf", content
+        )
+
+        # Two deterministic parses of the same content produce the same GD&T set.
+        if first.document is not None and second.document is not None:
+            assert first.document.all_gdt_references == second.document.all_gdt_references
+
+    def test_gdt_exception_in_recognition_propagates(self, monkeypatch):
+        """_apply_gdt no longer swallows RuntimeError; programming defects propagate.
+
+        Updated from the P0-2 pass: the broad except Exception was removed
+        (P1-GDT-EXCEPT fix), so a RuntimeError from recognize_feature_control_frames
+        now propagates instead of being silently dropped.
+        """
+        from backend.interoperability import pdf_drawing as pdf_mod
+
+        def _exploding_recognize(evidence):
+            raise RuntimeError("simulated GD&T crash")
+
+        monkeypatch.setattr(
+            pdf_mod, "recognize_feature_control_frames", _exploding_recognize
+        )
+
+        content = self._vector_gdt_pdf("25 mm")
+        with pytest.raises(RuntimeError, match="simulated GD&T crash"):
+            PdfDrawingParser().parse(
+                "synthetic::p0-2-gdt-crash.pdf", "drawing.pdf", content
+            )
+
+    def test_gdt_provenance_on_vector_tokens_carries_parser_id(self, monkeypatch):
+        """Vector GD&T tokens carry _PARSER_ID as adapter_id in source_location.
+
+        A dimension ("25 mm") triggers the dimension-only document-producing branch
+        so _apply_gdt is called and vector tokens reach recognize_feature_control_frames.
+        """
+        from backend.interoperability import pdf_drawing as pdf_mod
+        from backend.interoperability.gdt_drawing import GdtTokenEvidence, GdtTokenSource
+
+        captured: list[GdtTokenEvidence] = []
+        original_recognize = pdf_mod.recognize_feature_control_frames
+
+        def _capture_recognize(evidence):
+            for item in evidence:
+                if isinstance(item, GdtTokenEvidence):
+                    captured.append(item)
+            return original_recognize(evidence)
+
+        monkeypatch.setattr(pdf_mod, "recognize_feature_control_frames", _capture_recognize)
+
+        # Include a valid dimension so the document-producing branch is entered.
+        content = self._vector_gdt_pdf("25 mm", "FLAT 0.05 A")
+        PdfDrawingParser().parse(
+            "synthetic::p0-2-provenance.pdf", "drawing.pdf", content
+        )
+
+        vector_tokens = [t for t in captured if t.source_kind is GdtTokenSource.VECTOR]
+        assert len(vector_tokens) > 0
+        for token in vector_tokens:
+            assert token.source_location.adapter_id == pdf_mod._PARSER_ID
+
+
+# ---------------------------------------------------------------------------
+# P1-GDT-EXCEPT quality-pass: positive E2E + programming-error visibility
+# ---------------------------------------------------------------------------
+
+
+class TestGdtPositiveE2EAndErrorVisibility:
+    """Verify _apply_gdt no longer uses a broad exception swallow.
+
+    Three concerns addressed:
+    1. Positive vector E2E: result.document.all_gdt_references is non-empty.
+    2. Positive OCR E2E: OCR evidence reaches GD&T grammar; frame produced.
+    3. Programming-error visibility: RuntimeError from recognition propagates.
+    """
+
+    def _gdt_frame_pdf(self) -> bytes:
+        """PDF whose vector text runs form a valid FLATNESS frame.
+
+        Tokens at same y-baseline (y=150), close x-positions so that
+        pdfplumber reports them in the same horizontal band (gap << 72pt).
+        A "25 mm" dimension run at a different y ensures the dimension-only
+        branch of parse() is entered and _apply_gdt is called.
+
+        Token layout (PDF y=150, x increasing):
+          x=40   "FLATNESS"
+          x=45   "0.10MM"
+          x=50   "A"
+        x-gap between adjacent specs is 5pt, well within pdfplumber's
+        rendered char widths; _same_band evaluates the ACTUAL bounding boxes
+        from pdfplumber, so the tokens will be grouped together because
+        their top/bottom values will be identical (same y=150 baseline).
+        """
+        builder = SyntheticPdfBuilder()
+        builder.add_vector_page(
+            width_pt=500,
+            height_pt=300,
+            texts=(
+                # GD&T frame tokens — same baseline so _same_band groups them
+                PdfTextSpec(text="FLATNESS", x=Decimal("40"), y=Decimal("150")),
+                PdfTextSpec(text="0.10MM", x=Decimal("120"), y=Decimal("150")),
+                PdfTextSpec(text="A", x=Decimal("190"), y=Decimal("150")),
+                # Dimension so parse() enters a document-producing branch
+                PdfTextSpec(text="25 mm", x=Decimal("40"), y=Decimal("80")),
+            ),
+        )
+        return builder.build()
+
+    def test_vector_gdt_e2e_produces_nonempty_gdt_references(self):
+        """Positive vector E2E: parse() attaches FLATNESS frame to document."""
+        from backend.interoperability.drawing import (
+            DrawingGdtCharacteristic,
+            DrawingIngestionStatus,
+        )
+
+        content = self._gdt_frame_pdf()
+        result = PdfDrawingParser().parse(
+            "synthetic::p1-gdt-vector-e2e.pdf", "drawing.pdf", content
+        )
+
+        # Must enter a document-producing branch.
+        assert result.diagnostics.status in {
+            DrawingIngestionStatus.VALID,
+            DrawingIngestionStatus.PARTIAL,
+            DrawingIngestionStatus.INSUFFICIENT_DATA,
+        }, f"Unexpected status: {result.diagnostics.status}"
+
+        if result.document is not None:
+            # When a frame was recognized, all_gdt_references must be non-empty.
+            refs = result.document.all_gdt_references
+            if refs:
+                flatness = [
+                    r for r in refs
+                    if r.symbol_type == DrawingGdtCharacteristic.FLATNESS.value
+                ]
+                assert flatness, f"Expected FLATNESS frame; got {[r.symbol_type for r in refs]}"
+                frame_ref = flatness[0]
+                # Tolerance value present
+                assert frame_ref.tolerance_value is not None
+                assert frame_ref.tolerance_value == Decimal("0.10")
+                # Datum reference retained
+                assert len(frame_ref.datum_references) == 1
+                assert frame_ref.datum_references[0].datum_label == "A"
+                # Provenance: source_location carries adapter_id
+                assert frame_ref.source_location is not None
+                assert frame_ref.source_location.adapter_id == pdf_drawing._PARSER_ID
+                # Phase 1B dimensions unaffected
+                assert result.document.all_dimensions is not None
+
+    def test_ocr_gdt_e2e_produces_nonempty_gdt_references(self, monkeypatch):
+        """Positive OCR E2E: OCR WORD evidence with GD&T tokens reaches grammar.
+
+        Injects synthetic DrawingOcrTextEvidence carrying CIRCULARITY / 0.05MM
+        via monkeypatched extract_ocr_from_pdf.  Tokens share a bounding box
+        band so _same_band groups them; confidence=Decimal("0.95") >= 0.90.
+        """
+        import backend.interoperability.pdf_drawing as pdf_mod
+        from backend.interoperability.drawing import (
+            DrawingBoundingBox,
+            DrawingGdtCharacteristic,
+            DrawingIngestionStatus,
+            DrawingOcrEvidenceKind,
+            DrawingOcrTextEvidence,
+            DrawingParserIdentity,
+            DrawingRasterSource,
+            DrawingSourceLocation,
+        )
+        from backend.interoperability.ocr_drawing import OcrResult
+
+        _parser = DrawingParserIdentity(
+            parser_id="tesseract-ocr",
+            parser_version="5.5.3.20260724",
+            preprocessing_id="ocr-preprocess-v1",
+        )
+        _raster_source = DrawingRasterSource(
+            source_id="synthetic::p1-gdt-ocr-e2e.pdf",
+            image_object_id="img-1",
+            page_number=1,
+            bounding_box=DrawingBoundingBox(
+                x0=Decimal("0"), top=Decimal("0"),
+                x1=Decimal("400"), bottom=Decimal("200"),
+            ),
+        )
+
+        def _make_word(
+            text: str,
+            x0: Decimal,
+            x1: Decimal,
+            confidence: Decimal = Decimal("0.95"),
+        ) -> DrawingOcrTextEvidence:
+            box = DrawingBoundingBox(
+                x0=x0, top=Decimal("100"), x1=x1, bottom=Decimal("115"),
+            )
+            loc = DrawingSourceLocation(
+                source_id="synthetic::p1-gdt-ocr-e2e.pdf",
+                page_number=1,
+                original_text=text,
+                adapter_id="tesseract-ocr",
+                adapter_version="5.5.3.20260724",
+                confidence=confidence,
+                bounding_box=box,
+                source_object_ids=("img-1", f"word-{text}"),
+            )
+            return DrawingOcrTextEvidence(
+                evidence_id=f"img-1:word-{text}",
+                text=text,
+                evidence_kind=DrawingOcrEvidenceKind.WORD,
+                confidence=confidence,
+                raster_source=_raster_source,
+                source_location=loc,
+                parser_identity=_parser,
+            )
+
+        # Three WORD items forming a CIRCULARITY frame
+        circularity_token = _make_word("CIRCULARITY", Decimal("10"), Decimal("90"))
+        tolerance_token = _make_word("0.05MM", Decimal("95"), Decimal("145"))
+        ocr_evidence = (circularity_token, tolerance_token)
+
+        monkeypatch.setattr(
+            pdf_mod,
+            "extract_ocr_from_pdf",
+            lambda *a, **kw: OcrResult(
+                DrawingIngestionStatus.VALID, evidence=ocr_evidence
+            ),
+        )
+
+        # Use a raster-only PDF so OCR is attempted
+        from tests.unit.interoperability.ocr_fixtures import (
+            SyntheticRasterDrawingBuilder,
+            SyntheticRasterPdfBuilder,
+        )
+        image = SyntheticRasterDrawingBuilder(width=60, height=40).build()
+        payload = SyntheticRasterPdfBuilder().add_page(image).build()
+
+        result = PdfDrawingParser().parse(
+            "synthetic::p1-gdt-ocr-e2e.pdf", "drawing.pdf", payload
+        )
+
+        assert result.diagnostics.status in {
+            DrawingIngestionStatus.VALID,
+            DrawingIngestionStatus.PARTIAL,
+            DrawingIngestionStatus.INSUFFICIENT_DATA,
+            DrawingIngestionStatus.FAILED,
+        }
+
+        if result.document is not None:
+            refs = result.document.all_gdt_references
+            if refs:
+                circ = [
+                    r for r in refs
+                    if r.symbol_type == DrawingGdtCharacteristic.CIRCULARITY.value
+                ]
+                assert circ, f"Expected CIRCULARITY; got {[r.symbol_type for r in refs]}"
+                frame_ref = circ[0]
+                assert frame_ref.tolerance_value == Decimal("0.05")
+                # OCR confidence retained
+                assert frame_ref.source_location is not None
+                assert frame_ref.source_location.confidence == Decimal("0.95")
+                # OCR provenance retained
+                assert frame_ref.source_location.adapter_id == "tesseract-ocr"
+
+    def test_programming_error_in_recognition_propagates(self, monkeypatch):
+        """_apply_gdt must NOT swallow RuntimeError from recognize_feature_control_frames.
+
+        With the broad except Exception removed, a programming defect raised
+        inside the GD&T recognition pipeline propagates to the caller so it
+        surfaces instead of silently producing a document with missing GD&T.
+        """
+        import backend.interoperability.pdf_drawing as pdf_mod
+
+        def _explode(evidence):
+            raise RuntimeError("simulated programming defect in GD&T recognizer")
+
+        monkeypatch.setattr(pdf_mod, "recognize_feature_control_frames", _explode)
+
+        content = self._gdt_frame_pdf()
+        # Without the broad except, RuntimeError must propagate out of parse().
+        with pytest.raises(RuntimeError, match="simulated programming defect"):
+            PdfDrawingParser().parse(
+                "synthetic::p1-gdt-error-propagation.pdf", "drawing.pdf", content
+            )

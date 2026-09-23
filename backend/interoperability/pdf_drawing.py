@@ -32,7 +32,9 @@ from backend.interoperability.drawing import (
     DrawingIngestionResult,
     DrawingIngestionStatus,
     DrawingMaterialNote,
+    DrawingOcrTextEvidence,
     DrawingParser,
+    DrawingParserIdentity,
     DrawingRevision,
     DrawingSheet,
     DrawingSourceLocation,
@@ -42,6 +44,13 @@ from backend.interoperability.drawing import (
     DrawingView,
     DrawingViewType,
 )
+from backend.interoperability.gdt_drawing import (
+    GdtTokenEvidence,
+    GdtTokenSource,
+    attach_feature_control_frames,
+    recognize_feature_control_frames,
+)
+from backend.interoperability.ocr_drawing import extract_ocr_from_pdf
 
 _PARSER_ID = "machiningpro.vector-pdf"
 _PARSER_VERSION = "1.0.0"
@@ -269,6 +278,9 @@ class _TitleFieldEvidence:
     bounding_box: DrawingBoundingBox
     source_object_ids: tuple[str, ...]
     original_text: str
+    confidence: Decimal | None = None
+    adapter_id: str | None = None
+    adapter_version: str | None = None
 
     def __post_init__(self) -> None:
         if self.field_key not in _TITLE_FIELD_KEYS:
@@ -370,6 +382,9 @@ class _ToleranceCandidate:
     original_text: str
     bounding_box: DrawingBoundingBox
     source_object_ids: tuple[str, ...]
+    confidence: Decimal | None = None
+    adapter_id: str | None = None
+    adapter_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -382,6 +397,9 @@ class _DimensionCandidate:
     bounding_box: DrawingBoundingBox
     source_object_ids: tuple[str, ...]
     tolerance: _ToleranceCandidate | None = None
+    confidence: Decimal | None = None
+    adapter_id: str | None = None
+    adapter_version: str | None = None
 
 
 class _ResourceLimitError(Exception):
@@ -715,6 +733,12 @@ def _resolve_title_field_evidence(
             bounding_box=_union_box(tuple(item.bounding_box for item in ordered)),
             source_object_ids=object_ids,
             original_text=ordered[0].original_text,
+            confidence=min(
+                (item.confidence for item in ordered if item.confidence is not None),
+                default=None,
+            ),
+            adapter_id=ordered[0].adapter_id,
+            adapter_version=ordered[0].adapter_version,
         ),
         False,
     )
@@ -1657,6 +1681,9 @@ def _canonical_dimension_pair(
         bounding_box=candidate.bounding_box,
         source_object_ids=candidate.source_object_ids,
         original_text=candidate.original_text,
+        confidence=candidate.confidence,
+        adapter_id=candidate.adapter_id,
+        adapter_version=candidate.adapter_version,
     )
     tolerance = None
     if candidate.tolerance is not None:
@@ -1673,6 +1700,9 @@ def _canonical_dimension_pair(
                 bounding_box=evidence.bounding_box,
                 source_object_ids=evidence.source_object_ids,
                 original_text=evidence.original_text,
+                confidence=evidence.confidence,
+                adapter_id=evidence.adapter_id,
+                adapter_version=evidence.adapter_version,
             ),
         )
     dimension = DrawingDimension(
@@ -1997,6 +2027,481 @@ def _extract_title_candidates(
     )
 
 
+def _ocr_evidence_candidates(
+    evidence: tuple[Any, ...],
+) -> tuple[Any, ...]:
+    """Select one deterministic OCR granularity per text/box for semantics."""
+    selected: dict[tuple[int, str, DrawingBoundingBox], Any] = {}
+    priority = {"LINE": 0, "BLOCK": 1, "WORD": 2}
+    for item in evidence:
+        if getattr(item, "confidence", Decimal("0")) < Decimal("0.80"):
+            continue
+        box = item.source_location.bounding_box
+        if box is None:
+            continue
+        key = (item.raster_source.page_number, item.text, box)
+        current = selected.get(key)
+        if current is None or priority[item.evidence_kind.value] < priority[
+            current.evidence_kind.value
+        ]:
+            selected[key] = item
+    return tuple(
+        sorted(
+            selected.values(),
+            key=lambda item: (
+                item.raster_source.page_number,
+                item.source_location.bounding_box.top,
+                item.source_location.bounding_box.x0,
+                item.text,
+                item.evidence_id,
+            ),
+        )
+    )
+
+
+def _ocr_title_candidates(
+    evidence: tuple[Any, ...],
+    limits: PdfDrawingLimits,
+) -> tuple[_AnalyzedTitleCandidate, ...]:
+    items = _ocr_evidence_candidates(evidence)
+    by_page: dict[int, list[Any]] = {}
+    for item in items:
+        by_page.setdefault(item.raster_source.page_number, []).append(item)
+    analyzed: list[_AnalyzedTitleCandidate] = []
+    for page_number, page_items in sorted(by_page.items()):
+        field_items: list[_TitleFieldEvidence] = []
+        labels: list[tuple[Any, str]] = []
+        for item in page_items:
+            inline = _inline_title_pair(item.text)
+            if inline is not None:
+                field_key, value = inline
+                field_items.append(_ocr_title_field(item, field_key, value, 1))
+                continue
+            field_key = _title_field_key(item.text)
+            if field_key is not None:
+                labels.append((item, field_key))
+        for label, field_key in labels:
+            candidates = []
+            label_box = label.source_location.bounding_box
+            for value in page_items:
+                if value is label or _title_field_key(value.text) is not None:
+                    continue
+                value_box = value.source_location.bounding_box
+                if value_box is None or label_box is None:
+                    continue
+                same_line = (
+                    abs(value_box.top - label_box.top) <= _TEXT_LINE_BASELINE_TOLERANCE_PT
+                    and value_box.x0 > label_box.x1
+                    and value_box.x0 - label_box.x1 <= _TITLE_MAX_PAIR_DISTANCE_PT
+                )
+                below = (
+                    abs(value_box.top - label_box.bottom) <= _TITLE_MAX_PAIR_DISTANCE_PT
+                    and value_box.x1 > label_box.x0
+                    and value_box.x0 < label_box.x1
+                )
+                if same_line or below:
+                    canonical = _normalize_title_value(field_key, value.text)
+                    if canonical is not None:
+                        candidates.append((2 if same_line else 3, value, canonical))
+            if len(candidates) == 1:
+                rank, value, canonical = candidates[0]
+                field_items.append(
+                    _ocr_title_field(
+                        label,
+                        field_key,
+                        canonical,
+                        rank,
+                        value,
+                    )
+                )
+        if len(field_items) < _TITLE_MIN_PAIR_COUNT:
+            continue
+        resolved: list[_TitleFieldEvidence] = []
+        conflict = False
+        order = {
+            object_id: index
+            for index, object_id in enumerate(
+                sorted(
+                    object_id
+                    for item in field_items
+                    for object_id in item.source_object_ids
+                )
+            )
+        }
+        for field_key in _TITLE_FIELD_ORDER:
+            selected, conflicted = _resolve_title_field_evidence(
+                tuple(item for item in field_items if item.field_key == field_key),
+                order,
+            )
+            conflict = conflict or conflicted
+            if selected is not None:
+                resolved.append(selected)
+        if len(resolved) < _TITLE_MIN_PAIR_COUNT:
+            continue
+        box = _union_box(tuple(item.bounding_box for item in resolved))
+        source_ids = tuple(
+            sorted(
+                {
+                    object_id
+                    for item in resolved
+                    for object_id in item.source_object_ids
+                }
+            )
+        )
+        candidate = _TitleBlockCandidate(
+            page_number=page_number,
+            bounding_box=box,
+            source_object_ids=source_ids,
+            score=(
+                4
+                + 2
+                + min(18, 3 * len({item.field_key for item in resolved}))
+                + min(12, 2 * len(resolved))
+            ),
+            recognized_field_keys=tuple(
+                key for key in _TITLE_FIELD_ORDER if any(item.field_key == key for item in resolved)
+            ),
+            field_evidence=tuple(resolved),
+        )
+        if candidate.score >= _TITLE_MIN_SCORE:
+            analyzed.append(_AnalyzedTitleCandidate(candidate, conflict))
+    return tuple(
+        sorted(
+            analyzed,
+            key=lambda item: (
+                -item.candidate.score,
+                item.candidate.page_number,
+                item.candidate.bounding_box.top,
+                item.candidate.bounding_box.x0,
+                item.candidate.source_object_ids,
+            ),
+        )[: limits.max_title_block_candidates]
+    )
+
+
+def _ocr_title_field(
+    label: Any,
+    field_key: str,
+    value: str,
+    rank: int,
+    value_item: Any | None = None,
+) -> _TitleFieldEvidence:
+    items = (label,) if value_item is None else (label, value_item)
+    boxes = tuple(item.source_location.bounding_box for item in items)
+    object_ids = tuple(
+        object_id
+        for item in items
+        for object_id in item.source_location.source_object_ids
+    )
+    return _TitleFieldEvidence(
+        field_key=field_key,
+        value=value,
+        pairing_rank=rank,
+        page_number=label.raster_source.page_number,
+        bounding_box=_union_box(boxes),
+        source_object_ids=tuple(dict.fromkeys(object_ids)),
+        original_text=value,
+        confidence=min(item.confidence for item in items),
+        adapter_id="tesseract-ocr",
+        adapter_version="5.5.3.20260724",
+    )
+
+
+def _ocr_dimension_candidates(
+    evidence: tuple[Any, ...],
+    title_candidates: tuple[_AnalyzedTitleCandidate, ...],
+    limits: PdfDrawingLimits,
+) -> tuple[_DimensionCandidate, ...]:
+    fallback_unit = _dimension_unit_fallback(title_candidates)
+    candidates: list[_DimensionCandidate] = []
+    for item in _ocr_evidence_candidates(evidence):
+        text = _dimension_text_copy(item.text.strip())
+        if not text or len(text) > _DIMENSION_MAX_TEXT:
+            continue
+        box = item.source_location.bounding_box
+        if box is None:
+            continue
+        if any(
+            candidate.candidate.page_number == item.raster_source.page_number
+            and _box_center_is_inside(box, candidate.candidate.bounding_box)
+            for candidate in title_candidates
+        ):
+            continue
+        tolerance_match = _DIMENSION_TOLERANCE_PATTERN.fullmatch(text)
+        token_match = _DIMENSION_TOKEN_PATTERN.fullmatch(text)
+        tolerance = None
+        dimension_type = DrawingDimensionType.LINEAR
+        unit = None
+        value_text = None
+        if tolerance_match is not None:
+            unit = _canonical_dimension_unit(tolerance_match.group("unit"))
+            value_text = tolerance_match.group("nominal")
+            if unit is None:
+                continue
+            tolerance = _parse_tolerance(
+                tolerance_match,
+                unit,
+                text,
+                box,
+                item.source_location.source_object_ids,
+            )
+            if tolerance is not None:
+                tolerance = _with_ocr_tolerance(tolerance, item)
+        elif token_match is not None:
+            value_text = token_match.group("value")
+            if token_match.group("angle") is not None:
+                unit, dimension_type = "degree", DrawingDimensionType.ANGULAR
+            else:
+                unit = _canonical_dimension_unit(token_match.group("unit") or "")
+                prefix = (token_match.group("prefix") or "").upper()
+                if prefix in {"R", "RAD"}:
+                    dimension_type = DrawingDimensionType.RADIAL
+                elif prefix in {"DIA", "Ã˜", "âŒ€"}:
+                    dimension_type = DrawingDimensionType.DIAMETRAL
+            if unit is None:
+                continue
+        elif _DIMENSION_BARE_PATTERN.fullmatch(text) is not None:
+            if fallback_unit is None:
+                continue
+            unit, value_text = fallback_unit, text
+        else:
+            continue
+        value = _parse_dimension_decimal(value_text or "")
+        if value is None or unit is None:
+            continue
+        candidates.append(
+            _DimensionCandidate(
+                page_number=item.raster_source.page_number,
+                nominal_value=value,
+                unit=unit,
+                dimension_type=dimension_type,
+                original_text=text,
+                bounding_box=box,
+                source_object_ids=item.source_location.source_object_ids,
+                tolerance=tolerance,
+                confidence=item.confidence,
+                adapter_id="tesseract-ocr",
+                adapter_version="5.5.3.20260724",
+            )
+        )
+        if len(candidates) > limits.max_dimension_candidates:
+            raise _ResourceLimitError(None, 0)
+    return tuple(
+        sorted(
+            candidates,
+            key=lambda item: (
+                item.page_number,
+                item.bounding_box.top,
+                item.bounding_box.x0,
+                item.original_text,
+                item.source_object_ids,
+            ),
+        )
+    )
+
+
+def _with_ocr_tolerance(candidate: _ToleranceCandidate, item: Any) -> _ToleranceCandidate:
+    return _ToleranceCandidate(
+        candidate.tolerance_type,
+        candidate.upper_value,
+        candidate.lower_value,
+        candidate.unit,
+        candidate.original_text,
+        candidate.bounding_box,
+        item.source_location.source_object_ids,
+        item.confidence,
+        "tesseract-ocr",
+        "5.5.3.20260724",
+    )
+
+
+def _boxes_are_adjacent(first: DrawingBoundingBox, second: DrawingBoundingBox) -> bool:
+    return not (
+        first.x1 < second.x0 - _DIMENSION_CONNECTION_TOLERANCE_PT
+        or second.x1 < first.x0 - _DIMENSION_CONNECTION_TOLERANCE_PT
+        or first.bottom < second.top - _DIMENSION_CONNECTION_TOLERANCE_PT
+        or second.bottom < first.top - _DIMENSION_CONNECTION_TOLERANCE_PT
+    )
+
+
+def _merge_title_candidates(
+    vector_candidates: tuple[_AnalyzedTitleCandidate, ...],
+    ocr_candidates: tuple[_AnalyzedTitleCandidate, ...],
+) -> tuple[_AnalyzedTitleCandidate, ...]:
+    if not vector_candidates:
+        return ocr_candidates
+    if not ocr_candidates:
+        return vector_candidates
+    merged: list[_AnalyzedTitleCandidate] = []
+    for vector in vector_candidates:
+        related = tuple(
+            candidate
+            for candidate in ocr_candidates
+            if candidate.candidate.page_number == vector.candidate.page_number
+            and _boxes_are_adjacent(
+                candidate.candidate.bounding_box, vector.candidate.bounding_box
+            )
+        )
+        if not related:
+            merged.append(vector)
+            continue
+        ocr_fields = {
+            item.field_key: item
+            for candidate in related
+            for item in candidate.candidate.field_evidence
+        }
+        fields: list[_TitleFieldEvidence] = []
+        conflicted = vector.had_field_conflict or any(
+            candidate.had_field_conflict for candidate in related
+        )
+        for field in vector.candidate.field_evidence:
+            ocr_field = ocr_fields.get(field.field_key)
+            if ocr_field is None:
+                fields.append(field)
+            elif ocr_field.value == field.value:
+                fields.append(
+                    _TitleFieldEvidence(
+                        field.field_key,
+                        field.value,
+                        field.pairing_rank,
+                        field.page_number,
+                        _union_box((field.bounding_box, ocr_field.bounding_box)),
+                        tuple(
+                            dict.fromkeys(
+                                (*field.source_object_ids, *ocr_field.source_object_ids)
+                            )
+                        ),
+                        field.original_text,
+                        field.confidence or ocr_field.confidence,
+                        field.adapter_id,
+                        field.adapter_version,
+                    )
+                )
+            else:
+                conflicted = True
+        existing_keys = {field.field_key for field in fields}
+        for field in ocr_fields.values():
+            if field.field_key not in existing_keys:
+                fields.append(field)
+        fields.sort(key=lambda field: (_TITLE_FIELD_ORDER.index(field.field_key), field.value))
+        candidate = vector.candidate
+        merged_ids = tuple(
+            dict.fromkeys(
+                (
+                    *candidate.source_object_ids,
+                    *(id_ for item in fields for id_ in item.source_object_ids),
+                )
+            )
+        )
+        vector_keys = {item.field_key for item in vector.candidate.field_evidence}
+        merged_keys = tuple(
+            dict.fromkeys(
+                (*candidate.recognized_field_keys, *(item.field_key for item in fields))
+            )
+        )
+        merged.append(
+            _AnalyzedTitleCandidate(
+                _TitleBlockCandidate(
+                    candidate.page_number,
+                    _union_box((candidate.bounding_box, *(item.bounding_box for item in fields))),
+                    merged_ids,
+                    candidate.score + sum(
+                        1 for field in fields if field.field_key not in vector_keys
+                    ),
+                    merged_keys,
+                    tuple(fields),
+                ),
+                conflicted,
+            )
+        )
+    return tuple(merged)
+
+
+def _merge_dimension_candidates(
+    vector_candidates: tuple[_DimensionCandidate, ...],
+    ocr_candidates: tuple[_DimensionCandidate, ...],
+) -> tuple[_DimensionCandidate, ...]:
+    kept = list(vector_candidates)
+    conflicts: set[int] = set()
+    for ocr in ocr_candidates:
+        matches = [
+            index
+            for index, vector in enumerate(kept)
+            if vector.page_number == ocr.page_number
+            and _boxes_are_adjacent(vector.bounding_box, ocr.bounding_box)
+        ]
+        if not matches:
+            kept.append(ocr)
+            continue
+        for index in matches:
+            vector = kept[index]
+            same_value = (
+                vector.nominal_value == ocr.nominal_value
+                and vector.unit == ocr.unit
+                and vector.dimension_type == ocr.dimension_type
+                and (
+                    (vector.tolerance is None and ocr.tolerance is None)
+                    or (
+                        vector.tolerance is not None
+                        and ocr.tolerance is not None
+                        and vector.tolerance.upper_value == ocr.tolerance.upper_value
+                        and vector.tolerance.lower_value == ocr.tolerance.lower_value
+                    )
+                )
+            )
+            if same_value:
+                merged_tolerance = vector.tolerance
+                if vector.tolerance is not None and ocr.tolerance is not None:
+                    merged_tolerance = _ToleranceCandidate(
+                        vector.tolerance.tolerance_type,
+                        vector.tolerance.upper_value,
+                        vector.tolerance.lower_value,
+                        vector.tolerance.unit,
+                        vector.tolerance.original_text,
+                        _union_box(
+                            (vector.tolerance.bounding_box, ocr.tolerance.bounding_box)
+                        ),
+                        tuple(
+                            dict.fromkeys(
+                                (
+                                    *vector.tolerance.source_object_ids,
+                                    *ocr.tolerance.source_object_ids,
+                                )
+                            )
+                        ),
+                        vector.tolerance.confidence,
+                        vector.tolerance.adapter_id,
+                        vector.tolerance.adapter_version,
+                    )
+                kept[index] = _DimensionCandidate(
+                    vector.page_number,
+                    vector.nominal_value,
+                    vector.unit,
+                    vector.dimension_type,
+                    vector.original_text,
+                    _union_box((vector.bounding_box, ocr.bounding_box)),
+                    tuple(dict.fromkeys((*vector.source_object_ids, *ocr.source_object_ids))),
+                    merged_tolerance,
+                    vector.confidence,
+                    vector.adapter_id,
+                    vector.adapter_version,
+                )
+            else:
+                conflicts.add(index)
+    return tuple(
+        sorted(
+            (candidate for index, candidate in enumerate(kept) if index not in conflicts),
+            key=lambda item: (
+                item.page_number,
+                item.bounding_box.top,
+                item.bounding_box.x0,
+                item.original_text,
+                item.source_object_ids,
+            ),
+        )
+    )
+
+
 def _source_location(
     source_id: str,
     page_number: int,
@@ -2004,14 +2509,18 @@ def _source_location(
     bounding_box: DrawingBoundingBox | None = None,
     source_object_ids: tuple[str, ...] = (),
     original_text: str | None = None,
+    confidence: Decimal | None = None,
+    adapter_id: str | None = None,
+    adapter_version: str | None = None,
 ) -> DrawingSourceLocation:
     return DrawingSourceLocation(
         source_id=source_id,
         sheet_number=page_number,
         page_number=page_number,
         original_text=original_text,
-        adapter_id=_PARSER_ID,
-        adapter_version=_PARSER_VERSION,
+        adapter_id=adapter_id or _PARSER_ID,
+        adapter_version=adapter_version or _PARSER_VERSION,
+        confidence=confidence,
         authority=DrawingExtractionAuthority.EXTRACTED,
         bounding_box=bounding_box,
         source_object_ids=source_object_ids,
@@ -2059,6 +2568,9 @@ def _build_title_document(
                 bounding_box=revision_evidence.bounding_box,
                 source_object_ids=revision_evidence.source_object_ids,
                 original_text=revision_evidence.value,
+                confidence=revision_evidence.confidence,
+                adapter_id=revision_evidence.adapter_id,
+                adapter_version=revision_evidence.adapter_version,
             ),
         )
 
@@ -2075,6 +2587,9 @@ def _build_title_document(
                     bounding_box=material_evidence.bounding_box,
                     source_object_ids=material_evidence.source_object_ids,
                     original_text=material_evidence.value,
+                    confidence=material_evidence.confidence,
+                    adapter_id=material_evidence.adapter_id,
+                    adapter_version=material_evidence.adapter_version,
                 ),
             ),
         )
@@ -2116,6 +2631,25 @@ def _build_title_document(
         candidate.page_number,
         bounding_box=candidate.bounding_box,
         source_object_ids=candidate.source_object_ids,
+        confidence=(
+            min(
+                item.confidence
+                for item in candidate.field_evidence
+                if item.confidence is not None
+            )
+            if any(item.confidence is not None for item in candidate.field_evidence)
+            else None
+        ),
+        adapter_id=(
+            "tesseract-ocr"
+            if any(item.adapter_id == "tesseract-ocr" for item in candidate.field_evidence)
+            else None
+        ),
+        adapter_version=(
+            "5.5.3.20260724"
+            if any(item.adapter_id == "tesseract-ocr" for item in candidate.field_evidence)
+            else None
+        ),
     )
     title_block = DrawingTitleBlock(
         drawing_number=(
@@ -2619,30 +3153,77 @@ class PdfDrawingParser(DrawingParser):
         has_vector_evidence = any(
             page.text_runs or page.vector_paths for page in snapshot.pages
         )
-        if image_count and not has_vector_evidence:
+        title_candidates = execution.title_candidates
+        dimension_candidates = execution.dimension_candidates
+        ocr_failure = None
+        ocr_evidence: tuple[DrawingOcrTextEvidence, ...] = ()
+        if image_count:
+            ocr_result = extract_ocr_from_pdf(payload, source_id)
+            if ocr_result.status in {
+                DrawingIngestionStatus.VALID,
+                DrawingIngestionStatus.INSUFFICIENT_DATA,
+            }:
+                ocr_evidence = ocr_result.evidence
+                ocr_titles = _ocr_title_candidates(ocr_result.evidence, self.limits)
+                try:
+                    ocr_dimensions = _ocr_dimension_candidates(
+                        ocr_result.evidence, ocr_titles, self.limits
+                    )
+                except _ResourceLimitError:
+                    return self._result(
+                        source_id,
+                        DrawingIngestionStatus.FAILED,
+                        format_detected="PDF",
+                        errors=("PDF_RESOURCE_LIMIT",),
+                        sheet_count_expected=len(snapshot.pages),
+                        sheet_count_parsed=len(snapshot.pages),
+                    )
+                title_candidates = _merge_title_candidates(title_candidates, ocr_titles)
+                dimension_candidates = _merge_dimension_candidates(
+                    dimension_candidates, ocr_dimensions
+                )
+            elif ocr_result.status is DrawingIngestionStatus.UNSUPPORTED:
+                ocr_failure = "PDF_RASTER_UNSUPPORTED"
+            else:
+                ocr_failure = (
+                    ocr_result.diagnostics[0]
+                    if ocr_result.diagnostics
+                    else "PDF_OCR_FAILURE"
+                )
+        if not has_vector_evidence and ocr_failure is not None:
             return self._result(
                 source_id,
-                DrawingIngestionStatus.UNSUPPORTED,
+                (
+                    DrawingIngestionStatus.UNSUPPORTED
+                    if ocr_failure == "PDF_RASTER_UNSUPPORTED"
+                    else DrawingIngestionStatus.FAILED
+                ),
                 format_detected="PDF",
-                warnings=("PDF_RASTER_ONLY",),
+                warnings=(
+                    ("PDF_RASTER_ONLY",)
+                    if ocr_failure == "PDF_RASTER_UNSUPPORTED"
+                    else ()
+                ),
+                errors=(ocr_failure,) if ocr_failure != "PDF_RASTER_UNSUPPORTED" else (),
                 sheet_count_expected=len(snapshot.pages),
                 sheet_count_parsed=len(snapshot.pages),
             )
-        if execution.title_candidates:
-            highest_score = execution.title_candidates[0].candidate.score
+        if title_candidates:
+            highest_score = title_candidates[0].candidate.score
             highest = tuple(
                 candidate
-                for candidate in execution.title_candidates
+                for candidate in title_candidates
                 if candidate.candidate.score == highest_score
             )
             if len(highest) > 1:
-                if execution.dimension_candidates:
+                if dimension_candidates:
                     document = _assemble_dimension_content(
                         _base_dimension_document(source_id, payload, snapshot),
                         source_id,
                         snapshot,
-                        execution.dimension_candidates,
+                        dimension_candidates,
                     )
+                    document = _apply_gdt(document, snapshot, source_id, ocr_evidence)
                     return self._result(
                         source_id,
                         DrawingIngestionStatus.PARTIAL,
@@ -2668,13 +3249,14 @@ class PdfDrawingParser(DrawingParser):
                 snapshot,
                 selected,
             )
-            if execution.dimension_candidates:
+            if dimension_candidates:
                 document = _assemble_dimension_content(
                     document,
                     source_id,
                     snapshot,
-                    execution.dimension_candidates,
+                    dimension_candidates,
                 )
+            document = _apply_gdt(document, snapshot, source_id, ocr_evidence)
             warnings = tuple(
                 warning
                 for present, warning in (
@@ -2696,18 +3278,26 @@ class PdfDrawingParser(DrawingParser):
                 sheet_count_parsed=len(snapshot.pages),
                 document=document,
             )
-        if execution.dimension_candidates:
+        if dimension_candidates:
             document = _assemble_dimension_content(
                 _base_dimension_document(source_id, payload, snapshot),
                 source_id,
                 snapshot,
-                execution.dimension_candidates,
+                dimension_candidates,
             )
+            document = _apply_gdt(document, snapshot, source_id, ocr_evidence)
             return self._result(
                 source_id,
                 DrawingIngestionStatus.VALID,
                 format_detected="PDF",
-                warnings=("PDF_VECTOR_PREFLIGHT_OK",) if has_vector_evidence else (),
+                warnings=tuple(
+                    warning
+                    for warning in (
+                        "PDF_VECTOR_PREFLIGHT_OK" if has_vector_evidence else None,
+                        ocr_failure if not has_vector_evidence else None,
+                    )
+                    if warning is not None
+                ),
                 sheet_count_expected=len(snapshot.pages),
                 sheet_count_parsed=len(snapshot.pages),
                 document=document,
@@ -2716,8 +3306,19 @@ class PdfDrawingParser(DrawingParser):
             source_id,
             DrawingIngestionStatus.INSUFFICIENT_DATA,
             format_detected="PDF",
-            warnings=("PDF_VECTOR_PREFLIGHT_OK",) if has_vector_evidence else (),
-            errors=("PDF_INSUFFICIENT_VECTOR_DATA",),
+            warnings=tuple(
+                warning
+                for warning in (
+                    "PDF_VECTOR_PREFLIGHT_OK" if has_vector_evidence else None,
+                    ocr_failure if not has_vector_evidence else None,
+                )
+                if warning is not None
+            ),
+            errors=(
+                "PDF_INSUFFICIENT_VECTOR_DATA"
+                if has_vector_evidence or not ocr_failure
+                else ocr_failure
+            ,),
             sheet_count_expected=len(snapshot.pages),
             sheet_count_parsed=len(snapshot.pages),
         )
@@ -2756,6 +3357,80 @@ class PdfDrawingParser(DrawingParser):
             ),
             document=document,
         )
+
+
+_PDF_GDT_PARSER = DrawingParserIdentity(
+    parser_id=_PARSER_ID,
+    parser_version=_PARSER_VERSION,
+)
+
+
+def _vector_gdt_tokens(
+    snapshot: _PdfDocumentSnapshot,
+    source_id: str,
+) -> tuple[GdtTokenEvidence, ...]:
+    """Convert vector text runs from all pages into GD&T token candidates."""
+    tokens: list[GdtTokenEvidence] = []
+    for page in snapshot.pages:
+        for run in page.text_runs:
+            text = run.text.strip()
+            if not text or len(text) > 256:
+                continue
+            location = DrawingSourceLocation(
+                source_id=source_id,
+                page_number=page.page_number,
+                original_text=text,
+                adapter_id=_PARSER_ID,
+                adapter_version=_PARSER_VERSION,
+                bounding_box=run.ref.bounding_box,
+                source_object_ids=(run.ref.object_id,),
+            )
+            tokens.append(
+                GdtTokenEvidence(
+                    evidence_id=run.ref.object_id,
+                    text=text,
+                    source_kind=GdtTokenSource.VECTOR,
+                    confidence=Decimal("1"),
+                    source_location=location,
+                    parser_identity=_PDF_GDT_PARSER,
+                )
+            )
+    return tuple(tokens)
+
+
+def _ocr_gdt_tokens(
+    ocr_evidence: tuple[DrawingOcrTextEvidence, ...],
+) -> tuple[DrawingOcrTextEvidence, ...]:
+    """Return OCR word evidence suitable for GD&T recognition (pass-through)."""
+    return ocr_evidence
+
+
+def _apply_gdt(
+    document: CanonicalDrawing,
+    snapshot: _PdfDocumentSnapshot,
+    source_id: str,
+    ocr_evidence: tuple[DrawingOcrTextEvidence, ...],
+) -> CanonicalDrawing:
+    """Recognize GD&T frames and attach them to document.
+
+    All GD&T-domain conditions (no evidence, unsupported characteristic,
+    low confidence, candidate limit) are communicated through the
+    GdtRecognitionResult return value, never by exception.  No broad
+    exception handler is used here so that programming errors (TypeError,
+    AttributeError, etc.) surface immediately rather than being masked.
+    """
+    vector_tokens = _vector_gdt_tokens(snapshot, source_id)
+    ocr_tokens = _ocr_gdt_tokens(ocr_evidence)
+    combined: tuple[GdtTokenEvidence | DrawingOcrTextEvidence, ...] = (
+        *vector_tokens,
+        *ocr_tokens,
+    )
+    if not combined:
+        return document
+    result = recognize_feature_control_frames(combined)
+    if result.frames:
+        document = attach_feature_control_frames(document, result.frames)
+    return document
 
 
 __all__ = ["PdfDrawingLimits", "PdfDrawingParser"]

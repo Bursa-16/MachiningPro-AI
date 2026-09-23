@@ -49,6 +49,7 @@ INTEGRATION POINTS
 from __future__ import annotations
 
 import abc
+import re
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import StrEnum, unique
@@ -147,6 +148,58 @@ class DrawingNoteCategory(StrEnum):
     INSPECTION = "INSPECTION"
     PROCESS = "PROCESS"
     UNKNOWN = "UNKNOWN"
+
+
+@unique
+class DrawingOcrEvidenceKind(StrEnum):
+    """Granularity of bounded OCR evidence."""
+
+    WORD = "WORD"
+    LINE = "LINE"
+    BLOCK = "BLOCK"
+
+
+@unique
+class DrawingGdtCellRole(StrEnum):
+    """Role of a cell in a feature-control-frame container."""
+
+    CHARACTERISTIC = "CHARACTERISTIC"
+    TOLERANCE = "TOLERANCE"
+    DATUM = "DATUM"
+    MODIFIER = "MODIFIER"
+    UNKNOWN = "UNKNOWN"
+
+
+@unique
+class DrawingGdtCharacteristic(StrEnum):
+    """Phase 1C v1 GD&T characteristic allowlist."""
+
+    FLATNESS = "FLATNESS"
+    CIRCULARITY = "CIRCULARITY"
+    POSITION = "POSITION"
+    SYMMETRY = "SYMMETRY"
+
+
+@unique
+class DrawingGdtModifier(StrEnum):
+    """Supported Phase 1C modifier representation."""
+
+    NONE = "NONE"
+
+
+def _validate_finite_decimal(value: Decimal, field_name: str) -> None:
+    """Validate a canonical Decimal without accepting NaN or infinity."""
+    if not isinstance(value, Decimal):
+        raise TypeError(f"{field_name} must be Decimal, got {type(value)}")
+    if not value.is_finite():
+        raise ValueError(f"{field_name} must be finite")
+
+
+def _validate_confidence(value: Decimal, field_name: str = "confidence") -> None:
+    """Validate the canonical confidence representation: finite Decimal [0, 1]."""
+    _validate_finite_decimal(value, field_name)
+    if not Decimal("0") <= value <= Decimal("1"):
+        raise ValueError(f"{field_name} must be in [0, 1], got {value}")
 
 
 # ---------------------------------------------------------------------------
@@ -248,10 +301,7 @@ class DrawingSourceLocation:
                 f"DrawingSourceLocation.page_number must be >= 1, got {self.page_number}"
             )
         if self.confidence is not None:
-            if not (Decimal("0") <= self.confidence <= Decimal("1")):
-                raise ValueError(
-                    f"DrawingSourceLocation.confidence must be in [0, 1], got {self.confidence}"
-                )
+            _validate_confidence(self.confidence, "DrawingSourceLocation.confidence")
         if self.bounding_box is not None and not isinstance(
             self.bounding_box, DrawingBoundingBox
         ):
@@ -275,6 +325,98 @@ class DrawingSourceLocation:
                     "DrawingSourceLocation.source_object_ids must contain unique IDs"
                 )
             seen_object_ids.add(object_id)
+
+
+@dataclass(frozen=True)
+class DrawingParserIdentity:
+    """Stable parser and preprocessing identity for semantic evidence."""
+
+    parser_id: str
+    parser_version: str
+    preprocessing_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.parser_id or not self.parser_id.strip():
+            raise ValueError("DrawingParserIdentity.parser_id must not be blank")
+        if not self.parser_version or not self.parser_version.strip():
+            raise ValueError("DrawingParserIdentity.parser_version must not be blank")
+        if self.preprocessing_id is not None and not self.preprocessing_id.strip():
+            raise ValueError(
+                "DrawingParserIdentity.preprocessing_id must not be blank"
+            )
+
+
+@dataclass(frozen=True)
+class DrawingRasterSource:
+    """Typed identity and page-local provenance for one raster image object."""
+
+    source_id: str
+    page_number: int
+    image_object_id: str
+    bounding_box: DrawingBoundingBox
+    parser_identity: DrawingParserIdentity
+    image_format: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.source_id or not self.source_id.strip():
+            raise ValueError("DrawingRasterSource.source_id must not be blank")
+        if self.page_number < 1:
+            raise ValueError(
+                f"DrawingRasterSource.page_number must be >= 1, got {self.page_number}"
+            )
+        if not self.image_object_id or not self.image_object_id.strip():
+            raise ValueError("DrawingRasterSource.image_object_id must not be blank")
+        if not isinstance(self.bounding_box, DrawingBoundingBox):
+            raise TypeError("DrawingRasterSource.bounding_box must be DrawingBoundingBox")
+        if not isinstance(self.parser_identity, DrawingParserIdentity):
+            raise TypeError(
+                "DrawingRasterSource.parser_identity must be DrawingParserIdentity"
+            )
+        if self.image_format is not None and not self.image_format.strip():
+            raise ValueError("DrawingRasterSource.image_format must not be blank")
+
+
+@dataclass(frozen=True)
+class DrawingOcrTextEvidence:
+    """Bounded OCR word/line/block evidence with typed raster provenance."""
+
+    evidence_id: str
+    text: str
+    evidence_kind: DrawingOcrEvidenceKind
+    confidence: Decimal
+    raster_source: DrawingRasterSource
+    source_location: DrawingSourceLocation
+    parser_identity: DrawingParserIdentity
+
+    def __post_init__(self) -> None:
+        if not self.evidence_id or not self.evidence_id.strip():
+            raise ValueError("DrawingOcrTextEvidence.evidence_id must not be blank")
+        if not self.text or not self.text.strip():
+            raise ValueError("DrawingOcrTextEvidence.text must not be blank")
+        if not isinstance(self.evidence_kind, DrawingOcrEvidenceKind):
+            raise TypeError(
+                "DrawingOcrTextEvidence.evidence_kind must be DrawingOcrEvidenceKind"
+            )
+        _validate_confidence(self.confidence, "DrawingOcrTextEvidence.confidence")
+        if not isinstance(self.raster_source, DrawingRasterSource):
+            raise TypeError(
+                "DrawingOcrTextEvidence.raster_source must be DrawingRasterSource"
+            )
+        if not isinstance(self.source_location, DrawingSourceLocation):
+            raise TypeError(
+                "DrawingOcrTextEvidence.source_location must be DrawingSourceLocation"
+            )
+        if not isinstance(self.parser_identity, DrawingParserIdentity):
+            raise TypeError(
+                "DrawingOcrTextEvidence.parser_identity must be DrawingParserIdentity"
+            )
+        if (
+            self.source_location.page_number is not None
+            and self.source_location.page_number != self.raster_source.page_number
+        ):
+            raise ValueError(
+                "DrawingOcrTextEvidence.source_location page must match raster page"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -400,6 +542,7 @@ class DrawingGdtReference:
     tolerance_unit: str | None = None
     datum_references: tuple[DrawingDatumReference, ...] = field(default_factory=tuple)
     source_location: DrawingSourceLocation | None = None
+    feature_control_frame: DrawingFeatureControlFrame | None = None
 
     def __post_init__(self) -> None:
         if not self.gdt_id or not self.gdt_id.strip():
@@ -413,6 +556,121 @@ class DrawingGdtReference:
             raise ValueError(
                 "DrawingGdtReference.tolerance_unit is required when tolerance_value is set"
             )
+        if self.feature_control_frame is not None and not isinstance(
+            self.feature_control_frame, DrawingFeatureControlFrame
+        ):
+            raise TypeError(
+                "DrawingGdtReference.feature_control_frame must be "
+                "DrawingFeatureControlFrame"
+            )
+
+
+@dataclass(frozen=True)
+class DrawingGdtCell:
+    """One typed, provenance-bearing cell in a future GD&T frame."""
+
+    cell_index: int
+    role: DrawingGdtCellRole
+    normalized_text: str
+    confidence: Decimal
+    source_location: DrawingSourceLocation
+    parser_identity: DrawingParserIdentity
+
+    def __post_init__(self) -> None:
+        if self.cell_index < 0:
+            raise ValueError(
+                f"DrawingGdtCell.cell_index must be >= 0, got {self.cell_index}"
+            )
+        if not isinstance(self.role, DrawingGdtCellRole):
+            raise TypeError("DrawingGdtCell.role must be DrawingGdtCellRole")
+        if not self.normalized_text or not self.normalized_text.strip():
+            raise ValueError("DrawingGdtCell.normalized_text must not be blank")
+        _validate_confidence(self.confidence, "DrawingGdtCell.confidence")
+        if not isinstance(self.source_location, DrawingSourceLocation):
+            raise TypeError(
+                "DrawingGdtCell.source_location must be DrawingSourceLocation"
+            )
+        if not isinstance(self.parser_identity, DrawingParserIdentity):
+            raise TypeError(
+                "DrawingGdtCell.parser_identity must be DrawingParserIdentity"
+            )
+
+
+@dataclass(frozen=True)
+class DrawingFeatureControlFrame:
+    """Immutable container for later conservative GD&T recognition."""
+
+    frame_id: str
+    cells: tuple[DrawingGdtCell, ...]
+    source_location: DrawingSourceLocation
+    parser_identity: DrawingParserIdentity
+    confidence: Decimal
+    characteristic: DrawingGdtCharacteristic | None = None
+    tolerance_value: Decimal | None = None
+    tolerance_unit: str | None = None
+    diameter_applied: bool = False
+    datum_references: tuple[DrawingDatumReference, ...] = field(default_factory=tuple)
+    modifier: DrawingGdtModifier = DrawingGdtModifier.NONE
+
+    def __post_init__(self) -> None:
+        if not self.frame_id or not self.frame_id.strip():
+            raise ValueError("DrawingFeatureControlFrame.frame_id must not be blank")
+        if not isinstance(self.cells, tuple) or not self.cells:
+            raise ValueError("DrawingFeatureControlFrame.cells must be a non-empty tuple")
+        for expected_index, cell in enumerate(self.cells):
+            if not isinstance(cell, DrawingGdtCell):
+                raise TypeError(
+                    "DrawingFeatureControlFrame.cells must contain DrawingGdtCell values"
+                )
+            if cell.cell_index != expected_index:
+                raise ValueError(
+                    "DrawingFeatureControlFrame.cell_index values must be contiguous"
+                )
+        if self.characteristic is not None and not isinstance(
+            self.characteristic, DrawingGdtCharacteristic
+        ):
+            raise TypeError(
+                "DrawingFeatureControlFrame.characteristic must be DrawingGdtCharacteristic"
+            )
+        if self.tolerance_value is not None:
+            _validate_finite_decimal(
+                self.tolerance_value,
+                "DrawingFeatureControlFrame.tolerance_value",
+            )
+            if self.tolerance_unit is None:
+                raise ValueError(
+                    "DrawingFeatureControlFrame.tolerance_unit is required when "
+                    "tolerance_value is set"
+                )
+        if self.tolerance_unit is not None and not self.tolerance_unit.strip():
+            raise ValueError("DrawingFeatureControlFrame.tolerance_unit must not be blank")
+        if not isinstance(self.diameter_applied, bool):
+            raise TypeError("DrawingFeatureControlFrame.diameter_applied must be bool")
+        if not isinstance(self.modifier, DrawingGdtModifier):
+            raise TypeError("DrawingFeatureControlFrame.modifier must be DrawingGdtModifier")
+        if not isinstance(self.datum_references, tuple):
+            raise TypeError(
+                "DrawingFeatureControlFrame.datum_references must be a tuple"
+            )
+        for datum in self.datum_references:
+            if not isinstance(datum, DrawingDatumReference):
+                raise TypeError(
+                    "DrawingFeatureControlFrame.datum_references must contain "
+                    "DrawingDatumReference values"
+                )
+            if re.fullmatch(r"[A-Z]", datum.datum_label) is None:
+                raise ValueError(
+                    "DrawingFeatureControlFrame datum identifiers must be one uppercase letter"
+                )
+        if not isinstance(self.source_location, DrawingSourceLocation):
+            raise TypeError(
+                "DrawingFeatureControlFrame.source_location must be DrawingSourceLocation"
+            )
+        if not isinstance(self.parser_identity, DrawingParserIdentity):
+            raise TypeError(
+                "DrawingFeatureControlFrame.parser_identity must be DrawingParserIdentity"
+            )
+        _validate_confidence(self.confidence, "DrawingFeatureControlFrame.confidence")
 
 
 # ---------------------------------------------------------------------------
@@ -1116,13 +1374,22 @@ __all__ = [
     "DrawingDimensionType",
     "DrawingToleranceType",
     "DrawingNoteCategory",
+    "DrawingOcrEvidenceKind",
+    "DrawingGdtCellRole",
+    "DrawingGdtCharacteristic",
+    "DrawingGdtModifier",
     # Source location / provenance
     "DrawingBoundingBox",
     "DrawingSourceLocation",
+    "DrawingParserIdentity",
+    "DrawingRasterSource",
+    "DrawingOcrTextEvidence",
     # Sub-models
     "DrawingTolerance",
     "DrawingDatumReference",
     "DrawingGdtReference",
+    "DrawingGdtCell",
+    "DrawingFeatureControlFrame",
     "DrawingDimension",
     "DrawingSurfaceFinish",
     "DrawingNote",

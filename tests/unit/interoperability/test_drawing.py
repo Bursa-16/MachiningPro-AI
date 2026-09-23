@@ -45,6 +45,10 @@ from backend.interoperability.drawing import (
     DrawingDimension,
     DrawingDimensionType,
     DrawingExtractionAuthority,
+    DrawingFeatureControlFrame,
+    DrawingGdtCell,
+    DrawingGdtCellRole,
+    DrawingGdtCharacteristic,
     DrawingGdtReference,
     DrawingHeatTreatmentNote,
     DrawingIngestionDiagnostics,
@@ -53,7 +57,11 @@ from backend.interoperability.drawing import (
     DrawingMaterialNote,
     DrawingNote,
     DrawingNoteCategory,
+    DrawingOcrEvidenceKind,
+    DrawingOcrTextEvidence,
     DrawingParser,
+    DrawingParserIdentity,
+    DrawingRasterSource,
     DrawingRevision,
     DrawingSheet,
     DrawingSourceLocation,
@@ -264,6 +272,11 @@ class TestDrawingSourceLocation:
     def test_confidence_boundary_one(self):
         loc = DrawingSourceLocation(source_id="s", confidence=Decimal("1"))
         assert loc.confidence == Decimal("1")
+
+    @pytest.mark.parametrize("value", [Decimal("NaN"), Decimal("Infinity"), Decimal("-Infinity")])
+    def test_confidence_rejects_non_finite_values(self, value):
+        with pytest.raises(ValueError, match="confidence"):
+            DrawingSourceLocation(source_id="s", confidence=value)
 
     def test_immutability(self):
         loc = DrawingSourceLocation(source_id="upload::test.pdf")
@@ -531,6 +544,163 @@ class TestDrawingGdtReference:
         # unit without value is allowed (might be partially extracted)
         g = DrawingGdtReference(gdt_id="g1", tolerance_unit="mm")
         assert g.tolerance_unit == "mm"
+
+
+# ---------------------------------------------------------------------------
+# Phase 1C typed OCR/raster/GD&T evidence
+# ---------------------------------------------------------------------------
+
+def _phase_1c_box() -> DrawingBoundingBox:
+    return DrawingBoundingBox(
+        x0=Decimal("10"), top=Decimal("20"),
+        x1=Decimal("110"), bottom=Decimal("40"),
+    )
+
+
+def _phase_1c_location(*source_ids: str) -> DrawingSourceLocation:
+    return DrawingSourceLocation(
+        source_id="upload::phase1c.pdf",
+        page_number=1,
+        adapter_id="pdf-ocr",
+        adapter_version="1.0",
+        confidence=Decimal("0.95"),
+        bounding_box=_phase_1c_box(),
+        source_object_ids=source_ids,
+    )
+
+
+def _phase_1c_parser() -> DrawingParserIdentity:
+    return DrawingParserIdentity(
+        parser_id="ocr-drawing",
+        parser_version="1.0",
+        preprocessing_id="ocr-preprocess-v1",
+    )
+
+
+class TestPhase1CTypedEvidence:
+
+    def test_raster_source_and_ocr_provenance_are_frozen_and_retained(self):
+        raster = DrawingRasterSource(
+            source_id="upload::phase1c.pdf",
+            page_number=1,
+            image_object_id="page-1:image-1",
+            bounding_box=_phase_1c_box(),
+            image_format="png",
+            parser_identity=_phase_1c_parser(),
+        )
+        evidence = DrawingOcrTextEvidence(
+            evidence_id="page-1:image-1:word-1",
+            text="25.0",
+            evidence_kind=DrawingOcrEvidenceKind.WORD,
+            confidence=Decimal("0.95"),
+            raster_source=raster,
+            source_location=_phase_1c_location("page-1:image-1", "page-1:image-1:word-1"),
+            parser_identity=_phase_1c_parser(),
+        )
+
+        assert evidence.raster_source.image_object_id == "page-1:image-1"
+        assert evidence.source_location.bounding_box == _phase_1c_box()
+        assert evidence.parser_identity.preprocessing_id == "ocr-preprocess-v1"
+        with pytest.raises(FrozenInstanceError):
+            evidence.text = "changed"  # type: ignore[misc]
+        serialized = asdict(evidence)
+        assert "raw_bytes" not in serialized
+        assert "path" not in repr(serialized).lower()
+
+    def test_raster_source_rejects_invalid_page_and_box(self):
+        with pytest.raises(ValueError, match="page_number"):
+            DrawingRasterSource(
+                source_id="s", page_number=0, image_object_id="img",
+                bounding_box=_phase_1c_box(), parser_identity=_phase_1c_parser(),
+            )
+        with pytest.raises(TypeError, match="DrawingBoundingBox"):
+            DrawingRasterSource(
+                source_id="s", page_number=1, image_object_id="img",
+                bounding_box="box", parser_identity=_phase_1c_parser(),  # type: ignore[arg-type]
+            )
+
+    @pytest.mark.parametrize(
+        "value",
+        [Decimal("-0.01"), Decimal("1.01"), Decimal("NaN"), Decimal("Infinity")],
+    )
+    def test_ocr_confidence_rejects_invalid_values(self, value):
+        raster = DrawingRasterSource(
+            source_id="s", page_number=1, image_object_id="img",
+            bounding_box=_phase_1c_box(), parser_identity=_phase_1c_parser(),
+        )
+        with pytest.raises(ValueError, match="confidence"):
+            DrawingOcrTextEvidence(
+                evidence_id="word-1", text="A",
+                evidence_kind=DrawingOcrEvidenceKind.WORD,
+                confidence=value, raster_source=raster,
+                source_location=_phase_1c_location("img"),
+                parser_identity=_phase_1c_parser(),
+            )
+
+    def test_gdt_frame_construction_is_deterministic_and_typed(self):
+        cell = DrawingGdtCell(
+            cell_index=0,
+            role=DrawingGdtCellRole.CHARACTERISTIC,
+            normalized_text="flatness",
+            confidence=Decimal("0.95"),
+            source_location=_phase_1c_location("frame-1:cell-0"),
+            parser_identity=_phase_1c_parser(),
+        )
+        frame = DrawingFeatureControlFrame(
+            frame_id="frame-1",
+            cells=(cell,),
+            characteristic=DrawingGdtCharacteristic.FLATNESS,
+            tolerance_value=Decimal("0.10"),
+            tolerance_unit="mm",
+            datum_references=(
+                DrawingDatumReference(
+                    "A", source_location=_phase_1c_location("datum-A")
+                ),
+            ),
+            source_location=_phase_1c_location("frame-1"),
+            parser_identity=_phase_1c_parser(),
+            confidence=Decimal("0.95"),
+        )
+        equivalent = DrawingFeatureControlFrame(
+            frame_id="frame-1",
+            cells=(cell,),
+            characteristic=DrawingGdtCharacteristic.FLATNESS,
+            tolerance_value=Decimal("0.10"), tolerance_unit="mm",
+            datum_references=(
+                DrawingDatumReference(
+                    "A", source_location=_phase_1c_location("datum-A")
+                ),
+            ),
+            source_location=_phase_1c_location("frame-1"),
+            parser_identity=_phase_1c_parser(), confidence=Decimal("0.95"),
+        )
+        assert frame == equivalent
+        assert asdict(frame) == asdict(equivalent)
+        assert frame.modifier.value == "NONE"
+
+    def test_gdt_frame_rejects_malformed_cells_and_datum_labels(self):
+        cell = DrawingGdtCell(
+            cell_index=1, role=DrawingGdtCellRole.UNKNOWN, normalized_text="x",
+            confidence=Decimal("0.9"), source_location=_phase_1c_location("c"),
+            parser_identity=_phase_1c_parser(),
+        )
+        with pytest.raises(ValueError, match="cell_index"):
+            DrawingFeatureControlFrame(
+                frame_id="frame", cells=(cell,), source_location=_phase_1c_location("f"),
+                parser_identity=_phase_1c_parser(), confidence=Decimal("0.9"),
+            )
+        valid_cell = DrawingGdtCell(
+            cell_index=0, role=DrawingGdtCellRole.DATUM, normalized_text="A",
+            confidence=Decimal("0.9"), source_location=_phase_1c_location("c"),
+            parser_identity=_phase_1c_parser(),
+        )
+        with pytest.raises(ValueError, match="datum"):
+            DrawingFeatureControlFrame(
+                frame_id="frame", cells=(valid_cell,),
+                datum_references=(DrawingDatumReference("A1"),),
+                source_location=_phase_1c_location("f"),
+                parser_identity=_phase_1c_parser(), confidence=Decimal("0.9"),
+            )
 
 
 # ---------------------------------------------------------------------------
