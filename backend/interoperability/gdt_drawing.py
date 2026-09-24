@@ -295,13 +295,19 @@ def _merge_tokens(
 def _build_frame(
     tokens: tuple[GdtTokenEvidence, ...],
 ) -> tuple[DrawingFeatureControlFrame | None, str | None]:
-    if len(tokens) < 2 or len(tokens) > _MAX_CELLS:
+    if not tokens:
         return None, "GDT_FRAME_GRAMMAR_REJECTED"
     ordered = tuple(sorted(tokens, key=_sort_key))
     normalized = tuple(_normalize(item.text) for item in ordered)
     characteristic = _characteristic(normalized[0])
+    # A band that does not start with an allowlisted characteristic is not a
+    # frame candidate (ordinary drawing text). It is classified before the
+    # size check so GDT_FRAME_GRAMMAR_REJECTED always means a rejected
+    # characteristic-led candidate.
     if characteristic is None:
         return None, "GDT_UNSUPPORTED_CHARACTERISTIC"
+    if len(tokens) < 2 or len(tokens) > _MAX_CELLS:
+        return None, "GDT_FRAME_GRAMMAR_REJECTED"
     if any(token.confidence < _MIN_FRAME_CONFIDENCE for token in ordered):
         return None, "GDT_LOW_CONFIDENCE"
     tolerance_value: Decimal | None = None

@@ -2444,6 +2444,7 @@ class TestGdtPositiveE2EAndErrorVisibility:
                 x0=Decimal("0"), top=Decimal("0"),
                 x1=Decimal("400"), bottom=Decimal("200"),
             ),
+            parser_identity=_parser,
         )
 
         def _make_word(
@@ -2543,3 +2544,514 @@ class TestGdtPositiveE2EAndErrorVisibility:
             PdfDrawingParser().parse(
                 "synthetic::p1-gdt-error-propagation.pdf", "drawing.pdf", content
             )
+
+
+# ---------------------------------------------------------------------------
+# Task 0 (Phase 1C hotfix): diameter prefix, dimension conflicts, GD&T
+# diagnostics and OCR bare-number false positives.
+# ---------------------------------------------------------------------------
+
+_TASK0_SOURCE = "synthetic::task0.pdf"
+
+
+def _task0_box(x0: int, top: int, x1: int, bottom: int) -> DrawingBoundingBox:
+    return DrawingBoundingBox(Decimal(x0), Decimal(top), Decimal(x1), Decimal(bottom))
+
+
+def _task0_ocr(
+    evidence_id: str,
+    text: str,
+    box: DrawingBoundingBox,
+    *,
+    kind: str = "WORD",
+    confidence: str = "0.95",
+):
+    from backend.interoperability.drawing import (
+        DrawingOcrEvidenceKind,
+        DrawingOcrTextEvidence,
+        DrawingParserIdentity,
+        DrawingRasterSource,
+    )
+
+    parser = DrawingParserIdentity(
+        parser_id="tesseract-ocr",
+        parser_version="5.5.3.20260724",
+        preprocessing_id="ocr-preprocess-v1",
+    )
+    raster = DrawingRasterSource(
+        source_id=_TASK0_SOURCE,
+        page_number=1,
+        image_object_id="page-1:image-1",
+        bounding_box=_task0_box(0, 0, 842, 595),
+        parser_identity=DrawingParserIdentity(
+            parser_id="raster-drawing",
+            parser_version="1.0",
+            preprocessing_id="ocr-preprocess-v1",
+        ),
+        image_format="FLATE",
+    )
+    location = DrawingSourceLocation(
+        source_id=_TASK0_SOURCE,
+        page_number=1,
+        original_text=text,
+        adapter_id="tesseract-ocr",
+        adapter_version="5.5.3.20260724",
+        confidence=Decimal(confidence),
+        bounding_box=box,
+        source_object_ids=("page-1:image-1", f"page-1:image-1:{evidence_id}"),
+    )
+    return DrawingOcrTextEvidence(
+        evidence_id=f"page-1:image-1:{evidence_id}",
+        text=text,
+        evidence_kind=DrawingOcrEvidenceKind(kind),
+        confidence=Decimal(confidence),
+        raster_source=raster,
+        source_location=location,
+        parser_identity=parser,
+    )
+
+
+def _task0_mixed_pdf(*texts: PdfTextSpec) -> bytes:
+    builder = SyntheticPdfBuilder()
+    builder.add_vector_page(texts=texts, include_image=True)
+    return builder.build()
+
+
+def _task0_parse(monkeypatch, payload: bytes, evidence: tuple = ()):
+    from backend.interoperability.ocr_drawing import OcrResult
+
+    monkeypatch.setattr(
+        pdf_drawing,
+        "extract_ocr_from_pdf",
+        lambda *args, **kwargs: OcrResult(
+            DrawingIngestionStatus.VALID, evidence=tuple(evidence)
+        ),
+    )
+    return PdfDrawingParser().parse(_TASK0_SOURCE, "drawing.pdf", payload)
+
+
+def _task0_dimensions(result) -> list[tuple[str, str, str]]:
+    if result.document is None:
+        return []
+    return [
+        (str(item.nominal_value), item.unit, item.dimension_type.value)
+        for item in result.document.all_dimensions
+    ]
+
+
+class TestPhase1CTask0Hotfix:
+    # -- 1. diameter prefix -------------------------------------------------
+
+    def test_diameter_prefix_constant_is_exact_and_encoding_safe(self):
+        assert pdf_drawing._DIAMETER_PREFIXES == frozenset({"DIA", "Ø", "⌀"})
+        for text in ("Ø30 mm", "⌀30 mm", "DIA 30 mm", "dia 30 mm", "ø30 mm"):
+            match = pdf_drawing._DIMENSION_TOKEN_PATTERN.fullmatch(text)
+            assert match is not None
+            assert match.group("prefix").upper() in pdf_drawing._DIAMETER_PREFIXES
+
+    def test_pdf_drawing_source_contains_no_double_encoded_text(self):
+        from pathlib import Path
+
+        source = Path(pdf_drawing.__file__).read_text(encoding="utf-8")
+        for marker in ("Ã", "â€", "âŒ", "Â±"):
+            assert marker not in source
+
+    @pytest.mark.parametrize("text", ["Ø30 mm", "⌀30 mm", "DIA 30 mm"])
+    def test_ocr_diameter_prefixes_are_diametral(self, monkeypatch, text):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        result = _task0_parse(
+            monkeypatch, payload, (_task0_ocr("d1", text, _task0_box(300, 300, 360, 312)),)
+        )
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert ("30", "mm", "DIAMETRAL") in _task0_dimensions(result)
+
+    @pytest.mark.parametrize("text", ["Ø30 mm", "DIA 30 mm"])
+    def test_vector_diameter_prefixes_are_diametral(self, text):
+        builder = SyntheticPdfBuilder()
+        builder.add_vector_page(
+            texts=(PdfTextSpec(text=text, x=Decimal("100"), y=Decimal("500")),)
+        )
+        result = PdfDrawingParser().parse(_TASK0_SOURCE, "drawing.pdf", builder.build())
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert _task0_dimensions(result) == [("30", "mm", "DIAMETRAL")]
+
+    # -- 2. vector/OCR dimension conflicts ------------------------------------
+
+    def _vector_dimension_box(self, monkeypatch, payload: bytes) -> DrawingBoundingBox:
+        baseline = _task0_parse(monkeypatch, payload)
+        assert baseline.diagnostics.status is DrawingIngestionStatus.VALID
+        location = baseline.document.all_dimensions[0].source_location
+        assert location is not None and location.bounding_box is not None
+        return location.bounding_box
+
+    def test_sole_conflicting_dimension_is_reported_not_silently_dropped(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        box = self._vector_dimension_box(monkeypatch, payload)
+
+        result = _task0_parse(monkeypatch, payload, (_task0_ocr("c1", "26 mm", box),))
+
+        assert result.diagnostics.status is DrawingIngestionStatus.INSUFFICIENT_DATA
+        assert result.document is None
+        assert "PDF_DIMENSION_CONFLICT" in result.diagnostics.warnings
+
+    def test_conflict_with_remaining_content_is_partial_and_omits_both_values(
+        self, monkeypatch
+    ):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500")),
+            PdfTextSpec(text="40 mm", x=Decimal("400"), y=Decimal("200")),
+        )
+        baseline = _task0_parse(monkeypatch, payload)
+        first = next(
+            item
+            for item in baseline.document.all_dimensions
+            if item.nominal_value == Decimal("25")
+        )
+
+        result = _task0_parse(
+            monkeypatch,
+            payload,
+            (_task0_ocr("c1", "26 mm", first.source_location.bounding_box),),
+        )
+
+        assert result.diagnostics.status is DrawingIngestionStatus.PARTIAL
+        assert result.diagnostics.warnings == (
+            "PDF_VECTOR_PREFLIGHT_OK",
+            "PDF_DIMENSION_CONFLICT",
+        )
+        assert _task0_dimensions(result) == [("40", "mm", "LINEAR")]
+
+    def test_agreeing_vector_and_ocr_dimension_merge_without_warning(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        box = self._vector_dimension_box(monkeypatch, payload)
+
+        result = _task0_parse(monkeypatch, payload, (_task0_ocr("a1", "25 mm", box),))
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert result.diagnostics.warnings == ("PDF_VECTOR_PREFLIGHT_OK",)
+        dimension = result.document.all_dimensions[0]
+        assert "page-1:image-1:a1" in dimension.source_location.source_object_ids
+
+    def test_merge_helper_reports_conflict_flag(self):
+        box = _task0_box(10, 10, 40, 20)
+
+        def candidate(value: str, object_id: str):
+            return pdf_drawing._DimensionCandidate(
+                page_number=1,
+                nominal_value=Decimal(value),
+                unit="mm",
+                dimension_type=pdf_drawing.DrawingDimensionType.LINEAR,
+                original_text=f"{value} mm",
+                bounding_box=box,
+                source_object_ids=(object_id,),
+            )
+
+        merged, conflict = pdf_drawing._merge_dimension_candidates(
+            (candidate("25", "v"),), (candidate("26", "o"),)
+        )
+        assert merged == ()
+        assert conflict is True
+        merged, conflict = pdf_drawing._merge_dimension_candidates(
+            (candidate("25", "v"),), (candidate("25", "o"),)
+        )
+        assert len(merged) == 1
+        assert conflict is False
+
+    # -- 3. GD&T diagnostics --------------------------------------------------
+
+    @staticmethod
+    def _gdt_limit_tokens(count: int) -> tuple:
+        return tuple(
+            _task0_ocr(
+                f"g{index}",
+                "X",
+                _task0_box(
+                    index % 500,
+                    400 + (index // 500) * 20,
+                    index % 500 + 1,
+                    410 + (index // 500) * 20,
+                ),
+            )
+            for index in range(count)
+        )
+
+    def test_gdt_candidate_limit_fails_closed_without_document(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+
+        result = _task0_parse(monkeypatch, payload, self._gdt_limit_tokens(5_001))
+
+        assert result.diagnostics.status is DrawingIngestionStatus.FAILED
+        assert result.document is None
+        assert result.diagnostics.errors == ("GDT_CANDIDATE_LIMIT",)
+        assert result.diagnostics.warnings == ()
+        assert result.diagnostics.format_detected == "PDF"
+        assert "Traceback" not in repr(result)
+
+    def test_gdt_token_count_at_limit_does_not_fail(self, monkeypatch):
+        # The vector text "25 mm" contributes four non-space character tokens;
+        # 4 + 4,996 OCR tokens is exactly the 5,000-token GD&T limit.
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+
+        result = _task0_parse(monkeypatch, payload, self._gdt_limit_tokens(4_996))
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert _task0_dimensions(result) == [("25", "mm", "LINEAR")]
+
+    def test_rejected_gdt_frame_candidate_is_reported(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        tokens = (
+            _task0_ocr("p1", "POSITION", _task0_box(300, 100, 360, 112)),
+            _task0_ocr("p2", "0.1", _task0_box(365, 100, 385, 112)),
+            _task0_ocr("p3", "A", _task0_box(390, 100, 400, 112)),
+        )
+
+        result = _task0_parse(monkeypatch, payload, tokens)
+
+        assert result.diagnostics.status is DrawingIngestionStatus.PARTIAL
+        assert "GDT_FRAME_GRAMMAR_REJECTED" in result.diagnostics.warnings
+        assert result.document.all_gdt_references == ()
+
+    def test_conflicting_gdt_cells_are_reported(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        tokens = (
+            _task0_ocr("f1", "FLATNESS", _task0_box(300, 100, 360, 112)),
+            _task0_ocr("f2", "0.10 mm", _task0_box(365, 100, 395, 112)),
+            _task0_ocr("f3", "0.20 mm", _task0_box(400, 100, 430, 112)),
+        )
+
+        result = _task0_parse(monkeypatch, payload, tokens)
+
+        assert result.diagnostics.status is DrawingIngestionStatus.PARTIAL
+        assert "GDT_EVIDENCE_CONFLICT" in result.diagnostics.warnings
+        assert result.document.all_gdt_references == ()
+
+    def test_ordinary_text_emits_no_gdt_warning(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500")),
+            PdfTextSpec(text="GENERAL NOTE", x=Decimal("100"), y=Decimal("300")),
+        )
+
+        result = _task0_parse(monkeypatch, payload)
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert result.diagnostics.warnings == ("PDF_VECTOR_PREFLIGHT_OK",)
+
+    def test_valid_gdt_frame_still_attaches_without_warning(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        tokens = (
+            _task0_ocr("v1", "FLATNESS", _task0_box(300, 100, 360, 112)),
+            _task0_ocr("v2", "0.10 mm", _task0_box(365, 100, 395, 112)),
+        )
+
+        result = _task0_parse(monkeypatch, payload, tokens)
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert len(result.document.all_gdt_references) == 1
+
+    # -- 4. OCR bare numbers and identifier contexts --------------------------
+
+    @staticmethod
+    def _unit_title_block() -> tuple:
+        return (
+            _task0_ocr("t1", "DRAWING NO: X-1", _task0_box(600, 500, 700, 510), kind="LINE"),
+            _task0_ocr("t2", "UNITS: MM", _task0_box(600, 520, 700, 530), kind="LINE"),
+        )
+
+    @pytest.mark.parametrize("text", ["2026", "12345", "0.5", "7"])
+    def test_ocr_bare_number_is_not_a_dimension_even_with_fallback_unit(
+        self, monkeypatch, text
+    ):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        evidence = (
+            *self._unit_title_block(),
+            _task0_ocr("b1", text, _task0_box(100, 200, 140, 212)),
+        )
+
+        result = _task0_parse(monkeypatch, payload, evidence)
+
+        assert result.document is not None
+        assert result.document.title_block is not None
+        assert result.document.metadata.get("drawing.unit") == "mm"
+        assert _task0_dimensions(result) == [("25", "mm", "LINEAR")]
+
+    @pytest.mark.parametrize(
+        "label_line",
+        ["REV 30mm", "DATE 30mm", "SCALE 30mm", "SHEET 30mm", "PART NO 30mm", "DWG NO: 30mm"],
+    )
+    def test_ocr_token_inside_identifier_line_is_rejected(self, monkeypatch, label_line):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        evidence = (
+            _task0_ocr("l1", label_line, _task0_box(100, 200, 220, 212), kind="LINE"),
+            _task0_ocr("w1", "30mm", _task0_box(180, 200, 220, 212)),
+        )
+
+        result = _task0_parse(monkeypatch, payload, evidence)
+
+        assert _task0_dimensions(result) == [("25", "mm", "LINEAR")]
+
+    def test_explicit_unit_ocr_token_outside_identifier_context_is_kept(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        evidence = (
+            _task0_ocr("l1", "REV 30mm", _task0_box(100, 100, 220, 112), kind="LINE"),
+            _task0_ocr("w1", "30mm", _task0_box(180, 200, 220, 212)),
+        )
+
+        result = _task0_parse(monkeypatch, payload, evidence)
+
+        assert ("30", "mm", "LINEAR") in _task0_dimensions(result)
+
+    def test_identifier_label_prefix_is_whole_word_only(self):
+        detect = pdf_drawing._starts_with_identifier_label
+        for text in ("REV 2", "REV. B", "DATE: 2026-09-24", "SHEET 1 OF 2", "Part No. 12345"):
+            assert detect(text) is True
+        for text in ("REVERSE 30mm", "SCALED 30mm", "30mm", "DIA 30 mm", "DATED"):
+            assert detect(text) is False
+
+    def test_task0_repeated_parse_is_deterministic(self, monkeypatch):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500")),
+            PdfTextSpec(text="40 mm", x=Decimal("400"), y=Decimal("200")),
+        )
+        evidence = (
+            *self._unit_title_block(),
+            _task0_ocr("b1", "2026", _task0_box(100, 300, 140, 312)),
+            _task0_ocr("d1", "⌀30 mm", _task0_box(300, 300, 360, 312)),
+        )
+
+        first = _task0_parse(monkeypatch, payload, evidence)
+        second = _task0_parse(monkeypatch, payload, evidence)
+
+        assert first == second
+
+    # -- independent-review additions -----------------------------------------
+
+    @staticmethod
+    def _tesseract_line(prefix: str, text: str, x0: int, top: int) -> tuple:
+        """OCR evidence shaped like Tesseract output: one LINE plus its WORDs."""
+        words = text.split()
+        items = []
+        cursor = x0
+        for index, word in enumerate(words):
+            width = 8 * len(word)
+            items.append(
+                _task0_ocr(
+                    f"{prefix}-w{index}",
+                    word,
+                    _task0_box(cursor, top, cursor + width, top + 12),
+                )
+            )
+            cursor += width + 6
+        items.append(
+            _task0_ocr(
+                f"{prefix}-line",
+                " ".join(words),
+                _task0_box(x0, top, cursor - 6, top + 12),
+                kind="LINE",
+            )
+        )
+        return tuple(items)
+
+    @pytest.mark.parametrize("text", ["Ã˜30 mm", "âŒ€30 mm"])
+    def test_mojibake_diameter_prefix_is_never_a_dimension(self, monkeypatch, text):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        result = _task0_parse(
+            monkeypatch, payload, (_task0_ocr("m1", text, _task0_box(300, 300, 360, 312)),)
+        )
+
+        assert _task0_dimensions(result) == [("25", "mm", "LINEAR")]
+
+    @pytest.mark.parametrize(
+        "ocr_text",
+        ["25 ±0.10 mm", "25 in", "Ø25 mm", "25 +0.20/-0.10 mm"],
+    )
+    def test_tolerance_unit_and_type_conflicts_are_reported(self, monkeypatch, ocr_text):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        box = self._vector_dimension_box(monkeypatch, payload)
+
+        result = _task0_parse(monkeypatch, payload, (_task0_ocr("k1", ocr_text, box),))
+
+        assert "PDF_DIMENSION_CONFLICT" in result.diagnostics.warnings
+        assert result.document is None
+        assert result.diagnostics.status is DrawingIngestionStatus.INSUFFICIENT_DATA
+
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "2026",
+            "1:2",
+            "REV 3",
+            "SHEET 2",
+            "DATE 2026",
+            "DWG 123456",
+            "PART NO 123456",
+            "AB-1234-5",
+            "NOTE 3 HOLES",
+            "SHEET METAL 2 mm",
+            "SHEET METAL 2mm",
+        ],
+    )
+    def test_identifier_and_numeric_note_lines_never_become_dimensions(
+        self, monkeypatch, line
+    ):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="25 mm", x=Decimal("100"), y=Decimal("500"))
+        )
+        evidence = (
+            *self._unit_title_block(),
+            *self._tesseract_line("n", line, 100, 200),
+        )
+
+        result = _task0_parse(monkeypatch, payload, evidence)
+
+        assert _task0_dimensions(result) == [("25", "mm", "LINEAR")]
+
+    @pytest.mark.parametrize(
+        ("line", "expected"),
+        [
+            ("25 mm", ("25", "mm", "LINEAR")),
+            ("Ø25 mm", ("25", "mm", "DIAMETRAL")),
+            ("⌀25 mm", ("25", "mm", "DIAMETRAL")),
+            ("DIA 25 mm", ("25", "mm", "DIAMETRAL")),
+            ("25 ±0.10 mm", ("25", "mm", "LINEAR")),
+            ("25 +0.20/-0.10 mm", ("25", "mm", "LINEAR")),
+        ],
+    )
+    def test_legitimate_ocr_dimension_lines_are_accepted(self, monkeypatch, line, expected):
+        payload = _task0_mixed_pdf(
+            PdfTextSpec(text="40 mm", x=Decimal("400"), y=Decimal("100"))
+        )
+        evidence = (*self._unit_title_block(), *self._tesseract_line("d", line, 100, 200))
+
+        result = _task0_parse(monkeypatch, payload, evidence)
+
+        assert result.diagnostics.status is DrawingIngestionStatus.VALID
+        assert expected in _task0_dimensions(result)
+        assert len(_task0_dimensions(result)) == 2

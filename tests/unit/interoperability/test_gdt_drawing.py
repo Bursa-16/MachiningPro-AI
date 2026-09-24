@@ -172,3 +172,18 @@ def test_task7_attachment_preserves_existing_gdt_references():
         "existing",
         recognition.frames[0].frame_id,
     )
+
+
+def test_task0_ordinary_text_is_not_reported_as_a_rejected_frame():
+    result = recognize_feature_control_frames((_token("NOTE", 0),))
+    assert result.frames == ()
+    assert result.diagnostics == ("GDT_UNSUPPORTED_CHARACTERISTIC",)
+
+
+def test_task0_characteristic_led_rejections_keep_grammar_code():
+    single = recognize_feature_control_frames((_token("FLATNESS", 0),))
+    assert single.diagnostics == ("GDT_FRAME_GRAMMAR_REJECTED",)
+    unitless = recognize_feature_control_frames(
+        (_token("POSITION", 0), _token("0.1", 25), _token("A", 50))
+    )
+    assert unitless.diagnostics == ("GDT_FRAME_GRAMMAR_REJECTED",)

@@ -32,6 +32,7 @@ from backend.interoperability.drawing import (
     DrawingIngestionResult,
     DrawingIngestionStatus,
     DrawingMaterialNote,
+    DrawingOcrEvidenceKind,
     DrawingOcrTextEvidence,
     DrawingParser,
     DrawingParserIdentity,
@@ -129,6 +130,16 @@ _DIMENSION_TOKEN_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _DIMENSION_BARE_PATTERN = re.compile(rf"^{_DIMENSION_NUMBER}$")
+# Diameter prefixes after ``str.upper()``. Written as escapes so that a
+# non-UTF-8 editor or shell round trip cannot silently corrupt the symbols:
+# U+00D8 LATIN CAPITAL LETTER O WITH STROKE and U+2300 DIAMETER SIGN.
+_DIAMETER_PREFIXES = frozenset({"DIA", "Ø", "⌀"})
+_DIMENSION_CONFLICT_WARNING = "PDF_DIMENSION_CONFLICT"
+# GD&T grammar code emitted for every text band whose first token is not an
+# allowlisted characteristic, i.e. ordinary drawing text. It is not evidence
+# of a rejected frame candidate and is therefore not surfaced as a warning.
+_GDT_NON_CANDIDATE_CODE = "GDT_UNSUPPORTED_CHARACTERISTIC"
+_GDT_LIMIT_CODE = "GDT_CANDIDATE_LIMIT"
 _DIMENSION_MAX_TEXT = 256
 _DIMENSION_BAND_PT = Decimal("12")
 _DIMENSION_AXIS_MIN_PT = Decimal("6")
@@ -1620,7 +1631,7 @@ def _extract_dimension_candidates(
                     prefix = (token_match.group("prefix") or "").upper()
                     if prefix in {"R", "RAD"}:
                         dimension_type = DrawingDimensionType.RADIAL
-                    elif prefix in {"DIA", "Ø", "⌀"}:
+                    elif prefix in _DIAMETER_PREFIXES:
                         dimension_type = DrawingDimensionType.DIAMETRAL
                 if unit is None:
                     continue
@@ -2207,13 +2218,64 @@ def _ocr_title_field(
     )
 
 
+_TITLE_ALIAS_WORDS = tuple(tuple(alias.split()) for alias, _ in _TITLE_ALIASES)
+
+
+def _starts_with_identifier_label(value: str) -> bool:
+    """Return True when text begins with an approved title/identifier label.
+
+    The fixed 27-alias title vocabulary covers drawing/part number, revision,
+    date, scale, sheet and the other identifier fields. Matching is whole-word
+    on the Task 5 label normalization; there is no fuzzy or substring match.
+    """
+    normalized = _normalize_title_label(value)
+    if normalized is None:
+        return False
+    words = normalized.replace(":", " ").split()
+    return any(tuple(words[: len(alias)]) == alias for alias in _TITLE_ALIAS_WORDS)
+
+
+def _ocr_identifier_lines(
+    evidence: tuple[Any, ...],
+) -> tuple[tuple[int, DrawingBoundingBox], ...]:
+    """Page-local boxes of OCR lines that carry an identifier label.
+
+    Every OCR line is considered regardless of confidence: the result is only
+    used to reject candidates, never to create semantics.
+    """
+    lines: list[tuple[int, DrawingBoundingBox]] = []
+    for item in evidence:
+        if item.evidence_kind is not DrawingOcrEvidenceKind.LINE:
+            continue
+        box = item.source_location.bounding_box
+        if box is None or not _starts_with_identifier_label(item.text):
+            continue
+        lines.append((item.raster_source.page_number, box))
+    return tuple(lines)
+
+
+def _ocr_in_identifier_context(
+    item: Any,
+    box: DrawingBoundingBox,
+    identifier_lines: tuple[tuple[int, DrawingBoundingBox], ...],
+) -> bool:
+    """Reject OCR tokens that belong to a date/scale/revision/sheet/ID line."""
+    if _starts_with_identifier_label(item.text):
+        return True
+    page_number = item.raster_source.page_number
+    return any(
+        line_page == page_number and _box_center_is_inside(box, line_box)
+        for line_page, line_box in identifier_lines
+    )
+
+
 def _ocr_dimension_candidates(
     evidence: tuple[Any, ...],
     title_candidates: tuple[_AnalyzedTitleCandidate, ...],
     limits: PdfDrawingLimits,
 ) -> tuple[_DimensionCandidate, ...]:
-    fallback_unit = _dimension_unit_fallback(title_candidates)
     candidates: list[_DimensionCandidate] = []
+    identifier_lines = _ocr_identifier_lines(evidence)
     for item in _ocr_evidence_candidates(evidence):
         text = _dimension_text_copy(item.text.strip())
         if not text or len(text) > _DIMENSION_MAX_TEXT:
@@ -2226,6 +2288,8 @@ def _ocr_dimension_candidates(
             and _box_center_is_inside(box, candidate.candidate.bounding_box)
             for candidate in title_candidates
         ):
+            continue
+        if _ocr_in_identifier_context(item, box, identifier_lines):
             continue
         tolerance_match = _DIMENSION_TOLERANCE_PATTERN.fullmatch(text)
         token_match = _DIMENSION_TOKEN_PATTERN.fullmatch(text)
@@ -2256,15 +2320,15 @@ def _ocr_dimension_candidates(
                 prefix = (token_match.group("prefix") or "").upper()
                 if prefix in {"R", "RAD"}:
                     dimension_type = DrawingDimensionType.RADIAL
-                elif prefix in {"DIA", "Ã˜", "âŒ€"}:
+                elif prefix in _DIAMETER_PREFIXES:
                     dimension_type = DrawingDimensionType.DIAMETRAL
             if unit is None:
                 continue
-        elif _DIMENSION_BARE_PATTERN.fullmatch(text) is not None:
-            if fallback_unit is None:
-                continue
-            unit, value_text = fallback_unit, text
         else:
+            # Includes bare numbers. Phase 1B accepts a bare number only with
+            # vector dimension-line geometry cues; raster OCR has no such cue,
+            # so a sheet/title-block fallback unit alone never makes a bare
+            # OCR number an engineering dimension.
             continue
         value = _parse_dimension_decimal(value_text or "")
         if value is None or unit is None:
@@ -2420,7 +2484,14 @@ def _merge_title_candidates(
 def _merge_dimension_candidates(
     vector_candidates: tuple[_DimensionCandidate, ...],
     ocr_candidates: tuple[_DimensionCandidate, ...],
-) -> tuple[_DimensionCandidate, ...]:
+) -> tuple[tuple[_DimensionCandidate, ...], bool]:
+    """Merge agreeing vector/OCR dimensions; omit and report conflicts.
+
+    Phase 1C §5: conflicting candidates are omitted (confidence never picks a
+    winner) and the omission is reported. The boolean is True when at least
+    one conflict removed a candidate so the caller can emit the constant
+    ``PDF_DIMENSION_CONFLICT`` warning instead of dropping evidence silently.
+    """
     kept = list(vector_candidates)
     conflicts: set[int] = set()
     for ocr in ocr_candidates:
@@ -2488,7 +2559,7 @@ def _merge_dimension_candidates(
                 )
             else:
                 conflicts.add(index)
-    return tuple(
+    merged = tuple(
         sorted(
             (candidate for index, candidate in enumerate(kept) if index not in conflicts),
             key=lambda item: (
@@ -2500,6 +2571,7 @@ def _merge_dimension_candidates(
             ),
         )
     )
+    return merged, bool(conflicts)
 
 
 def _source_location(
@@ -3156,6 +3228,7 @@ class PdfDrawingParser(DrawingParser):
         title_candidates = execution.title_candidates
         dimension_candidates = execution.dimension_candidates
         ocr_failure = None
+        dimension_conflict = False
         ocr_evidence: tuple[DrawingOcrTextEvidence, ...] = ()
         if image_count:
             ocr_result = extract_ocr_from_pdf(payload, source_id)
@@ -3179,7 +3252,7 @@ class PdfDrawingParser(DrawingParser):
                         sheet_count_parsed=len(snapshot.pages),
                     )
                 title_candidates = _merge_title_candidates(title_candidates, ocr_titles)
-                dimension_candidates = _merge_dimension_candidates(
+                dimension_candidates, dimension_conflict = _merge_dimension_candidates(
                     dimension_candidates, ocr_dimensions
                 )
             elif ocr_result.status is DrawingIngestionStatus.UNSUPPORTED:
@@ -3208,6 +3281,11 @@ class PdfDrawingParser(DrawingParser):
                 sheet_count_expected=len(snapshot.pages),
                 sheet_count_parsed=len(snapshot.pages),
             )
+        # Recoverable semantic omissions that must be reported. Each one
+        # downgrades a document-bearing result to PARTIAL (1B §12, 1C §5/§6).
+        conflict_warnings: tuple[str, ...] = (
+            (_DIMENSION_CONFLICT_WARNING,) if dimension_conflict else ()
+        )
         if title_candidates:
             highest_score = title_candidates[0].candidate.score
             highest = tuple(
@@ -3223,12 +3301,20 @@ class PdfDrawingParser(DrawingParser):
                         snapshot,
                         dimension_candidates,
                     )
-                    document = _apply_gdt(document, snapshot, source_id, ocr_evidence)
+                    document, gdt_warnings, gdt_failure = _apply_gdt(
+                        document, snapshot, source_id, ocr_evidence
+                    )
+                    if gdt_failure is not None:
+                        return self._gdt_failure_result(source_id, snapshot, gdt_failure)
                     return self._result(
                         source_id,
                         DrawingIngestionStatus.PARTIAL,
                         format_detected="PDF",
-                        warnings=("PDF_TITLE_BLOCK_AMBIGUOUS",),
+                        warnings=(
+                            "PDF_TITLE_BLOCK_AMBIGUOUS",
+                            *conflict_warnings,
+                            *gdt_warnings,
+                        ),
                         sheet_count_expected=len(snapshot.pages),
                         sheet_count_parsed=len(snapshot.pages),
                         document=document,
@@ -3237,7 +3323,7 @@ class PdfDrawingParser(DrawingParser):
                     source_id,
                     DrawingIngestionStatus.INSUFFICIENT_DATA,
                     format_detected="PDF",
-                    warnings=("PDF_TITLE_BLOCK_AMBIGUOUS",),
+                    warnings=("PDF_TITLE_BLOCK_AMBIGUOUS", *conflict_warnings),
                     errors=("PDF_INSUFFICIENT_VECTOR_DATA",),
                     sheet_count_expected=len(snapshot.pages),
                     sheet_count_parsed=len(snapshot.pages),
@@ -3256,14 +3342,22 @@ class PdfDrawingParser(DrawingParser):
                     snapshot,
                     dimension_candidates,
                 )
-            document = _apply_gdt(document, snapshot, source_id, ocr_evidence)
-            warnings = tuple(
-                warning
-                for present, warning in (
-                    (selected.had_field_conflict, "PDF_TITLE_FIELD_CONFLICT"),
-                    (sheet_mismatch, "PDF_TITLE_SHEET_MISMATCH"),
-                )
-                if present
+            document, gdt_warnings, gdt_failure = _apply_gdt(
+                document, snapshot, source_id, ocr_evidence
+            )
+            if gdt_failure is not None:
+                return self._gdt_failure_result(source_id, snapshot, gdt_failure)
+            warnings = (
+                *(
+                    warning
+                    for present, warning in (
+                        (selected.had_field_conflict, "PDF_TITLE_FIELD_CONFLICT"),
+                        (sheet_mismatch, "PDF_TITLE_SHEET_MISMATCH"),
+                    )
+                    if present
+                ),
+                *conflict_warnings,
+                *gdt_warnings,
             )
             return self._result(
                 source_id,
@@ -3285,18 +3379,30 @@ class PdfDrawingParser(DrawingParser):
                 snapshot,
                 dimension_candidates,
             )
-            document = _apply_gdt(document, snapshot, source_id, ocr_evidence)
+            document, gdt_warnings, gdt_failure = _apply_gdt(
+                document, snapshot, source_id, ocr_evidence
+            )
+            if gdt_failure is not None:
+                return self._gdt_failure_result(source_id, snapshot, gdt_failure)
+            omission_warnings = (*conflict_warnings, *gdt_warnings)
             return self._result(
                 source_id,
-                DrawingIngestionStatus.VALID,
+                (
+                    DrawingIngestionStatus.PARTIAL
+                    if omission_warnings
+                    else DrawingIngestionStatus.VALID
+                ),
                 format_detected="PDF",
-                warnings=tuple(
-                    warning
-                    for warning in (
-                        "PDF_VECTOR_PREFLIGHT_OK" if has_vector_evidence else None,
-                        ocr_failure if not has_vector_evidence else None,
-                    )
-                    if warning is not None
+                warnings=(
+                    *(
+                        warning
+                        for warning in (
+                            "PDF_VECTOR_PREFLIGHT_OK" if has_vector_evidence else None,
+                            ocr_failure if not has_vector_evidence else None,
+                        )
+                        if warning is not None
+                    ),
+                    *omission_warnings,
                 ),
                 sheet_count_expected=len(snapshot.pages),
                 sheet_count_parsed=len(snapshot.pages),
@@ -3306,19 +3412,38 @@ class PdfDrawingParser(DrawingParser):
             source_id,
             DrawingIngestionStatus.INSUFFICIENT_DATA,
             format_detected="PDF",
-            warnings=tuple(
-                warning
-                for warning in (
-                    "PDF_VECTOR_PREFLIGHT_OK" if has_vector_evidence else None,
-                    ocr_failure if not has_vector_evidence else None,
-                )
-                if warning is not None
+            warnings=(
+                *(
+                    warning
+                    for warning in (
+                        "PDF_VECTOR_PREFLIGHT_OK" if has_vector_evidence else None,
+                        ocr_failure if not has_vector_evidence else None,
+                    )
+                    if warning is not None
+                ),
+                *conflict_warnings,
             ),
             errors=(
                 "PDF_INSUFFICIENT_VECTOR_DATA"
                 if has_vector_evidence or not ocr_failure
                 else ocr_failure
             ,),
+            sheet_count_expected=len(snapshot.pages),
+            sheet_count_parsed=len(snapshot.pages),
+        )
+
+    def _gdt_failure_result(
+        self,
+        source_id: str,
+        snapshot: _PdfDocumentSnapshot,
+        failure_code: str,
+    ) -> DrawingIngestionResult:
+        """Fail closed on a global GD&T resource-limit breach (Phase 1C §3.3/§6)."""
+        return self._result(
+            source_id,
+            DrawingIngestionStatus.FAILED,
+            format_detected="PDF",
+            errors=(failure_code,),
             sheet_count_expected=len(snapshot.pages),
             sheet_count_parsed=len(snapshot.pages),
         )
@@ -3410,14 +3535,22 @@ def _apply_gdt(
     snapshot: _PdfDocumentSnapshot,
     source_id: str,
     ocr_evidence: tuple[DrawingOcrTextEvidence, ...],
-) -> CanonicalDrawing:
-    """Recognize GD&T frames and attach them to document.
+) -> tuple[CanonicalDrawing, tuple[str, ...], str | None]:
+    """Recognize GD&T frames, attach them to document, and report omissions.
 
     All GD&T-domain conditions (no evidence, unsupported characteristic,
     low confidence, candidate limit) are communicated through the
     GdtRecognitionResult return value, never by exception.  No broad
     exception handler is used here so that programming errors (TypeError,
     AttributeError, etc.) surface immediately rather than being masked.
+
+    Returns ``(document, warnings, failure_code)``. A FAILED recognition
+    result (the global ``GDT_CANDIDATE_LIMIT`` breach) yields its constant
+    code as ``failure_code`` so the caller fails closed with no document.
+    Otherwise the warnings are the grammar's constant diagnostic codes,
+    sorted, so a rejected or conflicting frame candidate is never lost
+    silently. Ordinary text bands (``GDT_UNSUPPORTED_CHARACTERISTIC``) are not
+    frame candidates and are not reported.
     """
     vector_tokens = _vector_gdt_tokens(snapshot, source_id)
     ocr_tokens = _ocr_gdt_tokens(ocr_evidence)
@@ -3426,11 +3559,22 @@ def _apply_gdt(
         *ocr_tokens,
     )
     if not combined:
-        return document
+        return document, (), None
     result = recognize_feature_control_frames(combined)
+    if result.status is DrawingIngestionStatus.FAILED:
+        return document, (), (
+            result.diagnostics[0] if result.diagnostics else _GDT_LIMIT_CODE
+        )
     if result.frames:
         document = attach_feature_control_frames(document, result.frames)
-    return document
+    warnings = tuple(
+        sorted(
+            code
+            for code in set(result.diagnostics)
+            if code != _GDT_NON_CANDIDATE_CODE
+        )
+    )
+    return document, warnings, None
 
 
 __all__ = ["PdfDrawingLimits", "PdfDrawingParser"]
