@@ -100,7 +100,7 @@ PUBLIC_PAGES: tuple[PublicPage, ...] = (
             "What MachiningPro AI covers today and what is in development, "
             "with each capability labelled Available, In development or Planned."
         ),
-        nav="primary",
+        nav="primary", content_status="live",
     ),
     PublicPage(
         key="how-it-works", path="/how-it-works", nav_label="How It Works",
@@ -109,7 +109,7 @@ PUBLIC_PAGES: tuple[PublicPage, ...] = (
             "The MachiningPro AI engineering workflow: from CAD or drawing input "
             "to analysis, engineering evidence, process configuration and validation."
         ),
-        nav="primary",
+        nav="primary", content_status="live",
     ),
     PublicPage(
         key="solutions", path="/solutions", nav_label="Solutions", heading="Solutions",
@@ -118,7 +118,7 @@ PUBLIC_PAGES: tuple[PublicPage, ...] = (
             "How manufacturing, process and quality engineering teams can use "
             "MachiningPro AI in their day-to-day engineering work."
         ),
-        nav="primary",
+        nav="primary", content_status="live",
     ),
     PublicPage(
         key="case-studies", path="/case-studies", nav_label="Case Studies",
@@ -195,6 +195,8 @@ PAGES_BY_KEY: dict[str, PublicPage] = {p.key: p for p in PUBLIC_PAGES}
 SIGN_IN_HREF = "/app"
 REQUEST_DEMO_HREF = "/contact"
 HOW_IT_WORKS_HREF = "/how-it-works"
+PRODUCT_HREF = "/product"
+SOLUTIONS_HREF = "/solutions"
 
 
 def pages_for(nav: NavPlacement) -> tuple[PublicPage, ...]:
@@ -239,6 +241,9 @@ class PublicCapability:
     name: str
     description: str
     status: CapabilityStatus
+    # PUBLIC-01C: short, scannable bullets for the Product page's capability
+    # family cards. Restatements of `description`, never new claims.
+    key_capabilities: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def capability_label(self) -> str:
@@ -259,6 +264,11 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "in the engineering workspace."
         ),
         status="available",
+        key_capabilities=(
+            "STEP, IGES and DXF import",
+            "Canonical geometry and topology extraction",
+            "Format-detection confidence and fidelity diagnostics",
+        ),
     ),
     PublicCapability(
         key="drawing",
@@ -270,6 +280,11 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "not yet available."
         ),
         status="in_development",
+        key_capabilities=(
+            "PDF, raster and vector drawing parsing",
+            "Dimension and GD&T extraction",
+            "Dedicated workspace review view planned",
+        ),
     ),
     PublicCapability(
         key="machining",
@@ -280,6 +295,11 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "machining workspace view is planned."
         ),
         status="in_development",
+        key_capabilities=(
+            "Turning, milling and drilling formulas",
+            "Threading, hole finishing, honing and lapping",
+            "Dedicated machining workspace view planned",
+        ),
     ),
     PublicCapability(
         key="machine-tool",
@@ -290,6 +310,11 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "browsing and editing these libraries are planned."
         ),
         status="in_development",
+        key_capabilities=(
+            "Machine, tool and material catalog structures",
+            "Capability and validation rules",
+            "Workspace browsing and editing planned",
+        ),
     ),
     PublicCapability(
         key="quality",
@@ -299,6 +324,11 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "validation. A dedicated validation workspace view is planned."
         ),
         status="in_development",
+        key_capabilities=(
+            "Design-for-manufacturability rule checks",
+            "Process-plan validation",
+            "Dedicated validation workspace view planned",
+        ),
     ),
     PublicCapability(
         key="ai",
@@ -309,6 +339,11 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "distinguished from it. Not yet available in the workspace."
         ),
         status="in_development",
+        key_capabilities=(
+            "Advisory-only, never authoritative",
+            "Always visually distinguished from deterministic results",
+            "Not yet available in the workspace",
+        ),
     ),
     PublicCapability(
         key="costing",
@@ -318,8 +353,30 @@ CAPABILITIES: tuple[PublicCapability, ...] = (
             "design intent only, with no implementation yet."
         ),
         status="roadmap",
+        key_capabilities=(
+            "Cycle-time and should-cost estimation (design intent)",
+            "No implementation yet",
+        ),
     ),
 )
+
+CAPABILITIES_BY_KEY: dict[str, PublicCapability] = {c.key: c for c in CAPABILITIES}
+
+# Ordered from least to most conservative, so max() over statuses yields the
+# most conservative one — used to grade anything (a workflow step, a solution
+# group) that draws on more than one capability, without hand-picking a status
+# that could drift from the CAPABILITIES source of truth (PUBLIC-01C).
+_STATUS_SEVERITY: dict[CapabilityStatus, int] = {
+    "available": 0,
+    "in_development": 1,
+    "roadmap": 2,
+}
+
+
+def conservative_status(capability_keys: tuple[str, ...]) -> CapabilityStatus:
+    """Most conservative status among the given `CAPABILITIES` keys."""
+    statuses = [CAPABILITIES_BY_KEY[key].status for key in capability_keys]
+    return max(statuses, key=lambda s: _STATUS_SEVERITY[s])
 
 
 def capabilities_by_status() -> tuple[tuple[str, tuple[PublicCapability, ...]], ...]:
@@ -530,6 +587,8 @@ def page_context(page: PublicPage, config: PublicSiteConfig) -> dict[str, object
             "sign_in_href": SIGN_IN_HREF,
             "request_demo_href": REQUEST_DEMO_HREF,
             "how_it_works_href": HOW_IT_WORKS_HREF,
+            "product_href": PRODUCT_HREF,
+            "solutions_href": SOLUTIONS_HREF,
         },
         "page": page,
         "canonical_url": config.canonical_url(page.path),
@@ -555,4 +614,282 @@ def home_context(config: PublicSiteConfig) -> dict[str, object]:
             "maturity_groups": capabilities_by_status(),
         }
     )
+    return ctx
+
+
+# -- Engineering authority (PUBLIC-01C) ---------------------------------------
+# Shared between the Product page ("Engineering Authority Model") and the How
+# It Works page ("User Control") so the same principle is stated once, not
+# duplicated with two independently-editable copies.
+
+ENGINEERING_AUTHORITY_PRINCIPLES: tuple[str, ...] = (
+    "Deterministic engineering results are authoritative and are never "
+    "silently overridden by AI output.",
+    "AI assistance is advisory only — interpretation, evidence review, "
+    "explanation, retrieval and summarization — and is always visually "
+    "distinguished from a deterministic result.",
+    "Engineering decisions remain reviewable: parameters stay editable and "
+    "evidence stays inspectable rather than hidden behind an automated verdict.",
+    "MachiningPro AI does not make autonomous manufacturing decisions on a "
+    "user's behalf.",
+)
+
+
+# -- Data / library foundation (PUBLIC-01C) -----------------------------------
+# High-level only; no claim of complete or worldwide catalog coverage, since
+# that has not been implemented or measured.
+
+DATA_LIBRARY_FOUNDATION: tuple[str, ...] = (
+    "Machine and cutting-tool catalog structures, designed to support "
+    "structured engineering libraries rather than a fixed, complete list.",
+    "Material reference structures for the same purpose.",
+    "Process knowledge encoded as deterministic machining formulas, not "
+    "free-text rules of thumb.",
+    "Technical drawing evidence: structured dimensions and GD&T extracted "
+    "from parsed drawings, where drawing parsing is available.",
+    "Engineering rules for design-for-manufacturability and process-plan "
+    "checks.",
+)
+
+
+# -- Validation & traceability (PUBLIC-01C) -----------------------------------
+# Every term here maps to a concrete field already surfaced in the CAD import
+# workspace view (frontend/routers/ui.py::_result_to_display /
+# _result_to_safe_summary) — no invented capability.
+
+VALIDATION_TRACEABILITY_POINTS: tuple[str, ...] = (
+    "Deterministic calculations are authoritative; results are not "
+    "silently adjusted by AI.",
+    "Provenance is recorded per import: which adapter, and which adapter "
+    "version, produced a given result.",
+    "Format-detection confidence and detection method are shown, not "
+    "hidden.",
+    "Fidelity diagnostics flag unsupported or degraded content instead of "
+    "silently discarding it.",
+    "Structured, traceable reporting of these findings is on the roadmap; "
+    "today the evidence is reviewable in the CAD import result view.",
+)
+
+
+# -- How It Works — full workflow (PUBLIC-01C) --------------------------------
+# A fuller, 9-step version of the home page's condensed WORKFLOW_STEPS
+# (frontend/public_site.py::WORKFLOW_STEPS, left untouched to avoid
+# regressing PUBLIC-01B). Each status is graded against the same
+# CAPABILITIES entries the rest of the site uses — see the inline comments —
+# so a step is never marked more mature than the capability it depends on.
+
+HOW_IT_WORKS_STEPS: tuple[WorkflowStep, ...] = (
+    WorkflowStep(
+        "Open the Engineering Workspace",
+        "Start in the engineering workspace, the shared environment for "
+        "every step below.",
+        "available",
+    ),
+    WorkflowStep(
+        "Import CAD Data",
+        "Bring in a STEP, IGES or DXF file. Format detection, adapter "
+        "selection and canonical geometry/topology extraction run "
+        "automatically.",
+        CAPABILITIES_BY_KEY["cad-geometry"].status,
+    ),
+    WorkflowStep(
+        "Review Engineering Evidence",
+        "Inspect detection confidence, fidelity diagnostics and any "
+        "unsupported entities before trusting the result.",
+        CAPABILITIES_BY_KEY["cad-geometry"].status,
+    ),
+    WorkflowStep(
+        "Interpret Technical Drawings",
+        "Parse a 2D technical drawing — PDF, raster or vector — into "
+        "structured dimensions and GD&T. A dedicated workspace review "
+        "view is planned.",
+        CAPABILITIES_BY_KEY["drawing"].status,
+    ),
+    WorkflowStep(
+        "Select Machining Context",
+        "Choose the manufacturing process, machine, tool and material for "
+        "the part. Dedicated workspace views are planned.",
+        conservative_status(("machining", "machine-tool")),
+    ),
+    WorkflowStep(
+        "Configure Process Parameters",
+        "Set the machining parameters for the selected operations, using "
+        "deterministic formulas. A dedicated workspace view is planned.",
+        CAPABILITIES_BY_KEY["machining"].status,
+    ),
+    WorkflowStep(
+        "Validate Engineering Constraints",
+        "Run design-for-manufacturability and process-plan checks against "
+        "the configuration. A dedicated validation workspace view is "
+        "planned.",
+        CAPABILITIES_BY_KEY["quality"].status,
+    ),
+    WorkflowStep(
+        "Review Cost / RFQ Implications",
+        "See cycle-time and should-cost estimates for the configured "
+        "process. Currently design intent only, with no implementation "
+        "yet.",
+        CAPABILITIES_BY_KEY["costing"].status,
+    ),
+    WorkflowStep(
+        "Generate a Structured Report",
+        "Produce a traceable summary of the engineering decisions made "
+        "across the workflow. Planned.",
+        "roadmap",
+    ),
+)
+
+
+# -- Solutions (PUBLIC-01C) ---------------------------------------------------
+# Organized by role/problem, not by internal software module, per the
+# PUBLIC-01C brief. Maturity is never hand-picked: it is the most
+# conservative status among the capabilities a solution actually draws on
+# (see :func:`conservative_status`), so it cannot drift from CAPABILITIES.
+
+@dataclass(frozen=True)
+class SolutionGroup:
+    key: str
+    role: str
+    challenge: str
+    how_it_helps: str
+    capability_keys: tuple[str, ...]
+
+    @property
+    def status(self) -> CapabilityStatus:
+        return conservative_status(self.capability_keys)
+
+    @property
+    def maturity_label(self) -> str:
+        return MATURITY_STATUS_LABELS[self.status]
+
+    @property
+    def capabilities(self) -> tuple[PublicCapability, ...]:
+        return tuple(CAPABILITIES_BY_KEY[key] for key in self.capability_keys)
+
+
+SOLUTION_GROUPS: tuple[SolutionGroup, ...] = (
+    SolutionGroup(
+        key="manufacturing-engineering",
+        role="Manufacturing Engineering",
+        challenge=(
+            "Selecting a manufacturing process, calculating machining "
+            "parameters and checking design-for-manufacturability in one "
+            "place, instead of switching between spreadsheets and rules "
+            "of thumb."
+        ),
+        how_it_helps=(
+            "Import CAD geometry, run deterministic machining "
+            "calculations and review DFM checks against evidence you can "
+            "inspect line by line."
+        ),
+        capability_keys=("cad-geometry", "machining", "quality"),
+    ),
+    SolutionGroup(
+        key="process-engineering",
+        role="Process Engineering",
+        challenge=(
+            "Defining operations, sequencing them and keeping tooling and "
+            "process context consistent across a part's manufacturing "
+            "route."
+        ),
+        how_it_helps=(
+            "Structure the process plan around deterministic machining "
+            "formulas and machine/tool library data, with a process-plan "
+            "validation layer in progress."
+        ),
+        capability_keys=("machining", "machine-tool", "quality"),
+    ),
+    SolutionGroup(
+        key="quality-engineering",
+        role="Quality Engineering",
+        challenge=(
+            "Turning a 2D technical drawing into structured tolerance and "
+            "GD&T evidence, with a traceable validation record."
+        ),
+        how_it_helps=(
+            "Technical drawing parsing already extracts dimensions and "
+            "GD&T at the backend level; a dedicated workspace review view "
+            "and validation reporting are in progress."
+        ),
+        capability_keys=("drawing", "quality"),
+    ),
+    SolutionGroup(
+        key="supplier-development",
+        role="Supplier Development / Industrialization",
+        challenge=(
+            "Giving a new supplier a consistent, traceable CAD-to-"
+            "manufacturing pipeline during new product introduction."
+        ),
+        how_it_helps=(
+            "CAD import and canonical geometry extraction give suppliers "
+            "and internal teams a shared starting point today; broader "
+            "process and validation views for a full pipeline are in "
+            "progress. MachiningPro AI does not grant supplier approval "
+            "on its own."
+        ),
+        capability_keys=("cad-geometry", "quality"),
+    ),
+    SolutionGroup(
+        key="cost-rfq",
+        role="Cost / RFQ",
+        challenge=(
+            "Getting a cycle-time and should-cost estimate for quoting "
+            "without a dedicated engineering tool."
+        ),
+        how_it_helps=(
+            "Cost and RFQ support is design intent today, meant to build "
+            "on the same engineering evidence produced earlier in the "
+            "workflow."
+        ),
+        capability_keys=("costing",),
+    ),
+    SolutionGroup(
+        key="technical-project-teams",
+        role="Technical Project Teams",
+        challenge=(
+            "Keeping a shared, traceable view of engineering status "
+            "across CAD, drawings, machining and validation for a project "
+            "team."
+        ),
+        how_it_helps=(
+            "CAD import and engineering evidence review give a team a "
+            "common reference point today; broader cross-discipline "
+            "status reporting is in progress."
+        ),
+        capability_keys=("cad-geometry", "machining", "quality"),
+    ),
+)
+
+
+def product_context(config: PublicSiteConfig) -> dict[str, object]:
+    """Template context for the Product page (PUBLIC-01C)."""
+    ctx = page_context(PAGES_BY_KEY["product"], config)
+    ctx.update(
+        {
+            "capabilities": CAPABILITIES,
+            "maturity_groups": capabilities_by_status(),
+            "authority_principles": ENGINEERING_AUTHORITY_PRINCIPLES,
+            "data_library_foundation": DATA_LIBRARY_FOUNDATION,
+            "validation_points": VALIDATION_TRACEABILITY_POINTS,
+        }
+    )
+    return ctx
+
+
+def how_it_works_context(config: PublicSiteConfig) -> dict[str, object]:
+    """Template context for the How It Works page (PUBLIC-01C)."""
+    ctx = page_context(PAGES_BY_KEY["how-it-works"], config)
+    ctx.update(
+        {
+            "steps": HOW_IT_WORKS_STEPS,
+            "authority_principles": ENGINEERING_AUTHORITY_PRINCIPLES,
+        }
+    )
+    return ctx
+
+
+def solutions_context(config: PublicSiteConfig) -> dict[str, object]:
+    """Template context for the Solutions page (PUBLIC-01C)."""
+    ctx = page_context(PAGES_BY_KEY["solutions"], config)
+    ctx.update({"solution_groups": SOLUTION_GROUPS})
     return ctx

@@ -1,0 +1,150 @@
+{% extends "public/layout.html" %}
+{% from "public/_macros.html" import cta %}
+
+{#- MachiningPro AI — public Product page (PUBLIC-01C).
+
+    What the platform is, which capability families it brings together, and
+    how each is graded (Available / In Development / Planned) against
+    concrete repository evidence — see frontend/public_site.py::CAPABILITIES
+    and docs/superpowers/specs/2026-09-26-public-prelogin-ux-design.md.
+    No customer names, testimonials, prices or unsupported claims. -#}
+
+{% block content %}
+
+<!-- ===== PRODUCT HERO ===== -->
+<section class="mp-pub-page" aria-labelledby="mp-product-h1">
+  <div class="mp-pub-container">
+    <p class="mp-pub-page__eyebrow">{{ site.name }}</p>
+    <h1 class="mp-pub-page__title" id="mp-product-h1">A structured engineering platform</h1>
+    <p class="mp-pub-page__lead">
+      MachiningPro AI brings machining engineering, technical drawing
+      intelligence, manufacturing data and validation into one
+      deterministic-first environment, with AI-assisted workflows added
+      where they are ready and always clearly labelled.
+    </p>
+    <div class="mp-pub-cta-row">
+      {{ cta(site.how_it_works_href, "How It Works", kind="secondary") }}
+      {{ cta(site.request_demo_href, "Request Demo") }}
+    </div>
+  </div>
+</section>
+
+<!-- ===== PLATFORM OVERVIEW ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-product-overview-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-product-overview-h" class="mp-home-section__title">Platform Overview</h2>
+    <p class="mp-home-section__lead">
+      MachiningPro AI is organized as a single engineering environment
+      rather than a set of separate tools: CAD and technical drawing
+      intelligence, machining engineering, machine/tool/material data,
+      process validation and AI-assisted evidence review all draw on the
+      same imported part. Each area is at a different stage of readiness —
+      see the capability families and maturity matrix below for exactly
+      which parts are available today.
+    </p>
+  </div>
+</section>
+
+<!-- ===== CAPABILITY FAMILIES ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-product-families-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-product-families-h" class="mp-home-section__title">Capability Families</h2>
+    <p class="mp-home-section__lead">
+      See <a href="{{ site.how_it_works_href }}">How It Works</a> for how
+      these fit into a single engineering workflow.
+    </p>
+    <div class="mp-card-grid mp-card-grid--3">
+      {% for cap in capabilities %}
+      <div class="mp-card">
+        <div class="mp-card__meta">
+          <span class="mp-badge mp-badge--status-{{ cap.status }}">{{ cap.capability_label }}</span>
+        </div>
+        <h3 class="mp-card__title">{{ cap.name }}</h3>
+        <p class="mp-card__body">{{ cap.description }}</p>
+        {% if cap.key_capabilities %}
+        <ul class="mp-bullet-list mp-bullet-list--tight">
+          {% for item in cap.key_capabilities %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== ENGINEERING AUTHORITY MODEL ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-product-authority-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-product-authority-h" class="mp-home-section__title">Engineering Authority Model</h2>
+    <p class="mp-home-section__lead">
+      Deterministic engineering is the foundation. AI assistance is added
+      around it, never in place of it.
+    </p>
+    <ul class="mp-bullet-list">
+      {% for point in authority_principles %}<li>{{ point }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- ===== DATA / LIBRARY FOUNDATION ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-product-data-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-product-data-h" class="mp-home-section__title">Data &amp; Library Foundation</h2>
+    <p class="mp-home-section__lead">
+      A structured foundation the capability families above are built on.
+    </p>
+    <ul class="mp-bullet-list">
+      {% for point in data_library_foundation %}<li>{{ point }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- ===== VALIDATION & TRACEABILITY ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-product-validation-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-product-validation-h" class="mp-home-section__title">Validation &amp; Traceability</h2>
+    <p class="mp-home-section__lead">
+      What "engineering evidence" means in practice, today.
+    </p>
+    <ul class="mp-bullet-list">
+      {% for point in validation_points %}<li>{{ point }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- ===== PRODUCT MATURITY MATRIX ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-product-maturity-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-product-maturity-h" class="mp-home-section__title">Product Maturity Matrix</h2>
+    <p class="mp-home-section__lead">
+      An honest snapshot of where each capability family stands today, not
+      a promise of a release date.
+    </p>
+    <div class="mp-home-maturity">
+      {% for label, caps in maturity_groups %}
+      <div class="mp-home-maturity__col">
+        <h3 class="mp-home-maturity__heading">{{ label }}</h3>
+        <ul class="mp-home-maturity__list">
+          {% for cap in caps %}<li>{{ cap.name }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="mp-home-final-cta" aria-labelledby="mp-product-final-h">
+  <div class="mp-pub-container mp-home-final-cta__inner">
+    <h2 id="mp-product-final-h" class="mp-home-final-cta__title">
+      See MachiningPro AI applied to a real engineering workflow.
+    </h2>
+    <div class="mp-pub-cta-row mp-pub-cta-row--center">
+      {{ cta(site.how_it_works_href, "How It Works", kind="secondary", size="lg") }}
+      {{ cta(site.request_demo_href, "Request Demo", size="lg") }}
+      {{ cta(site.solutions_href, "View Solutions", kind="ghost", size="lg") }}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

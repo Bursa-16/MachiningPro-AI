@@ -2537,3 +2537,26 @@ html.mp-public .mp-btn:focus-visible {
   .mp-home-hero__visual { max-width: 100%; min-height: 160px; }
   .mp-home-trust__row { justify-content: flex-start; }
 }
+
+/* =========================================================================
+   25. PUBLIC-01C — PRODUCT / HOW IT WORKS / SOLUTIONS
+   Reuses PUBLIC-01B tokens, .mp-card, .mp-card-grid, .mp-home-steps,
+   .mp-home-maturity and .mp-badge--status-* verbatim. Only a small,
+   generic bullet-list style is new here, decoupled from the .mp-home-*
+   namespace since it is shared by all three pages below.
+   ========================================================================= */
+
+.mp-bullet-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--mp-sp-2); }
+.mp-bullet-list li {
+  font-size: var(--mp-text-sm); color: var(--mp-text-secondary);
+  padding-left: var(--mp-sp-4); position: relative; line-height: 1.5;
+}
+.mp-bullet-list li::before {
+  content: ""; position: absolute; left: 0; top: 0.55em;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--mp-text-muted);
+}
+.mp-bullet-list--tight { gap: var(--mp-sp-1); }
+
+/* Solutions cards: status badge sits above the role heading, same pattern
+   as the home page's capability cards. */
+.mp-card__meta { display: flex; align-items: center; gap: var(--mp-sp-2); margin-bottom: var(--mp-sp-2); }

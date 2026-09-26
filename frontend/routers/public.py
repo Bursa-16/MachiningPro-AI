@@ -1,9 +1,10 @@
-"""MachiningPro AI — public / pre-login page router (PUBLIC-01A / PUBLIC-01B).
+"""MachiningPro AI — public / pre-login page router (PUBLIC-01A / -01B / -01C).
 
-Registers the public home page and the page skeletons from
-``frontend.public_site``. The home page (PUBLIC-01B) is the one page in the
-registry with ``content_status="live"``; it renders ``public/home.html``
-with the richer home-page context. Every other registered page is still a
+Registers the public "live" content pages and the page skeletons from
+``frontend.public_site``. Home (PUBLIC-01B), Product, How It Works and
+Solutions (PUBLIC-01C) are the pages in the registry with
+``content_status="live"``; each renders its own template with a richer,
+page-specific context. Every other registered page is still a
 ``content_status="skeleton"`` placeholder rendered from ``public/skeleton.html``.
 """
 
@@ -13,11 +14,15 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from frontend.public_site import (
+    PAGES_BY_KEY,
     PUBLIC_PAGES,
     PublicPage,
     home_context,
+    how_it_works_context,
     load_config,
     page_context,
+    product_context,
+    solutions_context,
 )
 
 router = APIRouter(tags=["public"])
@@ -65,3 +70,34 @@ async def home(request: Request) -> HTMLResponse:
     templates = request.app.state.templates
     ctx = home_context(load_config())
     return templates.TemplateResponse(request, "public/home.html", ctx)
+
+
+# -- Product / How It Works / Solutions (PUBLIC-01C) -------------------------
+# Migrated off the generic skeleton loop above (``PublicPage.content_status``
+# flipped to "live" in the registry) onto their own templates and context
+# builders, the same pattern the home page established in PUBLIC-01B.
+
+@router.get(PAGES_BY_KEY["product"].path, response_class=HTMLResponse, name="public_product")
+async def product(request: Request) -> HTMLResponse:
+    """Public MachiningPro AI product page."""
+    templates = request.app.state.templates
+    ctx = product_context(load_config())
+    return templates.TemplateResponse(request, "public/product.html", ctx)
+
+
+@router.get(
+    PAGES_BY_KEY["how-it-works"].path, response_class=HTMLResponse, name="public_how_it_works",
+)
+async def how_it_works(request: Request) -> HTMLResponse:
+    """Public MachiningPro AI how-it-works page."""
+    templates = request.app.state.templates
+    ctx = how_it_works_context(load_config())
+    return templates.TemplateResponse(request, "public/how_it_works.html", ctx)
+
+
+@router.get(PAGES_BY_KEY["solutions"].path, response_class=HTMLResponse, name="public_solutions")
+async def solutions(request: Request) -> HTMLResponse:
+    """Public MachiningPro AI solutions page."""
+    templates = request.app.state.templates
+    ctx = solutions_context(load_config())
+    return templates.TemplateResponse(request, "public/solutions.html", ctx)

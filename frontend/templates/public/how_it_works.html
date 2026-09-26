@@ -1,0 +1,109 @@
+{% extends "public/layout.html" %}
+{% from "public/_macros.html" import cta %}
+
+{#- MachiningPro AI — public How It Works page (PUBLIC-01C).
+
+    A fuller, 9-step version of the workflow summarized on the home page,
+    grounded in frontend/public_site.py::HOW_IT_WORKS_STEPS. Each step's
+    status is graded from the same CAPABILITIES entries used everywhere
+    else on the site — never a separately-invented claim. -#}
+
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<section class="mp-pub-page" aria-labelledby="mp-hiw-h1">
+  <div class="mp-pub-container">
+    <p class="mp-pub-page__eyebrow">{{ site.name }}</p>
+    <h1 class="mp-pub-page__title" id="mp-hiw-h1">How MachiningPro AI Works</h1>
+    <p class="mp-pub-page__lead">
+      The end-to-end engineering workflow: what you do, what the platform
+      analyzes, where engineering review happens, and what comes out the
+      other end. Steps that are not fully available yet are labelled
+      In Development or Planned rather than shown as finished.
+    </p>
+    <div class="mp-pub-cta-row">
+      {{ cta(site.product_href, "Explore Product", kind="secondary") }}
+      {{ cta(site.request_demo_href, "Request Demo") }}
+    </div>
+  </div>
+</section>
+
+<!-- ===== WORKFLOW STEPS ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-hiw-steps-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-hiw-steps-h" class="mp-home-section__title">The Workflow</h2>
+    <ol class="mp-home-steps" data-hiw-steps>
+      {% for step in steps %}
+      <li class="mp-home-steps__item" data-hiw-step="{{ loop.index }}">
+        <span class="mp-home-steps__index" aria-hidden="true">{{ loop.index }}</span>
+        <div class="mp-home-steps__body">
+          <h3 class="mp-home-steps__title">
+            {{ step.title }}
+            {% if step.status != "available" %}<span class="mp-badge-planned">{{ step.status_label }}</span>{% endif %}
+          </h3>
+          <p class="mp-home-steps__desc">{{ step.description }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<!-- ===== BASIC / ADVANCED ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-hiw-disclosure-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-hiw-disclosure-h" class="mp-home-section__title">Basic and Advanced Views</h2>
+    <p class="mp-home-section__lead">
+      The platform UX direction is progressive disclosure: a basic view
+      asks for only the essential inputs for a step, with optional
+      technical parameters available in an advanced view for engineers who
+      need them. This reflects the intended direction for the workflow
+      above; not every step's forms have migrated to this pattern yet.
+    </p>
+  </div>
+</section>
+
+<!-- ===== USER CONTROL ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-hiw-control-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-hiw-control-h" class="mp-home-section__title">You Stay in Control</h2>
+    <ul class="mp-bullet-list">
+      {% for point in authority_principles %}<li>{{ point }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- ===== OUTPUTS ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-hiw-outputs-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-hiw-outputs-h" class="mp-home-section__title">What You Get Out of It</h2>
+    <ul class="mp-bullet-list">
+      <li>Engineering findings and diagnostics from the imported CAD data —
+        available today in the CAD import result view.</li>
+      <li>Format-detection confidence, adapter provenance and fidelity
+        warnings — available today.</li>
+      <li>Machining parameters and machine/tool/material context — In
+        Development; a dedicated workspace view is planned.</li>
+      <li>Design-for-manufacturability and process-plan validation status —
+        In Development.</li>
+      <li>Cost / RFQ data — Planned, no implementation yet.</li>
+      <li>A structured, traceable report of the full engineering decision
+        trail — Planned.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="mp-home-final-cta" aria-labelledby="mp-hiw-final-h">
+  <div class="mp-pub-container mp-home-final-cta__inner">
+    <h2 id="mp-hiw-final-h" class="mp-home-final-cta__title">
+      See the full capability picture behind this workflow.
+    </h2>
+    <div class="mp-pub-cta-row mp-pub-cta-row--center">
+      {{ cta(site.product_href, "Explore Product", kind="secondary", size="lg") }}
+      {{ cta(site.request_demo_href, "Request Demo", size="lg") }}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

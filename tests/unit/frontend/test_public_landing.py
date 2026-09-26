@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from frontend.app import app
-from frontend.public_site import CAPABILITIES, PAGES_BY_KEY
+from frontend.public_site import CAPABILITIES, PAGES_BY_KEY, WORKFLOW_STEPS
 
 
 @pytest.fixture()
@@ -68,7 +68,16 @@ class TestHomeContent:
         assert "mp-home-hero__lead" in home
 
     def test_workflow_section(self, home: str) -> None:
-        assert "how-it-works" in home.lower() or "How MachiningPro AI Works" in home
+        # PUBLIC-01C test hardening: the previous version of this test
+        # (`"how-it-works" in home.lower() or ...`) was vacuous — every page
+        # contains an href="/how-it-works" nav/CTA link, so it could not
+        # fail even if the whole "How MachiningPro AI Works" section were
+        # deleted. Assert the section's own heading id and at least one
+        # data-driven step actually render instead.
+        assert 'id="mp-home-howitworks-h"' in home
+        assert "How MachiningPro AI Works</h2>" in home
+        for step in WORKFLOW_STEPS:
+            assert step.title in home, f"missing workflow step: {step.title}"
 
     def test_step_format(self, home: str) -> None:
         assert "STEP" in home or "STP" in home
@@ -122,11 +131,27 @@ class TestCapabilitiesAndMaturity:
         assert "In Development" in home
 
     def test_no_capability_overclaimed_as_available(self, home: str) -> None:
-        # Only capabilities graded "available" may show the Available badge
-        # in a capability card; this guards against silently upgrading a
-        # capability's maturity in a future edit.
-        available_names = {c.name for c in CAPABILITIES if c.status == "available"}
-        assert available_names, "expected at least one available capability"
+        # PUBLIC-01C test hardening: the previous version of this test only
+        # asserted that at least one CAPABILITIES entry has status
+        # "available" — a fact about the static data, unconnected to what
+        # actually renders, so it could not catch a template bug that
+        # mislabels a card's maturity. For every capability, locate its
+        # rendered card and verify the badge status/label match the
+        # registry exactly (Jinja escapes "&" to "&amp;").
+        for cap in CAPABILITIES:
+            escaped_name = cap.name.replace("&", "&amp;")
+            pattern = (
+                r'<span class="mp-badge mp-badge--status-(\w+)">([^<]+)</span>\s*'
+                r'</div>\s*<h3 class="mp-card__title">' + re.escape(escaped_name) + r"</h3>"
+            )
+            match = re.search(pattern, home)
+            assert match, f"no capability card found for {cap.name!r}"
+            rendered_status, rendered_label = match.groups()
+            assert rendered_status == cap.status, (
+                f"{cap.name}: rendered badge status {rendered_status!r} != "
+                f"registry status {cap.status!r}"
+            )
+            assert rendered_label == cap.capability_label
 
     def test_maturity_section_present(self, home: str) -> None:
         assert "Product Maturity" in home

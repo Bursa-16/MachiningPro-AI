@@ -1,0 +1,70 @@
+{% extends "public/layout.html" %}
+{% from "public/_macros.html" import cta %}
+
+{#- MachiningPro AI — public Solutions page (PUBLIC-01C).
+
+    Organized by role/problem (frontend/public_site.py::SOLUTION_GROUPS),
+    not by internal software module. Each group's maturity label is the
+    most conservative status among the CAPABILITIES it actually draws on
+    (see SolutionGroup.status / conservative_status) — never hand-picked,
+    never a customer name, never a quantified benefit claim. -#}
+
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<section class="mp-pub-page" aria-labelledby="mp-sol-h1">
+  <div class="mp-pub-container">
+    <p class="mp-pub-page__eyebrow">{{ site.name }}</p>
+    <h1 class="mp-pub-page__title" id="mp-sol-h1">Solutions</h1>
+    <p class="mp-pub-page__lead">
+      How manufacturing, process and quality engineering teams can use
+      MachiningPro AI in their day-to-day engineering work, organized by
+      role rather than by internal module.
+    </p>
+    <div class="mp-pub-cta-row">
+      {{ cta(site.product_href, "Explore Product", kind="secondary") }}
+      {{ cta(site.request_demo_href, "Request Demo") }}
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOLUTION GROUPS ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-sol-groups-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-sol-groups-h" class="mp-home-section__title">Solutions by Role</h2>
+    <div class="mp-card-grid mp-card-grid--3" data-solution-groups>
+      {% for group in solution_groups %}
+      <div class="mp-card" data-solution="{{ group.key }}">
+        <div class="mp-card__meta">
+          <span class="mp-badge mp-badge--status-{{ group.status }}">{{ group.maturity_label }}</span>
+        </div>
+        <h3 class="mp-card__title">{{ group.role }}</h3>
+        <p class="mp-card__body"><strong>Challenge:</strong> {{ group.challenge }}</p>
+        <p class="mp-card__body"><strong>How MachiningPro AI helps:</strong> {{ group.how_it_helps }}</p>
+        <ul class="mp-bullet-list mp-bullet-list--tight">
+          {% for cap in group.capabilities %}<li>{{ cap.name }}</li>{% endfor %}
+        </ul>
+        <div class="mp-pub-cta-row">
+          {{ cta(site.request_demo_href, "Request Demo") }}
+          {{ cta(site.product_href, "View Product", kind="ghost") }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="mp-home-final-cta" aria-labelledby="mp-sol-final-h">
+  <div class="mp-pub-container mp-home-final-cta__inner">
+    <h2 id="mp-sol-final-h" class="mp-home-final-cta__title">
+      Not sure which fits your role?
+    </h2>
+    <div class="mp-pub-cta-row mp-pub-cta-row--center">
+      {{ cta(site.product_href, "Explore Product", kind="secondary", size="lg") }}
+      {{ cta(site.request_demo_href, "Request Demo", size="lg") }}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
