@@ -1,0 +1,191 @@
+{% extends "public/layout.html" %}
+{% from "public/_macros.html" import cta %}
+
+{#- MachiningPro AI — public home page (PUBLIC-01B).
+
+    Migrated off the legacy landing.html / public_base.html shell onto the
+    PUBLIC-01A public layout. Content is grounded in the actual repository:
+    capability status (Available / In Development / Planned) comes from
+    frontend/public_site.py::CAPABILITIES, graded from concrete evidence —
+    see docs/superpowers/specs/2026-09-26-public-prelogin-ux-design.md.
+    No customer names, logos, testimonials, prices or unsupported claims. -#}
+
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<section class="mp-home-hero" aria-labelledby="mp-home-h1">
+  <div class="mp-pub-container mp-home-hero__row">
+    <div class="mp-home-hero__copy">
+      <p class="mp-home-hero__eyebrow">Manufacturing Engineering Intelligence</p>
+      <h1 id="mp-home-h1" class="mp-home-hero__title">{{ site.name }}</h1>
+      <p class="mp-home-hero__lead">
+        A professional engineering platform that brings CAD import, machining
+        engineering calculations, design-for-manufacturability checks and
+        process planning into one structured, deterministic-first
+        environment — with AI assistance clearly labelled as it becomes
+        available.
+      </p>
+      <div class="mp-pub-cta-row">
+        {{ cta(site.request_demo_href, "Request Demo", size="lg") }}
+        {{ cta(site.how_it_works_href, "How It Works", kind="secondary", size="lg") }}
+        {{ cta(site.sign_in_href, "Sign In", kind="ghost", size="lg") }}
+      </div>
+    </div>
+    <div id="mp-hero-visual" class="mp-home-hero__visual" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ===== TRUST / STATUS STRIP ===== -->
+<section class="mp-home-trust" aria-label="Platform principles">
+  <div class="mp-pub-container mp-home-trust__row">
+    {% for point in trust_points %}
+    <span class="mp-home-trust__item">{{ point }}</span>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ===== CORE CAPABILITIES ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-home-capabilities-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-home-capabilities-h" class="mp-home-section__title">Core Capabilities</h2>
+    <p class="mp-home-section__lead">
+      What MachiningPro AI covers today, and what is under active
+      development. See <a href="/product">Product</a> for the full picture.
+    </p>
+    <div class="mp-card-grid mp-card-grid--3">
+      {% for cap in capabilities %}
+      <div class="mp-card">
+        <div class="mp-card__header">
+          <span class="mp-badge mp-badge--status-{{ cap.status }}">{{ cap.capability_label }}</span>
+        </div>
+        <h3 class="mp-card__title">{{ cap.name }}</h3>
+        <p class="mp-card__body">{{ cap.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW MACHININGPRO AI WORKS ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-home-howitworks-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-home-howitworks-h" class="mp-home-section__title">How MachiningPro AI Works</h2>
+    <ol class="mp-home-steps">
+      {% for step in workflow_steps %}
+      <li class="mp-home-steps__item">
+        <span class="mp-home-steps__index" aria-hidden="true">{{ loop.index }}</span>
+        <div class="mp-home-steps__body">
+          <h3 class="mp-home-steps__title">
+            {{ step.title }}
+            {% if step.status != "available" %}<span class="mp-badge-planned">{{ step.status_label }}</span>{% endif %}
+          </h3>
+          <p class="mp-home-steps__desc">{{ step.description }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<!-- ===== ENGINEERING WORKFLOW / PLATFORM FLOW ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-home-flow-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-home-flow-h" class="mp-home-section__title">Engineering Workflow</h2>
+    <ol class="mp-home-flow" aria-label="Platform data flow">
+      {% for stage in process_flow_stages %}
+      <li class="mp-home-flow__stage">{{ stage }}</li>
+      {% if not loop.last %}<li class="mp-home-flow__arrow" aria-hidden="true">&rarr;</li>{% endif %}
+      {% endfor %}
+    </ol>
+
+    <h3 class="mp-home-section__subtitle">Machining Process Explorer</h3>
+    <p class="mp-home-section__lead">
+      Select a machining process to see a conceptual engineering
+      visualization. All visuals are original technical illustrations —
+      not screenshots from external software.
+    </p>
+    <div id="mp-process-selector">
+      <div class="mp-process-tabs" data-process-tabs role="tablist">
+        <button class="mp-process-tab" data-process="milling" role="tab" aria-selected="true">Milling</button>
+        <button class="mp-process-tab" data-process="turning" role="tab" aria-selected="false">Turning</button>
+        <button class="mp-process-tab" data-process="drilling" role="tab" aria-selected="false">Drilling</button>
+        <button class="mp-process-tab" data-process="cam" role="tab" aria-selected="false">CAM</button>
+        <button class="mp-process-tab" data-process="validation" role="tab" aria-selected="false">Validation</button>
+      </div>
+      <div class="mp-home-flow__visual-wrap">
+        <div class="mp-process-visual" data-process-visual></div>
+        <h3 data-process-title class="mp-home-flow__visual-title"></h3>
+        <p data-process-desc class="mp-home-flow__visual-desc"></p>
+      </div>
+    </div>
+
+    <div class="mp-home-gallery">
+      <h3 class="mp-home-section__subtitle">Process Library</h3>
+      <div class="mp-card-grid mp-card-grid--4">
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/milling-face-cut.svg" width="400" height="280" alt="Face milling with indexable insert cutter showing toolpath and feed direction" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/turning-external.svg" width="400" height="260" alt="External longitudinal turning with CNMG insert showing depth of cut" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/drilling-through.svg" width="400" height="260" alt="Through-hole drilling with twist drill and axial feed" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/threading-external.svg" width="400" height="260" alt="External V-profile threading with pitch marking" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/cam-toolpath.svg" width="400" height="280" alt="CAM zigzag pocket clearing toolpath with approach and retract" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/validation-contour.svg" width="400" height="280" alt="Validation contour visualization with pass and review indicators" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/tooling-insert-holder.svg" width="400" height="260" alt="Turning tool holder with CNMG insert and nose radius" loading="lazy" decoding="async" /></div>
+        <div class="mp-card mp-home-gallery__cell"><img src="/static/media/machining/hole-finishing-reaming.svg" width="400" height="260" alt="Reaming to H7 tolerance for hole finishing" loading="lazy" decoding="async" /></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TARGET USERS / USE CASES ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-home-users-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-home-users-h" class="mp-home-section__title">Built for Manufacturing Professionals</h2>
+    <div class="mp-card-grid mp-card-grid--3">
+      {% for user in target_users %}
+      <div class="mp-card">
+        <h3 class="mp-card__title">{{ user.role }}</h3>
+        <p class="mp-card__body">{{ user.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRODUCT MATURITY / AVAILABILITY ===== -->
+<section class="mp-pub-page mp-pub-page--section" aria-labelledby="mp-home-maturity-h">
+  <div class="mp-pub-container">
+    <h2 id="mp-home-maturity-h" class="mp-home-section__title">Product Maturity</h2>
+    <p class="mp-home-section__lead">
+      MachiningPro AI has capabilities at different stages of readiness.
+      This is an honest snapshot, not a promise of a release date.
+    </p>
+    <div class="mp-home-maturity">
+      {% for label, caps in maturity_groups %}
+      <div class="mp-home-maturity__col">
+        <h3 class="mp-home-maturity__heading">{{ label }}</h3>
+        <ul class="mp-home-maturity__list">
+          {% for cap in caps %}<li>{{ cap.name }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="mp-home-final-cta" aria-labelledby="mp-home-final-h">
+  <div class="mp-pub-container mp-home-final-cta__inner">
+    <h2 id="mp-home-final-h" class="mp-home-final-cta__title">
+      See how MachiningPro AI fits your engineering workflow.
+    </h2>
+    <div class="mp-pub-cta-row mp-pub-cta-row--center">
+      {{ cta(site.request_demo_href, "Request Demo", size="lg") }}
+      {{ cta(site.how_it_works_href, "Explore How It Works", kind="secondary", size="lg") }}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/machining-visuals.js" defer></script>
+{% endblock %}

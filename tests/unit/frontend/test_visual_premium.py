@@ -50,14 +50,18 @@ class TestPremiumDesignTokens:
 
 
 class TestLandingPremium:
-    def test_dark_hero(self, landing: str) -> None:
-        assert "mp-hero-dark" in landing
+    # PUBLIC-01B redesigned the home hero onto the public shell with a more
+    # restrained treatment (no dark gradient/grid/scanline effect), per the
+    # design brief's "engineering-oriented, not neon SaaS" direction. These
+    # checks were updated to the new hero's structural markers.
+    def test_home_hero_present(self, landing: str) -> None:
+        assert "mp-home-hero" in landing
 
-    def test_hero_grid_overlay(self, landing: str) -> None:
-        assert "mp-hero-dark__grid" in landing
+    def test_hero_eyebrow(self, landing: str) -> None:
+        assert "mp-home-hero__eyebrow" in landing
 
-    def test_hero_scanline(self, landing: str) -> None:
-        assert "mp-hero-dark__scanline" in landing
+    def test_hero_title(self, landing: str) -> None:
+        assert "mp-home-hero__title" in landing
 
     def test_hero_accent_text(self, landing: str) -> None:
         assert "deterministic-first" in landing

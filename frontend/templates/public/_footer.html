@@ -9,33 +9,23 @@
         {% endif %}
       </div>
 
-      <nav aria-labelledby="mp-footer-product">
-        <p class="mp-pub-footer__heading" id="mp-footer-product">Product</p>
+      {% for label, pages in footer_groups %}
+      <nav aria-labelledby="mp-footer-{{ label|lower|replace(' ', '-') }}">
+        <p class="mp-pub-footer__heading" id="mp-footer-{{ label|lower|replace(' ', '-') }}">{{ label }}</p>
         <ul class="mp-pub-footer__list">
-          {% for p in primary_nav %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
+          {% for p in pages %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
+          {% if label == "Company" %}<li><a href="{{ site.sign_in_href }}">Sign In</a></li>{% endif %}
         </ul>
       </nav>
-
-      <nav aria-labelledby="mp-footer-company">
-        <p class="mp-pub-footer__heading" id="mp-footer-company">Get in touch</p>
-        <ul class="mp-pub-footer__list">
-          {% for p in company_nav %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
-          <li><a href="{{ site.sign_in_href }}">Sign In</a></li>
-          {% for s in config.social_links %}
-          <li><a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.label }}<span class="mp-sr-only"> (opens in a new tab)</span></a></li>
-          {% endfor %}
-        </ul>
-      </nav>
-
-      <nav aria-labelledby="mp-footer-legal">
-        <p class="mp-pub-footer__heading" id="mp-footer-legal">Legal</p>
-        <ul class="mp-pub-footer__list">
-          {% for p in legal_nav %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
-        </ul>
-      </nav>
+      {% endfor %}
     </div>
     <div class="mp-pub-footer__bottom">
-      <span>{{ site.name }} · {{ site.tagline }}</span>
+      <span>&copy; {{ config.copyright_year }} {{ site.name }}</span>
+      {% if config.social_links %}
+      <span class="mp-pub-footer__social">
+        {% for s in config.social_links %}<a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.label }}<span class="mp-sr-only"> (opens in a new tab)</span></a>{% if not loop.last %} &middot; {% endif %}{% endfor %}
+      </span>
+      {% endif %}
       <span>Deterministic engineering is authoritative; AI assistance is always labelled.</span>
     </div>
   </div>

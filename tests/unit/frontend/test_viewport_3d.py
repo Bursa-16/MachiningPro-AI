@@ -209,7 +209,8 @@ class TestNoRegression:
     def test_landing(self, client: TestClient) -> None:
         resp = client.get("/")
         assert resp.status_code == 200
-        assert "MachineryPro AI" in resp.text
+        # PUBLIC-01B: home page uses the correct product name.
+        assert "MachiningPro AI" in resp.text
 
     def test_workspace(self, client: TestClient) -> None:
         assert client.get("/ui/").status_code == 200

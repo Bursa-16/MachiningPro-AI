@@ -1,8 +1,10 @@
-"""MachiningPro AI — public / pre-login page router (PUBLIC-01A).
+"""MachiningPro AI — public / pre-login page router (PUBLIC-01A / PUBLIC-01B).
 
-Registers the public page skeletons from ``frontend.public_site``. The
-existing landing page at ``/`` is still served by ``routers/ui.py`` and is
-migrated onto the new public layout in PUBLIC-01B.
+Registers the public home page and the page skeletons from
+``frontend.public_site``. The home page (PUBLIC-01B) is the one page in the
+registry with ``content_status="live"``; it renders ``public/home.html``
+with the richer home-page context. Every other registered page is still a
+``content_status="skeleton"`` placeholder rendered from ``public/skeleton.html``.
 """
 
 from __future__ import annotations
@@ -10,7 +12,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from frontend.public_site import PUBLIC_PAGES, PublicPage, load_config, page_context
+from frontend.public_site import (
+    PUBLIC_PAGES,
+    PublicPage,
+    home_context,
+    load_config,
+    page_context,
+)
 
 router = APIRouter(tags=["public"])
 
@@ -43,3 +51,17 @@ def _register(page: PublicPage) -> None:
 for _page in PUBLIC_PAGES:
     if _page.content_status == "skeleton":
         _register(_page)
+
+
+# -- Home page (PUBLIC-01B) --------------------------------------------------
+# Migrated off the legacy ``landing.html`` / ``public_base.html`` shell and
+# onto the PUBLIC-01A public layout. Registered directly (not through
+# ``_register``) because it needs the richer ``home_context`` and its own
+# template, and it is intentionally excluded from the skeleton loop above.
+
+@router.get("/", response_class=HTMLResponse, name="public_home")
+async def home(request: Request) -> HTMLResponse:
+    """Public MachiningPro AI home / landing page."""
+    templates = request.app.state.templates
+    ctx = home_context(load_config())
+    return templates.TemplateResponse(request, "public/home.html", ctx)

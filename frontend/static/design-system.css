@@ -2393,3 +2393,147 @@ html.mp-public .mp-btn:focus-visible {
   }
   .mp-pub-footer { padding-bottom: var(--mp-sp-10); }
 }
+
+/* =========================================================================
+   24. PUBLIC-01B — HOME PAGE (MachiningPro AI public home)
+   Used by templates/public/home.html. Namespaced .mp-home-*.
+   Status badges reuse the shared status color tokens (see section 2) so
+   "available / in development / roadmap" reads consistently with the rest
+   of the design system rather than introducing a fourth badge palette.
+   ========================================================================= */
+
+.mp-badge--status-available     { background: var(--mp-status-success-bg); color: var(--mp-status-success-text); border: 1px solid var(--mp-status-success-border); }
+.mp-badge--status-in_development{ background: var(--mp-status-info-bg);    color: var(--mp-status-info-text);    border: 1px solid var(--mp-status-info-border); }
+.mp-badge--status-roadmap       { background: var(--mp-status-unavail-bg); color: var(--mp-status-unavail-text); border: 1px solid var(--mp-status-unavail-border); }
+
+/* Hero */
+.mp-home-hero { padding: var(--mp-sp-10) 0 var(--mp-sp-8); }
+.mp-home-hero__row {
+  display: flex; align-items: center; gap: var(--mp-sp-8); flex-wrap: wrap;
+}
+.mp-home-hero__copy { flex: 1 1 28rem; min-width: 280px; }
+.mp-home-hero__eyebrow {
+  font-size: var(--mp-text-xs); font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--mp-brand-500); margin: 0 0 var(--mp-sp-3);
+}
+.mp-home-hero__title {
+  font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1.1; margin: 0 0 var(--mp-sp-4); color: var(--mp-text);
+}
+.mp-home-hero__lead {
+  font-size: var(--mp-text-md); line-height: 1.6; color: var(--mp-text-secondary);
+  max-width: 38rem; margin: 0 0 var(--mp-sp-6);
+}
+.mp-home-hero__visual {
+  flex: 0 0 auto; width: 100%; max-width: 420px; min-height: 220px;
+  position: relative;
+}
+
+/* Trust / status strip */
+.mp-home-trust {
+  border-top: 1px solid var(--mp-border); border-bottom: 1px solid var(--mp-border);
+  background: var(--mp-bg-card);
+}
+.mp-home-trust__row {
+  display: flex; flex-wrap: wrap; gap: var(--mp-sp-3) var(--mp-sp-6);
+  justify-content: center; padding: var(--mp-sp-4) var(--mp-pub-gutter);
+}
+.mp-home-trust__item {
+  font-size: var(--mp-text-xs); font-weight: 600; letter-spacing: 0.02em;
+  color: var(--mp-text-secondary); white-space: nowrap;
+}
+.mp-home-trust__item::before { content: "\2713"; margin-right: 6px; color: var(--mp-status-success-text); }
+
+/* Generic section rhythm (reuses .mp-pub-page for gutters/max-width) */
+.mp-pub-page--section { padding-top: var(--mp-sp-10); padding-bottom: var(--mp-sp-2); }
+.mp-home-section__title {
+  font-size: var(--mp-text-xl); font-weight: 700; letter-spacing: -0.01em;
+  margin: 0 0 var(--mp-sp-3); color: var(--mp-text);
+}
+.mp-home-section__subtitle {
+  font-size: var(--mp-text-md); font-weight: 600; margin: var(--mp-sp-8) 0 var(--mp-sp-2);
+  color: var(--mp-text);
+}
+.mp-home-section__lead {
+  font-size: var(--mp-text-sm); line-height: 1.6; color: var(--mp-text-secondary);
+  max-width: 46rem; margin: 0 0 var(--mp-sp-6);
+}
+.mp-home-section__lead a { color: var(--mp-brand-500); }
+
+/* How it works — numbered steps */
+.mp-home-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--mp-sp-5); max-width: 48rem; }
+.mp-home-steps__item { display: flex; gap: var(--mp-sp-4); align-items: flex-start; }
+.mp-home-steps__index {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 1.75rem; height: 1.75rem; border-radius: 50%;
+  background: var(--mp-brand-600); color: #fff; font-size: var(--mp-text-sm); font-weight: 700;
+}
+.mp-home-steps__title { font-size: var(--mp-text-md); font-weight: 600; margin: 0 0 var(--mp-sp-1); color: var(--mp-text); }
+.mp-home-steps__desc { font-size: var(--mp-text-sm); color: var(--mp-text-secondary); margin: 0; line-height: 1.55; }
+
+/* Engineering workflow / platform flow */
+.mp-home-flow {
+  list-style: none; margin: 0 0 var(--mp-sp-6); padding: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--mp-sp-2);
+}
+.mp-home-flow__stage {
+  font-size: var(--mp-text-xs); font-weight: 600; padding: 6px 12px;
+  border-radius: 9999px; background: var(--mp-status-info-bg);
+  color: var(--mp-status-info-text); border: 1px solid var(--mp-status-info-border);
+}
+.mp-home-flow__arrow { color: var(--mp-text-muted); font-size: var(--mp-text-md); }
+.mp-home-flow__visual-wrap { margin-top: var(--mp-sp-4); }
+.mp-home-flow__visual-title { font-size: var(--mp-text-md); font-weight: 600; margin: var(--mp-sp-3) 0 var(--mp-sp-1); color: var(--mp-text); }
+.mp-home-flow__visual-desc { font-size: var(--mp-text-sm); color: var(--mp-text-secondary); margin: 0; }
+
+/* Process library gallery */
+.mp-home-gallery { margin-top: var(--mp-sp-8); }
+.mp-home-gallery__cell { padding: var(--mp-sp-3); }
+.mp-home-gallery__cell img { width: 100%; height: auto; border-radius: var(--mp-radius); display: block; }
+
+/* Product maturity */
+.mp-home-maturity {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--mp-sp-6);
+}
+.mp-home-maturity__col {
+  border: 1px solid var(--mp-border); border-radius: var(--mp-radius-lg);
+  padding: var(--mp-sp-4);
+}
+.mp-home-maturity__heading {
+  font-size: var(--mp-text-sm); font-weight: 700; margin: 0 0 var(--mp-sp-3);
+  color: var(--mp-text);
+}
+.mp-home-maturity__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--mp-sp-2); }
+.mp-home-maturity__list li {
+  font-size: var(--mp-text-sm); color: var(--mp-text-secondary);
+  padding-left: var(--mp-sp-4); position: relative;
+}
+.mp-home-maturity__list li::before {
+  content: ""; position: absolute; left: 0; top: 0.55em;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--mp-text-muted);
+}
+
+/* Final CTA banner */
+.mp-home-final-cta {
+  margin-top: var(--mp-sp-10); padding: var(--mp-sp-10) 0;
+  background: var(--mp-bg-card); border-top: 1px solid var(--mp-border);
+  text-align: center;
+}
+.mp-home-final-cta__inner { max-width: 44rem; margin: 0 auto; }
+.mp-home-final-cta__title {
+  font-size: var(--mp-text-xl); font-weight: 700; margin: 0 0 var(--mp-sp-5);
+  color: var(--mp-text);
+}
+.mp-pub-cta-row--center { justify-content: center; }
+
+@media (max-width: 900px) {
+  .mp-home-hero__visual { max-width: 320px; }
+  .mp-home-maturity { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .mp-home-hero { padding: var(--mp-sp-8) 0 var(--mp-sp-6); }
+  .mp-home-hero__row { flex-direction: column; }
+  .mp-home-hero__visual { max-width: 100%; min-height: 160px; }
+  .mp-home-trust__row { justify-content: flex-start; }
+}

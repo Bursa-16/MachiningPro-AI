@@ -105,6 +105,16 @@ class TestShell:
         assert '<details class="mp-pub-menu">' in html
         assert 'aria-label="Open site menu"' in html
 
+    def test_compact_menu_has_aria_expanded(self, html: str) -> None:
+        # PUBLIC-01B: static baseline state, kept in sync with the open
+        # state by static/js/public-nav.js.
+        assert 'aria-expanded="false"' in html
+
+    def test_public_nav_script_served(self, client: TestClient) -> None:
+        resp = client.get("/static/js/public-nav.js")
+        assert resp.status_code == 200
+        assert "aria-expanded" in resp.text
+
     def test_footer_links_legal_pages(self, html: str) -> None:
         assert 'href="/privacy"' in html and 'href="/terms"' in html
 

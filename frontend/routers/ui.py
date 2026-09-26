@@ -65,13 +65,9 @@ def _render(
 
 
 # -- Routes ----------------------------------------------------------------
-
-@router.get("/", response_class=HTMLResponse)
-async def landing(request: Request) -> HTMLResponse:
-    """Public MachineryPro AI landing page."""
-    templates = request.app.state.templates
-    return templates.TemplateResponse(request, "landing.html", {})
-
+# The public "/" landing page moved to ``routers/public.py`` in PUBLIC-01B
+# (rendered from ``public/home.html`` on the shared public shell instead of
+# the legacy ``landing.html`` / ``public_base.html`` templates).
 
 @router.get("/app")
 async def app_entry() -> HTMLResponse:
