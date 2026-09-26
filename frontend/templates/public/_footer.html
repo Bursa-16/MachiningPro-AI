@@ -1,0 +1,42 @@
+<footer class="mp-pub-footer">
+  <div class="mp-pub-container">
+    <div class="mp-pub-footer__grid">
+      <div class="mp-pub-footer__col--about">
+        <p class="mp-pub-footer__heading">{{ site.name }}</p>
+        <p class="mp-pub-footer__about">{{ site.summary }}</p>
+        {% if config.response_time_statement %}
+        <p class="mp-pub-footer__about">{{ config.response_time_statement }}</p>
+        {% endif %}
+      </div>
+
+      <nav aria-labelledby="mp-footer-product">
+        <p class="mp-pub-footer__heading" id="mp-footer-product">Product</p>
+        <ul class="mp-pub-footer__list">
+          {% for p in primary_nav %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
+        </ul>
+      </nav>
+
+      <nav aria-labelledby="mp-footer-company">
+        <p class="mp-pub-footer__heading" id="mp-footer-company">Get in touch</p>
+        <ul class="mp-pub-footer__list">
+          {% for p in company_nav %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
+          <li><a href="{{ site.sign_in_href }}">Sign In</a></li>
+          {% for s in config.social_links %}
+          <li><a href="{{ s.url }}" rel="noopener noreferrer" target="_blank">{{ s.label }}<span class="mp-sr-only"> (opens in a new tab)</span></a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      <nav aria-labelledby="mp-footer-legal">
+        <p class="mp-pub-footer__heading" id="mp-footer-legal">Legal</p>
+        <ul class="mp-pub-footer__list">
+          {% for p in legal_nav %}<li><a href="{{ p.path }}">{{ p.nav_label }}</a></li>{% endfor %}
+        </ul>
+      </nav>
+    </div>
+    <div class="mp-pub-footer__bottom">
+      <span>{{ site.name }} · {{ site.tagline }}</span>
+      <span>Deterministic engineering is authoritative; AI assistance is always labelled.</span>
+    </div>
+  </div>
+</footer>

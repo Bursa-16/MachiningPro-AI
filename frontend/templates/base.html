@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}MachineryPro AI{% endblock %}</title>
+  <title>{% block title %}MachiningPro AI{% endblock %}</title>
 
   <!-- Inter + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -30,7 +30,7 @@
     }
   </script>
 
-  <!-- MachineryPro AI Design System -->
+  <!-- MachiningPro AI Design System -->
   <link rel="stylesheet" href="/static/design-system.css" />
 
   <!-- HTMX -->
@@ -42,106 +42,17 @@
 </head>
 
 <body>
-  <div class="mp-shell">
+  <a class="mp-skip-link" href="#mp-main-content">Skip to main content</a>
+  <div class="mp-shell" data-mp-shell>
 
-    <!-- SIDEBAR -->
-    <aside class="mp-sidebar" role="navigation" aria-label="Main navigation">
+    <!-- SIDEBAR (desktop: fixed column; <= 900px: off-canvas drawer) -->
+    <aside class="mp-sidebar" id="mp-sidebar" aria-label="Main navigation">
       <div class="mp-sidebar__brand">
-        <div class="mp-sidebar__brand-title">MachineryPro AI</div>
+        <div class="mp-sidebar__brand-title">MachiningPro AI</div>
         <div class="mp-sidebar__brand-subtitle">Engineering Intelligence for Manufacturing</div>
       </div>
 
-      <nav class="mp-sidebar__nav">
-
-        {# ---- WORKSPACE ---- #}
-        <details class="mp-nav-group" {% if active_href == '/ui/' %}open{% endif %}>
-          <summary>Workspace</summary>
-          <ul class="mp-nav-group__items">
-            {% for item in nav_items if item.href == '/ui/' %}
-            <li>
-              <a href="{{ item.href }}"
-                 class="mp-nav-item {% if item.href == active_href %}mp-nav-item--active{% endif %}"
-                 {% if item.href == active_href %}aria-current="page"{% endif %}>
-                <span class="icon icon-{{ item.icon }}"></span>
-                <span>{{ item.label }}</span>
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </details>
-
-        {# ---- ENGINEERING DATA ---- #}
-        <details class="mp-nav-group" {% if active_href in ['/ui/cad-import', '/ui/geometry'] %}open{% endif %}>
-          <summary>Engineering Data</summary>
-          <ul class="mp-nav-group__items">
-            {% for item in nav_items if item.href in ['/ui/cad-import', '/ui/geometry'] %}
-            <li>
-              <a href="{{ item.href }}"
-                 class="mp-nav-item {% if item.href == active_href %}mp-nav-item--active{% endif %}"
-                 {% if item.href == active_href %}aria-current="page"{% endif %}>
-                <span class="icon icon-{{ item.icon }}"></span>
-                <span>{{ item.label }}</span>
-                {% if item.badge %}<span class="mp-badge-planned">{{ item.badge }}</span>{% endif %}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </details>
-
-        {# ---- MANUFACTURING ---- #}
-        <details class="mp-nav-group" {% if active_href in ['/ui/machining', '/ui/tools', '/ui/materials'] %}open{% endif %}>
-          <summary>Manufacturing</summary>
-          <ul class="mp-nav-group__items">
-            {% for item in nav_items if item.href in ['/ui/machining', '/ui/tools', '/ui/materials'] %}
-            <li>
-              <a href="{{ item.href }}"
-                 class="mp-nav-item {% if item.href == active_href %}mp-nav-item--active{% endif %}"
-                 {% if item.href == active_href %}aria-current="page"{% endif %}>
-                <span class="icon icon-{{ item.icon }}"></span>
-                <span>{{ item.label }}</span>
-                {% if item.badge %}<span class="mp-badge-planned">{{ item.badge }}</span>{% endif %}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </details>
-
-        {# ---- ASSURANCE ---- #}
-        <details class="mp-nav-group" {% if active_href == '/ui/validation' %}open{% endif %}>
-          <summary>Assurance</summary>
-          <ul class="mp-nav-group__items">
-            {% for item in nav_items if item.href == '/ui/validation' %}
-            <li>
-              <a href="{{ item.href }}"
-                 class="mp-nav-item {% if item.href == active_href %}mp-nav-item--active{% endif %}"
-                 {% if item.href == active_href %}aria-current="page"{% endif %}>
-                <span class="icon icon-{{ item.icon }}"></span>
-                <span>{{ item.label }}</span>
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </details>
-
-        {# ---- INTELLIGENCE ---- #}
-        <details class="mp-nav-group" {% if active_href == '/ui/ai-assistant' %}open{% endif %}>
-          <summary>Intelligence</summary>
-          <ul class="mp-nav-group__items">
-            {% for item in nav_items if item.href == '/ui/ai-assistant' %}
-            <li>
-              <a href="{{ item.href }}"
-                 class="mp-nav-item {% if item.href == active_href %}mp-nav-item--active{% endif %}"
-                 {% if item.href == active_href %}aria-current="page"{% endif %}>
-                <span class="icon icon-{{ item.icon }}"></span>
-                <span>{{ item.label }}</span>
-                {% if item.badge %}<span class="mp-badge-planned">{{ item.badge }}</span>{% endif %}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </details>
-
-      </nav>
+      {% include "partials/app_sidebar_nav.html" %}
 
       <div class="mp-sidebar__footer">
         <div class="mp-sidebar__status">
@@ -151,15 +62,27 @@
         <div class="mp-sidebar__version">v0.1.0 · Deterministic-First</div>
       </div>
     </aside>
+    <div class="mp-nav-backdrop" data-mp-nav-close hidden></div>
 
     <!-- Main Content -->
-    <main class="mp-main">
+    <main class="mp-main" id="mp-main-content" tabindex="-1">
+      <div class="mp-mobile-bar">
+        <button type="button" class="mp-mobile-bar__menu"
+                aria-controls="mp-sidebar" aria-expanded="false" data-mp-nav-toggle>
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+            <path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>Menu</span>
+        </button>
+        <a class="mp-mobile-bar__brand" href="/ui/">MachiningPro AI</a>
+      </div>
       <div class="{% block content_class %}mp-content{% endblock %}">
         {% block content %}{% endblock %}
       </div>
     </main>
   </div>
 
+  <script src="/static/js/app-shell.js" defer></script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

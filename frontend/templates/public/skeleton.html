@@ -1,0 +1,31 @@
+{% extends "public/layout.html" %}
+{% from "public/_macros.html" import cta %}
+
+{#- Placeholder-safe skeleton for a public page whose content is not yet written
+    and reviewed (PUBLIC-01A). Deliberately contains no marketing copy. -#}
+{% block content %}
+<section class="mp-pub-page" aria-labelledby="mp-pub-page-title">
+  <div class="mp-pub-container">
+    <p class="mp-pub-page__eyebrow">{{ site.name }}</p>
+    <h1 class="mp-pub-page__title" id="mp-pub-page-title">{{ page.heading }}</h1>
+    <p class="mp-pub-page__lead">{{ page.description }}</p>
+
+    <div class="mp-pub-notice" role="status">
+      <div>
+        <strong>This page is being prepared.</strong>
+        {% if page.status_note %}{{ page.status_note }}{% else %}Its content will be published once it has been reviewed against the current product scope.{% endif %}
+      </div>
+    </div>
+
+    <div class="mp-pub-cta-row">
+      {% if page.key == "contact" %}
+        {{ cta("/", "Back to Home", kind="secondary") }}
+        {{ cta(site.sign_in_href, "Sign In", kind="ghost") }}
+      {% else %}
+        {{ cta(site.request_demo_href, "Request Demo") }}
+        {{ cta("/", "Back to Home", kind="ghost") }}
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

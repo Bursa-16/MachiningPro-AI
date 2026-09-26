@@ -74,7 +74,8 @@ class TestUIRoutes:
 
     def test_dashboard_contains_title(self, client: TestClient) -> None:
         resp = client.get("/ui/")
-        assert "MachineryPro AI" in resp.text
+        # UX-01A: workspace chrome uses the correct product name.
+        assert "MachiningPro AI" in resp.text
 
     def test_dashboard_contains_status(self, client: TestClient) -> None:
         resp = client.get("/ui/")

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" class="mp-public">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ page.title }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ page.description }}{% endblock %}" />
+  {% if not page.indexable %}<meta name="robots" content="noindex, follow" />{% endif %}
+  {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}" />{% endif %}
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:site_name" content="{{ site.name }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{ page.title }}" />
+  <meta property="og:description" content="{{ page.description }}" />
+  {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}" />{% endif %}
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="{{ page.title }}" />
+  <meta name="twitter:description" content="{{ page.description }}" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/design-system.css" />
+  {% block extra_head %}{% endblock %}
+  {# PUBLIC-01F: structured data + opt-in analytics hook go here. No tracking is loaded in PUBLIC-01A. #}
+</head>
+<body>
+  <a class="mp-skip-link" href="#mp-pub-main">Skip to main content</a>
+
+  {% include "public/_header.html" %}
+
+  <main class="mp-pub-main" id="mp-pub-main" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "public/_footer.html" %}
+
+  {% if page.key != "contact" %}
+  <a class="mp-pub-fab" href="{{ site.request_demo_href }}">Request Demo</a>
+  {% endif %}
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

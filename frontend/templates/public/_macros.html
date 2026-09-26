@@ -1,0 +1,14 @@
+{#- MachiningPro AI — public layer macros (PUBLIC-01A). -#}
+
+{#- Reusable call-to-action. kind: primary | secondary | ghost; size: md | lg -#}
+{%- macro cta(href, label, kind="primary", size="md", extra_class="") -%}
+<a href="{{ href }}" class="mp-btn mp-btn--{{ kind }}{% if size == 'lg' %} mp-btn--lg{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ label }}</a>
+{%- endmacro -%}
+
+{%- macro nav_links(pages, current_path) -%}
+<ul class="mp-pub-nav__list">
+  {% for p in pages %}
+  <li><a class="mp-pub-nav__link" href="{{ p.path }}"{% if p.path == current_path %} aria-current="page"{% endif %}>{{ p.nav_label }}</a></li>
+  {% endfor %}
+</ul>
+{%- endmacro -%}

@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from frontend.routers import health, ui
+from frontend.routers import health, public, ui
 
 _HERE = Path(__file__).resolve().parent
 _TEMPLATES_DIR = _HERE / "templates"
@@ -40,6 +40,7 @@ def create_app() -> FastAPI:
     # --- routers ---
     application.include_router(health.router)
     application.include_router(ui.router)
+    application.include_router(public.router)
 
     return application
 

@@ -20,6 +20,7 @@ from backend.interoperability.orchestrator import (
     ImportStatus,
 )
 from frontend.cad_upload import StagedCadUpload, UploadRejected, stage_cad_upload
+from frontend.navigation import build_sidebar, legacy_nav_items
 
 logger = logging.getLogger(__name__)
 
@@ -32,23 +33,18 @@ ACCEPTED_EXTENSIONS: frozenset[str] = frozenset({
 
 router = APIRouter(tags=["ui"])
 
-# -- Navigation definition (single source of truth) -----------------------
+# -- Navigation definition -------------------------------------------------
+# The single source of truth now lives in ``frontend/navigation.py`` (UX-01A).
+# ``NAV_ITEMS`` is kept as a derived, backward-compatible flat list.
 
-NAV_ITEMS: list[dict[str, str]] = [
-    {"label": "Dashboard", "href": "/ui/", "icon": "home", "badge": ""},
-    {"label": "CAD Import", "href": "/ui/cad-import", "icon": "upload", "badge": ""},
-    {"label": "Geometry / Topology", "href": "/ui/geometry", "icon": "box", "badge": "PLANNED"},
-    {"label": "Machining", "href": "/ui/machining", "icon": "settings", "badge": "PLANNED"},
-    {"label": "Tools & Parameters", "href": "/ui/tools", "icon": "wrench", "badge": "PLANNED"},
-    {"label": "Materials", "href": "/ui/materials", "icon": "layers", "badge": "PLANNED"},
-    {"label": "Validation", "href": "/ui/validation", "icon": "shield-check", "badge": "PLANNED"},
-    {"label": "AI Assistant", "href": "/ui/ai-assistant", "icon": "sparkles", "badge": "PLANNED"},
-]
+NAV_ITEMS: list[dict[str, str]] = legacy_nav_items()
+
 
 def _context(*, active_href: str, **extra: object) -> dict[str, object]:
     """Build the standard template context (without request)."""
     return {
         "nav_items": NAV_ITEMS,
+        "nav_groups": build_sidebar(active_href),
         "active_href": active_href,
         **extra,
     }

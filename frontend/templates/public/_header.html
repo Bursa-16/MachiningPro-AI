@@ -1,0 +1,36 @@
+{% from "public/_macros.html" import cta, nav_links %}
+<header class="mp-pub-header">
+  <div class="mp-pub-container mp-pub-header__row">
+    <a class="mp-pub-brand" href="/" aria-label="{{ site.name }} home">
+      <span class="mp-pub-brand__name">{{ site.name }}</span>
+      <span class="mp-pub-brand__tagline">{{ site.tagline }}</span>
+    </a>
+
+    <nav class="mp-pub-nav mp-pub-nav--desktop" aria-label="Primary">
+      {{ nav_links(primary_nav, page.path) }}
+    </nav>
+
+    <div class="mp-pub-actions mp-pub-actions--desktop">
+      {{ cta(site.sign_in_href, "Sign In", kind="ghost") }}
+      {{ cta(site.request_demo_href, "Request Demo") }}
+    </div>
+
+    <details class="mp-pub-menu">
+      <summary aria-label="Open site menu">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+          <path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span>Menu</span>
+      </summary>
+      <div class="mp-pub-menu__panel">
+        <nav aria-label="Primary (compact)">
+          {{ nav_links(primary_nav, page.path) }}
+        </nav>
+        <div class="mp-pub-menu__actions">
+          {{ cta(site.request_demo_href, "Request Demo") }}
+          {{ cta(site.sign_in_href, "Sign In", kind="ghost") }}
+        </div>
+      </div>
+    </details>
+  </div>
+</header>

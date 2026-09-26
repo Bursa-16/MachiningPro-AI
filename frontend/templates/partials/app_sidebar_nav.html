@@ -1,0 +1,41 @@
+{#- MachiningPro AI — grouped post-login navigation (UX-01A).
+    Rendered from frontend/navigation.py via the ``nav_groups`` context value.
+    Native <details>/<summary> gives keyboard support (Enter/Space) and exposes
+    the expanded state to assistive technology without extra ARIA. -#}
+{%- macro nav_link(item) -%}
+<a href="{{ item.href }}"
+   class="mp-nav-item {% if item.is_active %}mp-nav-item--active{% endif %}"
+   {% if item.is_active %}aria-current="page"{% endif %}>
+  <span class="icon icon-{{ item.icon }}" aria-hidden="true"></span>
+  <span class="mp-nav-item__label">{{ item.label }}</span>
+  {% if item.badge %}<span class="mp-badge-planned">{{ item.badge }}</span>{% endif %}
+</a>
+{%- endmacro -%}
+
+<nav class="mp-sidebar__nav" aria-label="Workspace modules" data-mp-nav>
+  {% for group in nav_groups %}
+    {% if group.collapsible %}
+    <details class="mp-nav-group{% if group.is_active %} mp-nav-group--active{% endif %}"
+             data-nav-group="{{ group.id }}"
+             {% if group.is_active %}data-nav-group-active{% endif %}
+             {% if group.is_open %}open{% endif %}>
+      <summary class="mp-nav-group__summary">
+        <span class="mp-nav-group__label">{{ group.label }}</span>
+        <svg class="mp-nav-group__chevron" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
+          <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </summary>
+      <ul class="mp-nav-group__items">
+        {% for item in group.items %}<li>{{ nav_link(item) }}</li>{% endfor %}
+      </ul>
+    </details>
+    {% else %}
+    <div class="mp-nav-section" data-nav-group="{{ group.id }}">
+      <div class="mp-nav-section__label" id="mp-nav-section-{{ group.id }}">{{ group.label }}</div>
+      <ul class="mp-nav-group__items" aria-labelledby="mp-nav-section-{{ group.id }}">
+        {% for item in group.items %}<li>{{ nav_link(item) }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  {% endfor %}
+</nav>
