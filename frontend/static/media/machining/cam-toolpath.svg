@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" fill="none">
+  <!-- MachiningPro AI Original: CAM Toolpath. LICENSE: Project-owned. Commercial: YES -->
+  <rect width="400" height="280" fill="#f4f6f8"/>
+  <rect x="60" y="40" width="280" height="170" rx="4" fill="#e2e8f0" stroke="#64748b" stroke-width="1.2"/>
+  <rect x="80" y="55" width="240" height="140" rx="3" fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.8"/>
+  <rect x="110" y="75" width="180" height="100" rx="6" fill="#f4f6f8" stroke="#94a3b8" stroke-width="0.8"/>
+  <path d="M50 30 L120 70" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <circle cx="50" cy="30" r="3" fill="#10b981"/>
+  <text x="35" y="25" font-size="7" fill="#10b981" font-family="Inter,sans-serif">Start</text>
+  <path d="M120 85 H280 V95 H120 V105 H280 V115 H120 V125 H280 V135 H120 V145 H280 V155 H120 V165 H280" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M280 165 L350 30" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <circle cx="350" cy="30" r="3" fill="#ef4444"/>
+  <text x="352" y="25" font-size="7" fill="#ef4444" font-family="Inter,sans-serif">End</text>
+  <text x="300" y="92" font-size="7" fill="#f59e0b" font-family="Inter,sans-serif">ae</text>
+  <line x1="60" y1="230" x2="80" y2="230" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="85" y="233" font-size="8" fill="#64748b" font-family="Inter,sans-serif">Approach</text>
+  <line x1="140" y1="230" x2="160" y2="230" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="165" y="233" font-size="8" fill="#64748b" font-family="Inter,sans-serif">Cutting</text>
+  <line x1="210" y1="230" x2="230" y2="230" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="235" y="233" font-size="8" fill="#64748b" font-family="Inter,sans-serif">Retract</text>
+  <text x="200" y="256" text-anchor="middle" font-size="11" fill="#475569" font-family="Inter,sans-serif" font-weight="600">CAM Toolpath</text>
+  <text x="200" y="270" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Inter,sans-serif">Zigzag pocket clearing — concept visual</text>
+</svg>

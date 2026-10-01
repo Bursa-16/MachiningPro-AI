@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" fill="none">
+  <!-- MachiningPro AI Original: Tooling System. LICENSE: Project-owned. Commercial: YES -->
+  <rect width="400" height="260" fill="#f4f6f8"/>
+  <rect x="50" y="100" width="250" height="50" rx="3" fill="#475569" stroke="#334155" stroke-width="1.2"/>
+  <rect x="50" y="100" width="250" height="10" rx="2" fill="#64748b"/>
+  <rect x="280" y="90" width="80" height="70" rx="4" fill="#334155" stroke="#1e293b"/>
+  <rect x="40" y="140" width="30" height="24" rx="2" fill="#1e293b"/>
+  <polygon points="44,142 66,142 70,154 66,166 44,166 40,154" fill="#f59e0b" stroke="#d97706"/>
+  <circle cx="55" cy="154" r="3" fill="#334155" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="40" y1="154" x2="44" y2="142" stroke="#ef4444" stroke-width="2"/>
+  <path d="M42 162 A3 3 0 0 1 46 166" fill="none" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="30" y="178" font-size="7" fill="#ef4444" font-family="Inter,sans-serif">rε</text>
+  <text x="175" y="83" text-anchor="middle" font-size="7" fill="#2563eb" font-family="Inter,sans-serif">Tool length</text>
+  <text x="78" y="128" font-size="7" fill="#10b981" font-family="Inter,sans-serif">κr</text>
+  <text x="200" y="220" text-anchor="middle" font-size="11" fill="#475569" font-family="Inter,sans-serif" font-weight="600">Tooling System</text>
+  <text x="200" y="235" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Inter,sans-serif">Turning tool holder with CNMG insert — process visual</text>
+</svg>

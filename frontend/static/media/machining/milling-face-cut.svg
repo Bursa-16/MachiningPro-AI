@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" fill="none">
+  <!-- MachiningPro AI Original: Face Milling. LICENSE: Project-owned. Commercial: YES -->
+  <rect width="400" height="280" fill="#f4f6f8"/>
+  <rect x="30" y="180" width="340" height="24" rx="2" fill="#94a3b8" stroke="#64748b"/>
+  <rect x="80" y="120" width="240" height="60" rx="3" fill="#cbd5e1" stroke="#64748b" stroke-width="1.2"/>
+  <rect x="80" y="120" width="240" height="8" rx="1" fill="#e2e8f0"/>
+  <rect x="100" y="115" width="120" height="10" rx="1" fill="#f4f6f8" stroke="#94a3b8" stroke-width="0.5"/>
+  <rect x="135" y="30" width="50" height="85" rx="4" fill="#475569" stroke="#334155" stroke-width="1.2"/>
+  <rect x="130" y="105" width="14" height="12" rx="1" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" transform="rotate(-10 137 111)"/>
+  <rect x="176" y="105" width="14" height="12" rx="1" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" transform="rotate(10 183 111)"/>
+  <rect x="145" y="5" width="30" height="28" rx="4" fill="#334155" stroke="#1e293b"/>
+  <path d="M142 18 A20 20 0 1 1 178 18" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <polygon points="178,18 175,12 181,14" fill="#2563eb"/>
+  <path d="M60 100 H100 V115 H220 V100 H360" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.6"/>
+  <polygon points="280,100 273,96 273,104" fill="#2563eb"/>
+  <text x="285" y="103" font-size="9" fill="#2563eb" font-family="Inter,sans-serif" font-weight="500">Feed</text>
+  <line x1="340" y1="115" x2="340" y2="128" stroke="#f59e0b"/>
+  <text x="348" y="124" font-size="8" fill="#f59e0b" font-family="Inter,sans-serif">ap</text>
+  <text x="200" y="230" text-anchor="middle" font-size="11" fill="#475569" font-family="Inter,sans-serif" font-weight="600">Face Milling</text>
+  <text x="200" y="245" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Inter,sans-serif">Indexable insert face mill — process visual</text>
+</svg>

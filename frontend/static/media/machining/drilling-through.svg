@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" fill="none">
+  <!-- MachiningPro AI Original: Through-Hole Drilling. LICENSE: Project-owned. Commercial: YES -->
+  <rect width="400" height="260" fill="#f4f6f8"/>
+  <rect x="70" y="90" width="20" height="100" rx="2" fill="#64748b" stroke="#475569"/>
+  <rect x="90" y="100" width="220" height="80" rx="3" fill="#cbd5e1" stroke="#64748b" stroke-width="1.2"/>
+  <rect x="60" y="180" width="280" height="18" rx="2" fill="#94a3b8" stroke="#64748b" stroke-width="0.8"/>
+  <rect x="310" y="90" width="20" height="100" rx="2" fill="#64748b" stroke="#475569"/>
+  <rect x="193" y="100" width="14" height="80" fill="#f4f6f8" stroke="#94a3b8" stroke-width="0.5"/>
+  <rect x="195" y="15" width="10" height="87" fill="#475569" stroke="#334155"/>
+  <polygon points="195,102 205,102 200,112" fill="#475569" stroke="#334155" stroke-width="0.8"/>
+  <line x1="197" y1="30" x2="203" y2="95" stroke="#64748b" stroke-width="0.6"/>
+  <line x1="203" y1="30" x2="197" y2="95" stroke="#64748b" stroke-width="0.6"/>
+  <rect x="188" y="0" width="24" height="18" rx="3" fill="#334155"/>
+  <polygon points="225,90 221,82 229,82" fill="#2563eb"/>
+  <text x="230" y="65" font-size="9" fill="#2563eb" font-family="Inter,sans-serif" font-weight="500">vf</text>
+  <path d="M190 8 A12 12 0 1 1 210 8" fill="none" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="200" y="220" text-anchor="middle" font-size="11" fill="#475569" font-family="Inter,sans-serif" font-weight="600">Through-Hole Drilling</text>
+  <text x="200" y="235" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Inter,sans-serif">Twist drill with axial feed — process visual</text>
+</svg>

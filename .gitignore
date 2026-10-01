@@ -1,0 +1,47 @@
+﻿# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# --- Junk observed during Stage 0 discovery ---
+*.crdownload
+*.tmp
+*.part
+
+# --- Regenerable artifacts (rebuild via scripts/) ---
+data/dedup_report.csv
+
+# Keep directory placeholders
+!frontend/.gitkeep
+!data/raw/.gitkeep
+!data/extracted/.gitkeep
+
+# --- Pre-existing source material stays LOCAL ONLY (never committed) ---
+# 1.59 GB corpus incl. publisher PDFs (Elsevier/DergiPark) - redistribution restricted.
+Machinery_Article/
+*.pdf
+*.docx
+*.doc
+
+# Tracked exception: the generated catalog INDEX is small and documents provenance.
+!data/literature_catalog.csv
+Programlar/
+node_modules/
+*.pyc
+*.patch
+MachiningPro_AI_VP100_*.xlsx
+data/literature_catalog.csv

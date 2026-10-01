@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" fill="none">
+  <!-- MachiningPro AI Original: External Turning. LICENSE: Project-owned. Commercial: YES -->
+  <rect width="400" height="260" fill="#f4f6f8"/>
+  <rect x="20" y="60" width="50" height="140" rx="4" fill="#334155" stroke="#1e293b" stroke-width="1.2"/>
+  <rect x="65" y="70" width="25" height="30" rx="2" fill="#64748b" stroke="#475569"/>
+  <rect x="65" y="160" width="25" height="30" rx="2" fill="#64748b" stroke="#475569"/>
+  <rect x="88" y="90" width="220" height="80" rx="3" fill="#cbd5e1" stroke="#64748b" stroke-width="1.2"/>
+  <rect x="200" y="95" width="108" height="70" rx="2" fill="#e2e8f0" stroke="#94a3b8" stroke-width="0.8"/>
+  <line x1="60" y1="130" x2="330" y2="130" stroke="#94a3b8" stroke-width="0.6" stroke-dasharray="8 4"/>
+  <rect x="290" y="168" width="70" height="20" rx="2" fill="#475569" stroke="#334155"/>
+  <polygon points="295,170 280,178 295,186" fill="#f59e0b" stroke="#d97706" stroke-width="0.8"/>
+  <line x1="280" y1="170" x2="280" y2="186" stroke="#ef4444" stroke-width="2"/>
+  <polygon points="300,155 307,151 307,159" fill="#2563eb"/>
+  <text x="352" y="158" font-size="9" fill="#2563eb" font-family="Inter,sans-serif" font-weight="500">f</text>
+  <text x="255" y="86" font-size="8" fill="#f59e0b" font-family="Inter,sans-serif">ap</text>
+  <text x="200" y="230" text-anchor="middle" font-size="11" fill="#475569" font-family="Inter,sans-serif" font-weight="600">External Turning</text>
+  <text x="200" y="245" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Inter,sans-serif">Longitudinal OD turning with CNMG insert — process visual</text>
+</svg>
