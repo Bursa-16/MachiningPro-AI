@@ -1,4 +1,4 @@
-﻿# --- Python ---
+# --- Python ---
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -37,8 +37,6 @@ Machinery_Article/
 *.docx
 *.doc
 
-# Tracked exception: the generated catalog INDEX is small and documents provenance.
-!data/literature_catalog.csv
 Programlar/
 node_modules/
 *.pyc

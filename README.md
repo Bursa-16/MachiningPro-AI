@@ -10,11 +10,12 @@ AI acts as an advisory, explainable, and traceable layer. It surfaces evidence-o
 
 ## Current Release
 
-**v0.1.0-alpha.4**
+**Public Alpha Engineering / Research Preview**
 
-Release head: `97952bac52a9c3c1d2312f787b66686e265697c6`
+Current public branch: `main`
 
-This is an alpha release. MachiningPro AI is not production-ready.
+MachiningPro AI remains under active engineering validation and is not a
+production-qualified manufacturing decision system.
 
 ---
 
@@ -22,13 +23,13 @@ This is an alpha release. MachiningPro AI is not production-ready.
 
 The following deterministic engineering cores are implemented and closed:
 
-- **Machining Math Foundation** (Stage 3A) — cutting speed ↔ spindle speed, feed relationships, MRR, machining time, power, torque
-- **Turning Core** (Stage 3B) — external turning, boring, facing, pass count, volume removal, turning MRR
-- **Milling Core** (Stage 3C) — feed per rev, engagement ratios, milling time, milling MRR, validation rules
-- **Drilling Core** (Stage 3D) — drilling-specific deterministic calculations and rules
-- **Threading and Tapping Core** (Stage 3E) — deterministic threading and tapping calculations
-- **Hole Finishing Core** (Stage 3F) — reaming and boring / hole-finishing calculations
-- **Empirical Engineering Data Foundation** (Stage 3G) — provenance-mandatory empirical parameter records, material and tooling applicability, deterministic lookup semantics
+- **Machining Math Foundation** (Stage 3A) â€” cutting speed â†” spindle speed, feed relationships, MRR, machining time, power, torque
+- **Turning Core** (Stage 3B) â€” external turning, boring, facing, pass count, volume removal, turning MRR
+- **Milling Core** (Stage 3C) â€” feed per rev, engagement ratios, milling time, milling MRR, validation rules
+- **Drilling Core** (Stage 3D) â€” drilling-specific deterministic calculations and rules
+- **Threading and Tapping Core** (Stage 3E) â€” deterministic threading and tapping calculations
+- **Hole Finishing Core** (Stage 3F) â€” reaming and boring / hole-finishing calculations
+- **Empirical Engineering Data Foundation** (Stage 3G) â€” provenance-mandatory empirical parameter records, material and tooling applicability, deterministic lookup semantics
 
 All calculations are deterministic, reproducible, unit-safe, and fail closed on invalid inputs.
 
@@ -39,12 +40,12 @@ All calculations are deterministic, reproducible, unit-safe, and fail closed on 
 MachiningPro AI includes a premium engineering workstation interface with:
 
 - Separate landing page and engineering workspace
-- **Model / Process Tree** — hierarchical view of parts, features, and process steps
-- **Engineering Viewport** — interactive 3D visualization (see below)
-- **Properties Panel** — context-sensitive engineering properties
-- **AI Engineering Assistant** — advisory, traceable, citation-aware
-- **Process Timeline** — operation sequencing view
-- **Operation Workflow** — structured engineering decision flow
+- **Model / Process Tree** â€” hierarchical view of parts, features, and process steps
+- **Engineering Viewport** â€” interactive 3D visualization (see below)
+- **Properties Panel** â€” context-sensitive engineering properties
+- **AI Engineering Assistant** â€” advisory, traceable, citation-aware
+- **Process Timeline** â€” operation sequencing view
+- **Operation Workflow** â€” structured engineering decision flow
 
 ---
 
@@ -54,14 +55,14 @@ The engineering viewport is powered by Three.js / WebGL and provides:
 
 - **Orbit / Pan / Zoom** camera controls
 - **Fit View** and **Reset View** commands
-- **View Cube** — standard engineering orientations (Front, Back, Top, Bottom, Left, Right, Isometric)
-- **XYZ Trihedron** — axis orientation indicator
-- **Display Modes** — Shaded, Shaded with Edges, Wireframe, Transparent / X-Ray
-- **Object Picking** — click geometry to select and cross-reference with Model Tree
-- **Model Tree ↔ 3D Synchronization** — selection state is shared between tree and viewport
-- **Process / Toolpath Preview** — foundation for visualizing machining operations
-- **Basic Clipping / Section Foundation** — sectional view capability
-- **Graceful WebGL Fallback** — degrades safely when GPU acceleration is unavailable
+- **View Cube** â€” standard engineering orientations (Front, Back, Top, Bottom, Left, Right, Isometric)
+- **XYZ Trihedron** â€” axis orientation indicator
+- **Display Modes** â€” Shaded, Shaded with Edges, Wireframe, Transparent / X-Ray
+- **Object Picking** â€” click geometry to select and cross-reference with Model Tree
+- **Model Tree â†” 3D Synchronization** â€” selection state is shared between tree and viewport
+- **Process / Toolpath Preview** â€” foundation for visualizing machining operations
+- **Basic Clipping / Section Foundation** â€” sectional view capability
+- **Graceful WebGL Fallback** â€” degrades safely when GPU acceleration is unavailable
 
 The 3D viewport is a visualization and engineering decision support layer. It does not yet provide a full CAD kernel, production STEP topology editing, production CAM toolpath generation, full machine kinematics, production collision detection, or a full measurement suite.
 
@@ -71,15 +72,15 @@ The 3D viewport is a visualization and engineering decision support layer. It do
 
 ```
 User Experience / Engineering Workstation
-          ↓
+          â†“
 Engineering Application / Workflow Layer
-          ↓
-   Deterministic Engineering Core          ← authoritative
-          ↓
+          â†“
+   Deterministic Engineering Core          â† authoritative
+          â†“
   Knowledge / Rules / Engineering Data
-          ↓
-       AI Advisory Layer                   ← advisory only
-          ↓
+          â†“
+       AI Advisory Layer                   â† advisory only
+          â†“
   Interoperability / Geometry / External Data
 ```
 
