@@ -21,7 +21,7 @@ export default function DashboardPage() {
           {
             label: 'API Status',
             value: health?.status || '—',
-            color: health?.database_ok ? 'text-tp-valid' : 'text-tp-error',
+            color: health?.status === 'ok' ? 'text-tp-valid' : 'text-tp-error',
           },
           {
             label: 'Version',
@@ -30,8 +30,8 @@ export default function DashboardPage() {
           },
           {
             label: 'Database',
-            value: health?.database_ok ? 'Connected' : 'Unavailable',
-            color: health?.database_ok ? 'text-tp-valid' : 'text-tp-error',
+            value: health?.database_ok ? 'Connected' : 'Not configured',
+            color: health?.database_ok ? 'text-tp-valid' : 'text-tp-text-2',
           },
           {
             label: 'Server Date',
