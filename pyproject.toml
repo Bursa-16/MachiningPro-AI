@@ -3,13 +3,13 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "machinery-ai"
+name = "machiningpro-ai"
 version = "0.1.0"
-description = "Machinery AI - deterministic-first machining intelligence platform"
+description = "MachiningPro AI - deterministic-first machining engineering platform"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
-authors = [{ name = "Machinery AI" }]
+license = { text = "MIT" }
+authors = [{ name = "MachiningPro AI" }]
 dependencies = [
     "fastapi>=0.110",
     "uvicorn>=0.29",

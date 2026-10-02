@@ -12,24 +12,24 @@
   --color-tp-border: #2a2f42;
   --color-tp-border-strong: #3a4060;
 
-  /* Engineering accent â€” steel blue */
+  /* Engineering accent - steel blue */
   --color-tp-accent: #4a7cc9;
   --color-tp-accent-light: #6b9bdd;
   --color-tp-accent-muted: #3a5e94;
 
-  /* Status: validated / pass â€” controlled teal */
+  /* Status: validated / pass - controlled teal */
   --color-tp-valid: #1b9e7a;
   --color-tp-valid-muted: #134d3c;
 
-  /* Warning â€” controlled amber */
+  /* Warning - controlled amber */
   --color-tp-warn: #c8860e;
   --color-tp-warn-muted: #4a3408;
 
-  /* Error â€” muted industrial red */
+  /* Error - muted industrial red */
   --color-tp-error: #c04040;
   --color-tp-error-muted: #3a1616;
 
-  /* AI context â€” controlled violet */
+  /* AI context - controlled violet */
   --color-tp-ai: #7c5cbf;
   --color-tp-ai-muted: #2a1e40;
 
@@ -42,7 +42,7 @@
   --font-family-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Radius â€” precision engineering feel */
+  /* Radius - precision engineering feel */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -52,20 +52,14 @@
   --spacing-section: 24px;
 }
 
-
-  /* === VISUAL-02A additions === */
-  /* Sidebar dimensions */
+:root {
   --sidebar-w-expanded: 208px;
   --sidebar-w-collapsed: 48px;
-
-  /* Header/breadcrumb heights */
   --header-h: 48px;
   --breadcrumb-h: 28px;
-
-  /* Hover surface */
   --color-tp-surface-hover: #1e2336;
+}
 
-/* Global resets */
 body {
   background: var(--color-tp-bg);
   color: var(--color-tp-text);
@@ -75,7 +69,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Tabular numerals for engineering values */
 .tabular-nums { font-variant-numeric: tabular-nums; }
 .eng-value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .eng-unit { font-size: 0.75rem; color: var(--color-tp-text-3); margin-left: 2px; }
