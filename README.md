@@ -1,5 +1,8 @@
 # MachiningPro AI
 
+<p align="center">
+  <img src="docs/assets/branding/machiningpro-ai-logo.png" alt="MachiningPro AI" width="560">
+</p>
 **Deterministic-first machining engineering with AI-assisted, explainable decision support.**
 
 **Status:** Alpha Engineering / Research Preview
