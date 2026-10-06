@@ -3,7 +3,6 @@
  * Validates MachiningPro AI Module Guide FAQ integrity
  */
 
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -12,21 +11,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Import module guides
 import * as guides from '../src/data/moduleGuides.ts';
 
-const CANONICAL_MODULE_COUNT = 22;
 const SECTIONS_PER_MODULE = 19;
 const FAQ_MIN_PER_MODULE = 3;
 const FAQ_MAX_PER_MODULE = 6;
 const FAQ_MIN_TOTAL = 66;
 const FAQ_MAX_TOTAL = 132;
 
-const REQUIRED_MODULE_IDS = [
-  'dashboard', 'machining-analysis', 'cutting-parameters', 'tool-life',
-  'surface-roughness', 'turning', 'milling', 'drilling', 'threading',
-  'hole-finishing', 'honing', 'lapping', 'machines', 'materials',
-  'cutting-tools', 'libraries', 'cad-import',
-  'technical-drawing-intelligence', 'process-planning', 'dfm',
-  'machine-capability', 'validation'
-];
 
 // Collect exported guides
 const moduleGuides = [];
