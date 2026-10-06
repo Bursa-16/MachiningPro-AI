@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState } from 'react'
 import type { Locale, TranslationDictionary } from './types'
 import type { ReactNode } from 'react'
 import { enTranslations } from './en'
@@ -17,30 +17,31 @@ interface LocaleContextType {
 
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined)
 
-export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [locale, setLocaleState] = useState<Locale>('en')
-  const [mounted, setMounted] = useState(false)
+const readSavedLocale = (): Locale => {
+  try {
+    const saved = localStorage.getItem('machiningpro_locale')
+    if (saved === 'tr' || saved === 'en') return saved
+  } catch {
+    // storage unavailable: fall through to default
+  }
+  return 'en'
+}
 
-  // Initialize from localStorage on mount
-  useEffect(() => {
-    const savedLocale = localStorage.getItem('machiningpro_locale') as Locale | null
-    if (savedLocale && (savedLocale === 'tr' || savedLocale === 'en')) {
-      setLocaleState(savedLocale)
-    }
-    setMounted(true)
-  }, [])
+export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Read synchronously so the context exists on the very first render.
+  const [locale, setLocaleState] = useState<Locale>(readSavedLocale)
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale)
-    localStorage.setItem('machiningpro_locale', newLocale)
+    try {
+      localStorage.setItem('machiningpro_locale', newLocale)
+    } catch {
+      // storage unavailable: keep in-memory locale only
+    }
   }
 
   const t = (key: keyof TranslationDictionary): string => {
     return translations[locale][key] || key
-  }
-
-  if (!mounted) {
-    return <>{children}</>
   }
 
   return (
