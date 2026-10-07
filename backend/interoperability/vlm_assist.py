@@ -13,8 +13,9 @@ R3B scope: when the caller supplies the ``regions`` that its requests were cut
 from, each response is parsed by ``parse_vlm_response`` into advisory evidence.
 Any rejected response fails the whole report with no evidence. Without
 ``regions`` a response is validated for identity and size and then discarded.
-Reconciliation and request preparation are later slices; the report carries no
-findings.
+With ``reconcile=True`` the report also carries the advisory findings produced
+by ``reconcile_advisory_evidence`` (R3C); the comparison is report-only and the
+deterministic result is never touched. Request preparation is a later slice.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import time
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import replace
 
 from backend.interoperability.drawing import (
     DrawingExtractionAuthority,
@@ -45,6 +47,7 @@ from backend.interoperability.vlm_provider import (
     VlmResponse,
     VlmRetryPolicy,
 )
+from backend.interoperability.vlm_reconciliation import reconcile_advisory_evidence
 from backend.interoperability.vlm_response import VlmResponseError, parse_vlm_response
 
 AI_DEFAULT_AUTHORITY = DrawingExtractionAuthority.ADVISORY
@@ -82,6 +85,7 @@ class AiAssistedDrawingExtractor:
         *,
         config: DrawingVlmAssistConfig,
         regions: Mapping[str, DrawingVlmRegion] | None = None,
+        reconcile: bool = False,
     ) -> DrawingAssistedIngestionResult:
         if not isinstance(base_result, DrawingIngestionResult):
             raise TypeError("base_result must be DrawingIngestionResult")
@@ -123,6 +127,13 @@ class AiAssistedDrawingExtractor:
                 regions=used_regions,
                 evidence=evidence,
             )
+            if reconcile and report.evidence:
+                findings = tuple(
+                    item.finding
+                    for item in reconcile_advisory_evidence(base_result, report)
+                    if item.finding is not None
+                )
+                report = replace(report, findings=findings)
             return DrawingAssistedIngestionResult(result=base_result, advisory=report)
 
         failed = DrawingIngestionStatus.FAILED
