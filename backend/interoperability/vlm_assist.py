@@ -23,7 +23,7 @@ from __future__ import annotations
 import hashlib
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from backend.interoperability.drawing import (
     DrawingExtractionAuthority,
@@ -36,6 +36,7 @@ from backend.interoperability.vlm_drawing import (
     DrawingVlmAssistConfig,
     DrawingVlmEvidence,
     DrawingVlmRegion,
+    DrawingVlmRegionKind,
 )
 from backend.interoperability.vlm_provider import (
     VlmCancellation,
@@ -58,8 +59,27 @@ _NO_PROMPT_VERSION = "none"
 _UNSUPPORTED_CODES = frozenset({VlmErrorCode.DISABLED, VlmErrorCode.UNSUPPORTED})
 
 
+@dataclass(frozen=True)
+class VlmEgressRecord:
+    """What a REMOTE provider is about to receive. Metadata and a digest, never content."""
+
+    provider_id: str
+    model_id: str
+    model_version: str
+    request_id: str
+    payload_sha256: str
+    payload_bytes: int
+    context_chars: int
+
+
 class AiAssistedDrawingExtractor:
-    """Runs one explicitly supplied provider over caller-prepared requests."""
+    """Runs one explicitly supplied provider over caller-prepared requests.
+
+    A REMOTE provider is refused unless the operator opts in three times: here
+    (``allow_remote_egress``), in the assist config (``allow_remote`` and an
+    allow-list entry) and, when ``require_audit_for_remote`` is set, by supplying
+    an ``egress_audit`` sink that is called before every send.
+    """
 
     def __init__(
         self,
@@ -68,11 +88,19 @@ class AiAssistedDrawingExtractor:
         retry_policy: VlmRetryPolicy | None = None,
         monotonic: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
+        allow_remote_egress: bool = False,
+        egress_audit: Callable[[VlmEgressRecord], None] | None = None,
     ) -> None:
         if not isinstance(provider, VlmProvider):
             raise TypeError("provider must implement VlmProvider")
         if retry_policy is not None and not isinstance(retry_policy, VlmRetryPolicy):
             raise TypeError("retry_policy must be VlmRetryPolicy or None")
+        if not isinstance(allow_remote_egress, bool):
+            raise TypeError("allow_remote_egress must be bool")
+        if egress_audit is not None and not callable(egress_audit):
+            raise TypeError("egress_audit must be callable or None")
+        self._allow_remote_egress = allow_remote_egress
+        self._egress_audit = egress_audit
         self._provider = provider
         self._retry_policy = retry_policy or VlmRetryPolicy()
         self._monotonic = monotonic
@@ -140,9 +168,11 @@ class AiAssistedDrawingExtractor:
         unsupported = DrawingIngestionStatus.UNSUPPORTED
         limits = config.limits
 
-        # R3A has no remote capability: a REMOTE provider is refused before any call.
-        if identity.locality is not VlmLocality.LOCAL:
-            return finish(unsupported, ("VLM_REMOTE_NOT_SUPPORTED",), 0)
+        remote = identity.locality is not VlmLocality.LOCAL
+        if remote:
+            refusal = self._remote_refusal(identity.provider_id, config, prepared, regions)
+            if refusal is not None:
+                return finish(unsupported, (refusal,), 0)
         if config.allowed_provider_ids and identity.provider_id not in config.allowed_provider_ids:
             return finish(unsupported, ("VLM_PROVIDER_NOT_ALLOWED",), 0)
         if not prepared:
@@ -179,6 +209,11 @@ class AiAssistedDrawingExtractor:
                     cancellation.cancel()
                     return finish(failed, ("VLM_BUDGET_EXHAUSTED",), calls)
                 deadline = float(min(limits.request_timeout_seconds, remaining))
+                if remote and self._egress_audit is not None:
+                    try:
+                        self._egress_audit(_egress_record(identity, request))
+                    except Exception:
+                        return finish(failed, ("VLM_REMOTE_AUDIT_FAILED",), calls)
                 calls += 1
                 try:
                     response = self._provider.infer(
@@ -243,6 +278,44 @@ class AiAssistedDrawingExtractor:
         )
 
 
+    def _remote_refusal(
+        self,
+        provider_id: str,
+        config: DrawingVlmAssistConfig,
+        prepared: tuple[VlmRequest, ...],
+        regions: Mapping[str, DrawingVlmRegion] | None,
+    ) -> str | None:
+        """Return a stable refusal code unless every remote opt-in is present."""
+        if not self._allow_remote_egress:
+            return "VLM_REMOTE_NOT_SUPPORTED"
+        if not config.allow_remote:
+            return "VLM_REMOTE_NOT_ENABLED"
+        if provider_id not in config.allowed_provider_ids:
+            return "VLM_PROVIDER_NOT_ALLOWED"
+        if regions is None:
+            return "VLM_REMOTE_REGIONS_REQUIRED"
+        if not config.remote_allow_title_block and any(
+            regions[request.request_id].kind is DrawingVlmRegionKind.TITLE_BLOCK
+            for request in prepared
+        ):
+            return "VLM_REMOTE_TITLE_BLOCK_NOT_ALLOWED"
+        if config.require_audit_for_remote and self._egress_audit is None:
+            return "VLM_REMOTE_AUDIT_REQUIRED"
+        return None
+
+
+def _egress_record(identity: object, request: VlmRequest) -> VlmEgressRecord:
+    return VlmEgressRecord(
+        provider_id=identity.provider_id,  # type: ignore[attr-defined]
+        model_id=identity.model_id,  # type: ignore[attr-defined]
+        model_version=identity.model_version,  # type: ignore[attr-defined]
+        request_id=request.request_id,
+        payload_sha256=hashlib.sha256(request.image_png).hexdigest(),
+        payload_bytes=len(request.image_png),
+        context_chars=sum(len(text) for text in request.context_text),
+    )
+
+
 def _response_problem(
     response: object,
     request: VlmRequest,
@@ -266,6 +339,7 @@ def _fingerprint(value: object) -> str:
 
 __all__ = [
     "AI_DEFAULT_AUTHORITY",
+    "VlmEgressRecord",
     "AUTO_PROMOTION_ALLOWED",
     "AiAssistedDrawingExtractor",
     "DETERMINISTIC_EVIDENCE_OVERWRITE_ALLOWED",
