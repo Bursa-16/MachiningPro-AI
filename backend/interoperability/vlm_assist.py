@@ -7,17 +7,21 @@ imports or calls it. Authority stays ADVISORY, there is no promotion path and
 deterministic evidence is never altered.
 
 R3A scope: explicit gating, bounded execution (attempts, deadline, backoff,
-cancellation), fail-closed handling and constant diagnostic codes. Response
-parsing, evidence creation, reconciliation and request preparation are later
-slices, so a provider response is validated for identity and size and then
-discarded; the report carries no evidence and no findings.
+cancellation), fail-closed handling and constant diagnostic codes.
+
+R3B scope: when the caller supplies the ``regions`` that its requests were cut
+from, each response is parsed by ``parse_vlm_response`` into advisory evidence.
+Any rejected response fails the whole report with no evidence. Without
+``regions`` a response is validated for identity and size and then discarded.
+Reconciliation and request preparation are later slices; the report carries no
+findings.
 """
 
 from __future__ import annotations
 
 import hashlib
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 
 from backend.interoperability.drawing import (
     DrawingExtractionAuthority,
@@ -28,6 +32,8 @@ from backend.interoperability.vlm_drawing import (
     DrawingAdvisoryReport,
     DrawingAssistedIngestionResult,
     DrawingVlmAssistConfig,
+    DrawingVlmEvidence,
+    DrawingVlmRegion,
 )
 from backend.interoperability.vlm_provider import (
     VlmCancellation,
@@ -39,6 +45,7 @@ from backend.interoperability.vlm_provider import (
     VlmResponse,
     VlmRetryPolicy,
 )
+from backend.interoperability.vlm_response import VlmResponseError, parse_vlm_response
 
 AI_DEFAULT_AUTHORITY = DrawingExtractionAuthority.ADVISORY
 AUTO_PROMOTION_ALLOWED = False
@@ -74,6 +81,7 @@ class AiAssistedDrawingExtractor:
         requests: Sequence[VlmRequest],
         *,
         config: DrawingVlmAssistConfig,
+        regions: Mapping[str, DrawingVlmRegion] | None = None,
     ) -> DrawingAssistedIngestionResult:
         if not isinstance(base_result, DrawingIngestionResult):
             raise TypeError("base_result must be DrawingIngestionResult")
@@ -82,6 +90,10 @@ class AiAssistedDrawingExtractor:
         prepared = tuple(requests)
         if any(not isinstance(request, VlmRequest) for request in prepared):
             raise TypeError("requests must contain VlmRequest values")
+        if regions is not None:
+            for request in prepared:
+                if not isinstance(regions.get(request.request_id), DrawingVlmRegion):
+                    raise ValueError("regions must map every request_id to a DrawingVlmRegion")
         if not config.enabled:
             return DrawingAssistedIngestionResult(result=base_result)
 
@@ -97,6 +109,8 @@ class AiAssistedDrawingExtractor:
             status: DrawingIngestionStatus,
             diagnostics: tuple[str, ...],
             calls: int,
+            evidence: tuple[DrawingVlmEvidence, ...] = (),
+            used_regions: tuple[DrawingVlmRegion, ...] = (),
         ) -> DrawingAssistedIngestionResult:
             report = DrawingAdvisoryReport(
                 status=status,
@@ -106,6 +120,8 @@ class AiAssistedDrawingExtractor:
                 base_result_fingerprint=base_fingerprint,
                 diagnostics=diagnostics,
                 request_count=calls,
+                regions=used_regions,
+                evidence=evidence,
             )
             return DrawingAssistedIngestionResult(result=base_result, advisory=report)
 
@@ -142,6 +158,7 @@ class AiAssistedDrawingExtractor:
         cancellation = VlmCancellation()
         started = self._monotonic()
         calls = 0
+        collected: list[DrawingVlmEvidence] = []
         for request in prepared:
             attempt = 0
             while True:
@@ -178,9 +195,40 @@ class AiAssistedDrawingExtractor:
                 problem = _response_problem(response, request, identity, limits.response_bytes)
                 if problem is not None:
                     return finish(failed, (problem,), calls)
+                if regions is not None:
+                    try:
+                        collected.extend(
+                            parse_vlm_response(
+                                response, request, regions[request.request_id], limits=limits
+                            )
+                        )
+                    except VlmResponseError as error:
+                        return finish(failed, (f"VLM_RESPONSE_{error.code.value}",), calls)
+                    if len(collected) > limits.evidence_items_total:
+                        return finish(failed, ("VLM_EVIDENCE_LIMIT",), calls)
                 break
+        if regions is None:
+            return finish(
+                DrawingIngestionStatus.INSUFFICIENT_DATA, ("VLM_RESPONSES_NOT_PARSED",), calls
+            )
+        used: dict[str, DrawingVlmRegion] = {}
+        for request in prepared:
+            region = regions[request.request_id]
+            if used.setdefault(region.region_id, region) != region:
+                raise ValueError("distinct regions must not share a region_id")
+        if not collected:
+            return finish(
+                DrawingIngestionStatus.INSUFFICIENT_DATA,
+                ("VLM_NO_CANDIDATES",),
+                calls,
+                used_regions=tuple(used.values()),
+            )
         return finish(
-            DrawingIngestionStatus.INSUFFICIENT_DATA, ("VLM_RESPONSES_NOT_PARSED",), calls
+            DrawingIngestionStatus.VALID,
+            (),
+            calls,
+            evidence=tuple(collected),
+            used_regions=tuple(used.values()),
         )
 
 
