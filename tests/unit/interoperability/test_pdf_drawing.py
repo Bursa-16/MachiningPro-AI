@@ -476,7 +476,11 @@ class TestPdfDrawingLimits:
 
 class TestPdfDrawingParserIdentity:
     def test_public_surface_is_exact(self):
-        assert pdf_drawing.__all__ == ["PdfDrawingLimits", "PdfDrawingParser"]
+        assert pdf_drawing.__all__ == [
+            "PdfDrawingLimits",
+            "PdfDrawingParser",
+            "VectorPdfDrawingParser",
+        ]
 
     def test_parser_implements_phase_1a_contract(self):
         assert isinstance(PdfDrawingParser(), DrawingParser)

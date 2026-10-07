@@ -3122,8 +3122,27 @@ def _declares_encryption(content: bytes) -> bool:
     return b"/Type /XRef" in tail and b"/Encrypt" in tail
 
 
-class PdfDrawingParser(DrawingParser):
-    """Vector-PDF parser foundation with no semantic extraction."""
+@dataclass(frozen=True)
+class _RasterEnrichment:
+    """Outcome of the optional raster (Phase 1C) stage of ``parse()``."""
+
+    title_candidates: tuple[_AnalyzedTitleCandidate, ...]
+    dimension_candidates: tuple[_DimensionCandidate, ...]
+    ocr_evidence: tuple[DrawingOcrTextEvidence, ...] = ()
+    ocr_failure: str | None = None
+    dimension_conflict: bool = False
+    early_result: DrawingIngestionResult | None = None
+
+
+class VectorPdfDrawingParser(DrawingParser):
+    """Pure Phase 1B deterministic vector-PDF parser.
+
+    Extracts vector text/geometry, vector title blocks, vector dimensions and
+    vector tolerances only. It never runs OCR, raster decoding, GD&T
+    recognition or any AI stage: those are Phase 1C / later enrichment,
+    available through ``PdfDrawingParser``. Raster-only input is reported as
+    ``PDF_RASTER_ONLY`` (unsupported) without decoding any image.
+    """
 
     _worker_entry = staticmethod(_pdf_worker_entry)
 
@@ -3225,44 +3244,21 @@ class PdfDrawingParser(DrawingParser):
         has_vector_evidence = any(
             page.text_runs or page.vector_paths for page in snapshot.pages
         )
-        title_candidates = execution.title_candidates
-        dimension_candidates = execution.dimension_candidates
-        ocr_failure = None
-        dimension_conflict = False
-        ocr_evidence: tuple[DrawingOcrTextEvidence, ...] = ()
-        if image_count:
-            ocr_result = extract_ocr_from_pdf(payload, source_id)
-            if ocr_result.status in {
-                DrawingIngestionStatus.VALID,
-                DrawingIngestionStatus.INSUFFICIENT_DATA,
-            }:
-                ocr_evidence = ocr_result.evidence
-                ocr_titles = _ocr_title_candidates(ocr_result.evidence, self.limits)
-                try:
-                    ocr_dimensions = _ocr_dimension_candidates(
-                        ocr_result.evidence, ocr_titles, self.limits
-                    )
-                except _ResourceLimitError:
-                    return self._result(
-                        source_id,
-                        DrawingIngestionStatus.FAILED,
-                        format_detected="PDF",
-                        errors=("PDF_RESOURCE_LIMIT",),
-                        sheet_count_expected=len(snapshot.pages),
-                        sheet_count_parsed=len(snapshot.pages),
-                    )
-                title_candidates = _merge_title_candidates(title_candidates, ocr_titles)
-                dimension_candidates, dimension_conflict = _merge_dimension_candidates(
-                    dimension_candidates, ocr_dimensions
-                )
-            elif ocr_result.status is DrawingIngestionStatus.UNSUPPORTED:
-                ocr_failure = "PDF_RASTER_UNSUPPORTED"
-            else:
-                ocr_failure = (
-                    ocr_result.diagnostics[0]
-                    if ocr_result.diagnostics
-                    else "PDF_OCR_FAILURE"
-                )
+        enrichment = self._raster_enrichment(
+            payload,
+            source_id,
+            snapshot,
+            image_count,
+            execution.title_candidates,
+            execution.dimension_candidates,
+        )
+        if enrichment.early_result is not None:
+            return enrichment.early_result
+        title_candidates = enrichment.title_candidates
+        dimension_candidates = enrichment.dimension_candidates
+        ocr_failure = enrichment.ocr_failure
+        dimension_conflict = enrichment.dimension_conflict
+        ocr_evidence = enrichment.ocr_evidence
         if not has_vector_evidence and ocr_failure is not None:
             return self._result(
                 source_id,
@@ -3301,7 +3297,7 @@ class PdfDrawingParser(DrawingParser):
                         snapshot,
                         dimension_candidates,
                     )
-                    document, gdt_warnings, gdt_failure = _apply_gdt(
+                    document, gdt_warnings, gdt_failure = self._gdt_enrichment(
                         document, snapshot, source_id, ocr_evidence
                     )
                     if gdt_failure is not None:
@@ -3342,7 +3338,7 @@ class PdfDrawingParser(DrawingParser):
                     snapshot,
                     dimension_candidates,
                 )
-            document, gdt_warnings, gdt_failure = _apply_gdt(
+            document, gdt_warnings, gdt_failure = self._gdt_enrichment(
                 document, snapshot, source_id, ocr_evidence
             )
             if gdt_failure is not None:
@@ -3379,7 +3375,7 @@ class PdfDrawingParser(DrawingParser):
                 snapshot,
                 dimension_candidates,
             )
-            document, gdt_warnings, gdt_failure = _apply_gdt(
+            document, gdt_warnings, gdt_failure = self._gdt_enrichment(
                 document, snapshot, source_id, ocr_evidence
             )
             if gdt_failure is not None:
@@ -3432,6 +3428,34 @@ class PdfDrawingParser(DrawingParser):
             sheet_count_parsed=len(snapshot.pages),
         )
 
+    def _raster_enrichment(
+        self,
+        payload: bytes,
+        source_id: str,
+        snapshot: _PdfDocumentSnapshot,
+        image_count: int,
+        title_candidates: tuple[_AnalyzedTitleCandidate, ...],
+        dimension_candidates: tuple[_DimensionCandidate, ...],
+    ) -> _RasterEnrichment:
+        """Phase 1B: raster content is never inspected; images only mark input."""
+        del payload, source_id, snapshot
+        return _RasterEnrichment(
+            title_candidates=title_candidates,
+            dimension_candidates=dimension_candidates,
+            ocr_failure="PDF_RASTER_UNSUPPORTED" if image_count else None,
+        )
+
+    def _gdt_enrichment(
+        self,
+        document: CanonicalDrawing,
+        snapshot: _PdfDocumentSnapshot,
+        source_id: str,
+        ocr_evidence: tuple[DrawingOcrTextEvidence, ...],
+    ) -> tuple[CanonicalDrawing, tuple[str, ...], str | None]:
+        """Phase 1B: no GD&T recognition; the document is returned unchanged."""
+        del snapshot, source_id, ocr_evidence
+        return document, (), None
+
     def _gdt_failure_result(
         self,
         source_id: str,
@@ -3482,6 +3506,80 @@ class PdfDrawingParser(DrawingParser):
             ),
             document=document,
         )
+
+
+class PdfDrawingParser(VectorPdfDrawingParser):
+    """Composed compatibility parser: Phase 1B vector + Phase 1C OCR + GD&T.
+
+    Runs the full ``VectorPdfDrawingParser`` pipeline, then enriches it with
+    bounded OCR evidence for raster pages and GD&T frame recognition. Use
+    ``VectorPdfDrawingParser`` for the pure Phase 1B path.
+    """
+
+    def _raster_enrichment(
+        self,
+        payload: bytes,
+        source_id: str,
+        snapshot: _PdfDocumentSnapshot,
+        image_count: int,
+        title_candidates: tuple[_AnalyzedTitleCandidate, ...],
+        dimension_candidates: tuple[_DimensionCandidate, ...],
+    ) -> _RasterEnrichment:
+        if not image_count:
+            return _RasterEnrichment(title_candidates, dimension_candidates)
+        ocr_result = extract_ocr_from_pdf(payload, source_id)
+        if ocr_result.status in {
+            DrawingIngestionStatus.VALID,
+            DrawingIngestionStatus.INSUFFICIENT_DATA,
+        }:
+            ocr_titles = _ocr_title_candidates(ocr_result.evidence, self.limits)
+            try:
+                ocr_dimensions = _ocr_dimension_candidates(
+                    ocr_result.evidence, ocr_titles, self.limits
+                )
+            except _ResourceLimitError:
+                return _RasterEnrichment(
+                    title_candidates,
+                    dimension_candidates,
+                    early_result=self._result(
+                        source_id,
+                        DrawingIngestionStatus.FAILED,
+                        format_detected="PDF",
+                        errors=("PDF_RESOURCE_LIMIT",),
+                        sheet_count_expected=len(snapshot.pages),
+                        sheet_count_parsed=len(snapshot.pages),
+                    ),
+                )
+            merged_titles = _merge_title_candidates(title_candidates, ocr_titles)
+            merged_dimensions, conflict = _merge_dimension_candidates(
+                dimension_candidates, ocr_dimensions
+            )
+            return _RasterEnrichment(
+                merged_titles,
+                merged_dimensions,
+                ocr_evidence=ocr_result.evidence,
+                dimension_conflict=conflict,
+            )
+        if ocr_result.status is DrawingIngestionStatus.UNSUPPORTED:
+            failure = "PDF_RASTER_UNSUPPORTED"
+        else:
+            failure = (
+                ocr_result.diagnostics[0]
+                if ocr_result.diagnostics
+                else "PDF_OCR_FAILURE"
+            )
+        return _RasterEnrichment(
+            title_candidates, dimension_candidates, ocr_failure=failure
+        )
+
+    def _gdt_enrichment(
+        self,
+        document: CanonicalDrawing,
+        snapshot: _PdfDocumentSnapshot,
+        source_id: str,
+        ocr_evidence: tuple[DrawingOcrTextEvidence, ...],
+    ) -> tuple[CanonicalDrawing, tuple[str, ...], str | None]:
+        return _apply_gdt(document, snapshot, source_id, ocr_evidence)
 
 
 _PDF_GDT_PARSER = DrawingParserIdentity(
@@ -3577,4 +3675,4 @@ def _apply_gdt(
     return document, warnings, None
 
 
-__all__ = ["PdfDrawingLimits", "PdfDrawingParser"]
+__all__ = ["PdfDrawingLimits", "PdfDrawingParser", "VectorPdfDrawingParser"]

@@ -241,7 +241,7 @@ of content are passed as `notes` for format sniffing.
 
 ### Phase 1B â€” PDF Vector Extraction
 
-- `PdfDrawingParser` â€” PyMuPDF/pdfplumber, vector text extraction
+- `VectorPdfDrawingParser` - pure vector-PDF parser (pdfplumber); never runs OCR, GD&T or AI
 - Actual title block extraction
 - Dimension annotation detection from vector layer
 - Tolerance extraction from dimension strings
@@ -251,6 +251,15 @@ of content are passed as `notes` for format sniffing.
 - `OcrDrawingParser` â€” Tesseract / easyocr for raster drawings
 - GD&T symbol recognition
 - DXF annotation extraction (`DxfDrawingParser` via ezdxf)
+
+#### Implementation mapping (phase boundary)
+
+| Component | Phase | Scope |
+|---|---|---|
+| `VectorPdfDrawingParser` (`pdf_drawing.py`) | 1B | Vector text/geometry, vector title block, vector dimensions and tolerances. Never invokes OCR, raster decoding, GD&T or AI. Raster-only input is reported `PDF_RASTER_ONLY` (unsupported). |
+| `raster_drawing.py`, `ocr_drawing.py` (`extract_ocr_from_pdf`) | 1C | Raster inspection and bounded offline OCR evidence. |
+| `gdt_drawing.py` (`recognize_feature_control_frames`) | 1C / later | GD&T feature-control-frame recognition. |
+| `PdfDrawingParser` (`pdf_drawing.py`) | composed | Compatibility parser: the 1B vector path plus 1C OCR enrichment and GD&T. Subclasses `VectorPdfDrawingParser`. |
 
 ### Phase 1D â€” AI-Assisted Extraction
 
