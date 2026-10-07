@@ -520,6 +520,8 @@ def _decode_image(
             with Image.open(BytesIO(data)) as image_file:
                 if getattr(image_file, "n_frames", 1) != 1:
                     raise _RasterUnsupported
+                if image_file.size != (width, height):
+                    raise _RasterMalformed
                 image_file.load()
                 image = image_file.copy()
         if image.size != (width, height):

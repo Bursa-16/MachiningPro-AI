@@ -634,3 +634,37 @@ def test_p0_1_word_num_absent_from_pytesseract_output_does_not_raise(monkeypatch
         DrawingIngestionStatus.INSUFFICIENT_DATA,
         DrawingIngestionStatus.FAILED,
     }
+
+
+def test_encoded_image_larger_than_declared_is_rejected_before_full_decode(monkeypatch):
+    """The declared size bounds are authoritative: a JPEG whose real header size
+    differs from the PDF-declared size must fail before any pixel decode."""
+    import io
+
+    from PIL import Image, ImageFile
+
+    from backend.interoperability import raster_drawing
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (400, 400), (255, 255, 255)).save(buffer, "JPEG")
+    data = buffer.getvalue()
+
+    class _Stream:
+        def get_data(self):
+            return data
+
+    decodes: list[tuple[int, int]] = []
+    original_load = ImageFile.ImageFile.load
+
+    def _spy(self, *args, **kwargs):
+        decodes.append(self.size)
+        return original_load(self, *args, **kwargs)
+
+    monkeypatch.setattr(ImageFile.ImageFile, "load", _spy)
+    try:
+        raster_drawing._decode_image(_Stream(), 10, 10, "JPEG", None, 8)
+    except raster_drawing._RasterMalformed:
+        pass
+    else:
+        raise AssertionError("size mismatch must be rejected as malformed")
+    assert decodes == []
