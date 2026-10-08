@@ -1,33 +1,48 @@
-import { useMemo, useReducer, useState } from 'react'
-import { ShieldCheck } from 'lucide-react'
+import { Suspense, lazy, useMemo, useReducer, useRef, useState } from 'react'
+import { LoaderCircle, ShieldCheck, Upload } from 'lucide-react'
 import Panel from '../components/ui/Panel'
 import AiStatus from '../components/drawing-review/AiStatus'
 import AuthorityBadge from '../components/drawing-review/AuthorityBadge'
 import DrawingViewer from '../components/drawing-review/DrawingViewer'
 import FindingCard from '../components/drawing-review/FindingCard'
 import { useLocale } from '../i18n'
+import { useAnalysisController } from '../hooks/useAnalysisController'
+import { aiStateFor, isJobActive } from '../lib/analysisController.ts'
 import { countByStatus, createReviewState, reviewReducer } from '../lib/drawingReview.ts'
-import {
-  PREVIEW_STATE_KEYS,
-  SAMPLE_DETERMINISTIC,
-  SAMPLE_REGION,
-  previewState,
-  type PreviewStateKey,
-} from '../data/sampleDrawingReview.ts'
-import type { AiAnalysisState, ReviewAction } from '../types/drawingReview.ts'
+import { drawingAnalysisApi } from '../services/drawingAnalysis'
+import type { SamplePreview } from '../components/drawing-review/DevPreview'
+import type {
+  AiAnalysisState,
+  DeterministicItem,
+  ReviewAction,
+  ReviewState,
+  SourceRegion,
+} from '../types/drawingReview.ts'
 
-type Action = ReviewAction | { type: 'RESET'; state: ReturnType<typeof createReviewState> }
+// Development-only: the dynamic import sits behind a compile-time constant, so production
+// builds drop the sample data and the previewer entirely.
+const DevPreview = import.meta.env.DEV
+  ? lazy(() => import('../components/drawing-review/DevPreview'))
+  : null
 
-function reducer(state: ReturnType<typeof createReviewState>, action: Action) {
+type LocalAction = ReviewAction | { type: 'RESET'; state: ReviewState }
+
+function localReducer(state: ReviewState, action: LocalAction): ReviewState {
   return action.type === 'RESET' ? action.state : reviewReducer(state, action)
 }
+
+const BUTTON =
+  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded border px-3 text-sm ' +
+  'font-medium transition-colors sm:min-h-9 focus-visible:outline-2 ' +
+  'focus-visible:outline-tp-accent-light disabled:cursor-not-allowed disabled:opacity-50'
 
 /**
  * Human-review workspace for advisory AI drawing findings.
  *
- * The backend exposes no drawing-analysis or review endpoint yet, so this build works on
- * a clearly labelled synthetic sample and keeps decisions in the browser session. The
- * deterministic panel is independent of the AI state and is always rendered.
+ * Production data comes from the authenticated drawing-analysis API: upload (deterministic
+ * ingestion), an explicit "Analyze with Local AI" job that is polled for real states, and
+ * server-side review decisions. The development sample below is reachable only in dev
+ * builds. The deterministic panel is independent of the AI state and is always rendered.
  */
 export default function TechnicalDrawingIntelligencePage({
   reviewer,
@@ -35,30 +50,60 @@ export default function TechnicalDrawingIntelligencePage({
   reviewer: string | null
 }) {
   const { t } = useLocale()
-  const [sampleLoaded, setSampleLoaded] = useState(false)
-  const [ai, setAi] = useState<AiAnalysisState>({ kind: 'FAILED', failure: 'NOT_CONNECTED' })
-  const [review, dispatch] = useReducer(reducer, {})
+  const { controller, state } = useAnalysisController(drawingAnalysisApi)
+  const fileInput = useRef<HTMLInputElement>(null)
+
+  // Development-only sample mode; null in production builds.
+  const [sample, setSample] = useState<SamplePreview | null>(null)
+  const [localReview, dispatch] = useReducer(localReducer, {})
   const [selected, setSelected] = useState<string | null>(null)
 
+  const sampleMode = sample !== null
+  const ai: AiAnalysisState = sample?.ai ?? aiStateFor(state)
   const findings = ai.kind === 'READY' ? ai.findings : []
-  const counts = useMemo(() => countByStatus(review), [review])
+  const records: ReviewState = sampleMode ? localReview : (state.job?.reviews ?? {})
+  const counts = useMemo(() => countByStatus(records), [records])
+  const active = isJobActive(state.job)
 
-  const applyAiState = (next: AiAnalysisState) => {
-    setAi(next)
+  const deterministic: readonly DeterministicItem[] = sample
+    ? sample.deterministic
+    : (state.drawing?.deterministic.items ?? [])
+  const drawingLoaded = sampleMode || state.drawing !== null
+  const region: SourceRegion | null = sample ? sample.region : (state.job?.region ?? null)
+  const firstPage = state.drawing?.pages[0] ?? null
+  const live =
+    !sampleMode && firstPage
+      ? { widthPt: firstPage.width_pt, heightPt: firstPage.height_pt, imageUrl: state.previewUrl }
+      : null
+  const selectedFinding = findings.find(f => f.evidence_id === selected) ?? null
+
+  const stamp = () => new Date().toISOString()
+  const applySample = (next: SamplePreview) => {
+    setSample(next)
     setSelected(null)
     dispatch({
       type: 'RESET',
-      state: createReviewState(next.kind === 'READY' ? next.findings : []),
+      state: createReviewState(next.ai.kind === 'READY' ? next.ai.findings : []),
     })
   }
 
-  const loadSample = () => {
-    setSampleLoaded(true)
-    applyAiState(previewState('READY'))
+  const decide = (evidenceId: string, action: 'ACCEPT' | 'REJECT' | { value: string }) => {
+    if (sampleMode) {
+      const base = { evidence_id: evidenceId, reviewed_by: reviewer, reviewed_at: stamp() }
+      dispatch(
+        typeof action === 'string'
+          ? { type: action, ...base }
+          : { type: 'EDIT', value: action.value, ...base },
+      )
+      return
+    }
+    void controller.review(
+      evidenceId,
+      typeof action === 'string' ? { action } : { action: 'EDIT', value: action.value },
+    )
   }
 
-  const stamp = () => new Date().toISOString()
-  const selectedFinding = findings.find(f => f.evidence_id === selected) ?? null
+  const canAnalyze = !sampleMode && state.drawing !== null && !state.uploading && !state.starting && !active
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6">
@@ -81,30 +126,73 @@ export default function TechnicalDrawingIntelligencePage({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0 space-y-4">
-          <Panel title={t('drDrawing')} subtitle={sampleLoaded ? t('drSampleNote') : undefined}>
+          <Panel title={t('drDrawing')} subtitle={sampleMode ? t('drSampleNote') : undefined}>
             <DrawingViewer
-              loaded={sampleLoaded}
-              region={sampleLoaded ? SAMPLE_REGION : null}
-              showRegion={selectedFinding !== null}
+              loaded={drawingLoaded}
+              region={region}
+              showRegion={selectedFinding !== null && region !== null}
+              live={live}
+              art={sample?.art}
             />
-            {!sampleLoaded && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInput}
+                data-testid="upload-input"
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (file) {
+                    setSample(null)
+                    setSelected(null)
+                    void controller.upload(file)
+                  }
+                }}
+              />
               <button
                 type="button"
-                onClick={loadSample}
-                className="mt-3 inline-flex min-h-11 items-center rounded border
-                           border-tp-accent-muted bg-tp-surface-2 px-3 text-sm font-medium
-                           text-tp-accent-light hover:bg-tp-surface-3 sm:min-h-9
-                           focus-visible:outline-2 focus-visible:outline-tp-accent-light"
+                data-testid="upload-button"
+                disabled={state.uploading || active}
+                onClick={() => fileInput.current?.click()}
+                className={`${BUTTON} border-tp-border-strong text-tp-text hover:bg-tp-surface-2`}
               >
-                {t('drLoadSample')}
+                {state.uploading ? (
+                  <LoaderCircle size={14} className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <Upload size={14} aria-hidden="true" />
+                )}
+                {state.uploading ? t('drUploading') : t('drUploadDrawing')}
               </button>
+              <button
+                type="button"
+                data-testid="analyze-button"
+                disabled={!canAnalyze}
+                onClick={() => void controller.startAnalysis()}
+                className={`${BUTTON} border-tp-ai bg-tp-ai-muted text-tp-text hover:bg-tp-ai/30`}
+              >
+                {active || state.starting
+                  ? t('drAnalysisActive')
+                  : state.job
+                    ? t('drAnalyzeAgain')
+                    : t('drAnalyze')}
+              </button>
+            </div>
+            {state.uploadFailed && (
+              <div role="alert" data-testid="upload-error" className="mt-2 text-xs text-tp-error">
+                {t('drUploadFailed')}
+              </div>
+            )}
+            {state.drawing && !sampleMode && (
+              <p className="mt-2 text-xs text-tp-text-3">{t('drWholeImageNote')}</p>
             )}
           </Panel>
 
           <Panel title={t('drDeterministicResult')} subtitle={t('drDeterministicHint')}>
-            {sampleLoaded ? (
+            {deterministic.length > 0 ? (
               <ul className="space-y-2" data-testid="deterministic-list">
-                {SAMPLE_DETERMINISTIC.map(item => (
+                {deterministic.map(item => (
                   <li
                     key={item.id}
                     data-testid="deterministic-item"
@@ -113,7 +201,7 @@ export default function TechnicalDrawingIntelligencePage({
                     <div className="mb-1">
                       <AuthorityBadge kind="DETERMINISTIC" />
                     </div>
-                    <div className="font-mono text-lg font-semibold tabular-nums">
+                    <div className="font-mono text-lg font-semibold tabular-nums break-words">
                       {item.value}
                     </div>
                     <div className="text-xs text-tp-text-3">
@@ -131,6 +219,11 @@ export default function TechnicalDrawingIntelligencePage({
         <aside aria-label={t('drPanelTitle')} className="min-w-0">
           <Panel title={t('drPanelTitle')}>
             <div className="space-y-3">
+              {sampleMode && (
+                <div className="text-[11px] uppercase tracking-wide text-tp-warn">
+                  {t('drSampleBadge')}
+                </div>
+              )}
               {ai.kind === 'READY' && findings.length > 0 ? (
                 <>
                   <div
@@ -142,68 +235,38 @@ export default function TechnicalDrawingIntelligencePage({
                     <span>{counts.EDITED} {t('drCountEdited')}</span>
                     <span>{counts.REJECTED} {t('drCountRejected')}</span>
                   </div>
-                  {findings.map(finding => (
-                    <FindingCard
-                      key={finding.evidence_id}
-                      finding={finding}
-                      record={review[finding.evidence_id]}
-                      selected={selected === finding.evidence_id}
-                      onSelect={() => setSelected(finding.evidence_id)}
-                      onAccept={() =>
-                        dispatch({
-                          type: 'ACCEPT',
-                          evidence_id: finding.evidence_id,
-                          reviewed_by: reviewer,
-                          reviewed_at: stamp(),
-                        })
-                      }
-                      onReject={() =>
-                        dispatch({
-                          type: 'REJECT',
-                          evidence_id: finding.evidence_id,
-                          reviewed_by: reviewer,
-                          reviewed_at: stamp(),
-                        })
-                      }
-                      onEdit={value =>
-                        dispatch({
-                          type: 'EDIT',
-                          evidence_id: finding.evidence_id,
-                          value,
-                          reviewed_by: reviewer,
-                          reviewed_at: stamp(),
-                        })
-                      }
-                    />
-                  ))}
-                  <p className="text-xs text-tp-text-3">{t('drSessionNote')}</p>
+                  {findings.map(finding => {
+                    const record = records[finding.evidence_id]
+                    return record ? (
+                      <FindingCard
+                        key={finding.evidence_id}
+                        finding={finding}
+                        record={record}
+                        selected={selected === finding.evidence_id}
+                        onSelect={() => setSelected(finding.evidence_id)}
+                        onAccept={() => decide(finding.evidence_id, 'ACCEPT')}
+                        onReject={() => decide(finding.evidence_id, 'REJECT')}
+                        onEdit={value => decide(finding.evidence_id, { value })}
+                      />
+                    ) : null
+                  })}
+                  {state.reviewFailed && (
+                    <div role="alert" data-testid="review-error" className="text-xs text-tp-error">
+                      {t('drReviewSaveFailed')}
+                    </div>
+                  )}
+                  <p className="text-xs text-tp-text-3">
+                    {sampleMode ? t('drSessionNote') : t('drServerSessionNote')}
+                  </p>
                 </>
               ) : (
                 <AiStatus state={ai} />
               )}
 
-              {import.meta.env.DEV && (
-                <label className="block text-xs text-tp-text-3">
-                  {t('drPreviewStates')}
-                  <select
-                    data-testid="preview-state"
-                    className="mt-1 block min-h-9 w-full rounded border border-tp-border
-                               bg-tp-bg px-2 text-sm text-tp-text"
-                    defaultValue=""
-                    onChange={e => {
-                      if (!e.target.value) return
-                      setSampleLoaded(true)
-                      applyAiState(previewState(e.target.value as PreviewStateKey))
-                    }}
-                  >
-                    <option value="">—</option>
-                    {PREVIEW_STATE_KEYS.map(key => (
-                      <option key={key} value={key}>
-                        {key}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              {DevPreview && (
+                <Suspense fallback={null}>
+                  <DevPreview onSelect={applySample} />
+                </Suspense>
               )}
             </div>
           </Panel>

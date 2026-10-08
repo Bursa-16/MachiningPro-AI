@@ -10,13 +10,15 @@ const FAILURE_KEY: Record<AiFailureKind, keyof TranslationDictionary> = {
   MODEL_UNAVAILABLE: 'drStateModel',
   TIMEOUT: 'drStateTimeout',
   VALIDATION_FAILED: 'drStateValidation',
+  INVALID_DRAWING: 'drStateInvalidDrawing',
+  INVALID_REGION: 'drStateInvalidRegion',
   NOT_CONNECTED: 'drStateNotConnected',
   UNKNOWN: 'drStateUnknown',
 }
 
 const PHASE_KEY: Record<AnalysisPhase, keyof TranslationDictionary> = {
+  QUEUED: 'drPhaseQueued',
   PREPARING_DRAWING: 'drPhasePreparing',
-  ANALYZING_REGION: 'drPhaseAnalyzing',
   AI_IN_PROGRESS: 'drPhaseAi',
   VALIDATING_RESPONSE: 'drPhaseValidating',
 }

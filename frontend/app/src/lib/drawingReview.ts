@@ -15,8 +15,8 @@ import type {
 export const MAX_REVIEW_VALUE_CHARS = 256
 
 export const ANALYSIS_PHASES: readonly AnalysisPhase[] = [
+  'QUEUED',
   'PREPARING_DRAWING',
-  'ANALYZING_REGION',
   'AI_IN_PROGRESS',
   'VALIDATING_RESPONSE',
 ]

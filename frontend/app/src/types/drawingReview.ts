@@ -35,6 +35,9 @@ export interface AdvisoryFinding {
   request_id: string
   box_basis: BoxBasis
   reconciliation: Reconciliation | null
+  /** Present on live evidence; the sample fixture omits them. */
+  prompt_contract_version?: string
+  schema_version?: string
 }
 
 /** A value produced by the deterministic parser/OCR pipeline. */
@@ -86,9 +89,10 @@ export type ReviewAction =
       reviewed_at: string
     }
 
+/** Mirrors the backend job states QUEUED / PREPARING / ANALYZING / VALIDATING. */
 export type AnalysisPhase =
+  | 'QUEUED'
   | 'PREPARING_DRAWING'
-  | 'ANALYZING_REGION'
   | 'AI_IN_PROGRESS'
   | 'VALIDATING_RESPONSE'
 
@@ -98,6 +102,8 @@ export type AiFailureKind =
   | 'MODEL_UNAVAILABLE'
   | 'TIMEOUT'
   | 'VALIDATION_FAILED'
+  | 'INVALID_DRAWING'
+  | 'INVALID_REGION'
   | 'NOT_CONNECTED'
   | 'UNKNOWN'
 

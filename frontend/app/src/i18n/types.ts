@@ -286,10 +286,22 @@ export interface TranslationDictionary {
   drStateUnknown: string
   drDeterministicStillAvailable: string
   drPhasePreparing: string
-  drPhaseAnalyzing: string
   drPhaseAi: string
   drPhaseValidating: string
   drPhaseReady: string
   drSlowNote: string
   drPreviewStates: string
+  drPhaseQueued: string
+  drUploadDrawing: string
+  drUploading: string
+  drUploadFailed: string
+  drAnalyze: string
+  drAnalysisActive: string
+  drAnalyzeAgain: string
+  drReviewSaveFailed: string
+  drStateInvalidDrawing: string
+  drStateInvalidRegion: string
+  drWholeImageNote: string
+  drServerSessionNote: string
+  drSampleBadge: string
 }

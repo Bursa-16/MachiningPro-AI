@@ -20,6 +20,8 @@ const wrap = (node: React.ReactNode) =>
 
 const noop = () => {}
 
+export { drawingAnalysisApi } from '../src/services/drawingAnalysis'
+
 export const renderFindingCard = (finding: AdvisoryFinding, record: ReviewRecord, selected = false) =>
   wrap(
     <FindingCard

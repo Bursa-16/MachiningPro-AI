@@ -1065,7 +1065,12 @@ class TestStaticAudit:
             for path in _BACKEND.rglob("*.py")
             if "vlm_ollama" in path.read_text(encoding="utf-8") and path.name != "vlm_ollama.py"
         ]
-        assert users == []
+        # The one explicit consumer is the analysis API, which builds the provider only from
+        # ``OllamaVlmConfig.from_environment`` (refuses unless MACHININGPRO_AI_PROVIDER=ollama).
+        assert users == ["drawing_analysis.py"]
+        source = (_BACKEND / "api" / "drawing_analysis.py").read_text(encoding="utf-8")
+        assert "OllamaVlmConfig.from_environment()" in source
+        assert "vlm_openai" not in source
 
     @pytest.mark.parametrize("module", ["pdf_drawing", "ocr_drawing", "raster_drawing"])
     def test_t41_t42_deterministic_phase_modules_never_reference_the_provider(self, module):

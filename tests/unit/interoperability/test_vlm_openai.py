@@ -969,6 +969,8 @@ class TestStaticAudit:
                     if {"identity", "capabilities", "infer"} <= methods:
                         implementers.append((path.name, node.name))
         assert sorted(implementers) == [
+            # instrumentation decorator around a provider, not a provider of its own
+            ("drawing_analysis.py", "_PhaseReportingProvider"),
             ("vlm_ollama.py", "OllamaVlmProvider"),
             ("vlm_openai.py", "OpenAiVlmProvider"),
             ("vlm_providers.py", "DisabledVlmProvider"),

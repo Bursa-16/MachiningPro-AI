@@ -4,6 +4,7 @@ MachiningPro AI FastAPI HTTP Application
 Minimal standalone HTTP foundation supporting:
 - GET /api/health - System health and version info
 - POST /api/login - Local development authentication
+- /api/drawings/... - authenticated drawing upload, explicit AI analysis jobs and human review
 """
 
 from datetime import UTC, datetime
@@ -12,6 +13,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from .auth import LoginRequest, authenticate, get_configured_credentials
+from .drawing_analysis import router as drawing_analysis_router
 
 
 class ChangePasswordRequest(BaseModel):
@@ -21,6 +23,7 @@ class ChangePasswordRequest(BaseModel):
 
 # Create FastAPI application
 app = FastAPI(title="MachiningPro AI", version="0.1.0-alpha.10")
+app.include_router(drawing_analysis_router)
 
 
 @app.get("/api/health")

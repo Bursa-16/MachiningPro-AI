@@ -75,9 +75,9 @@ export function previewState(key: PreviewStateKey): AiAnalysisState {
     case 'EMPTY':
       return { kind: 'READY', findings: [] }
     case 'RUNNING_1':
-      return { kind: 'RUNNING', phase: 'PREPARING_DRAWING' }
+      return { kind: 'RUNNING', phase: 'QUEUED' }
     case 'RUNNING_2':
-      return { kind: 'RUNNING', phase: 'ANALYZING_REGION' }
+      return { kind: 'RUNNING', phase: 'PREPARING_DRAWING' }
     case 'RUNNING_3':
       return { kind: 'RUNNING', phase: 'AI_IN_PROGRESS' }
     case 'RUNNING_4':

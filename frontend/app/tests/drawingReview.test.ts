@@ -345,13 +345,14 @@ describe('rendered states', () => {
       assert.match(html, /data-state="RUNNING"/)
       assert.match(html, /animate-spin/)
       assert.match(html, /Preparing drawing\.\.\./)
-      assert.match(html, /Validating AI response\.\.\./)
+      assert.match(html, /Preparing AI analysis\.\.\./)
+      assert.match(html, /Validating AI suggestions\.\.\./)
       assert.match(html, /several minutes/)
       assert.doesNotMatch(html, /\d\s?%/)
       assert.doesNotMatch(html, /<progress|role="progressbar"|aria-valuenow/)
     }
     const running = render.renderAiStatus(previewState('RUNNING_3'))
-    assert.match(running, /data-current="true"[^>]*>● AI analysis in progress/)
+    assert.match(running, /data-current="true"[^>]*>● Local AI analysis in progress/)
     assert.doesNotMatch(running, /cancel/i)
   })
 
@@ -394,9 +395,11 @@ describe('rendered page', () => {
     const html = render.renderPage('engineer-1')
     assert.match(html, /Technical Drawing Intelligence/)
     assert.match(html, /AI suggestions require human review before use\./)
-    assert.match(html, /AI analysis is not connected in this build/)
-    assert.match(html, /Deterministic results remain available/)
-    assert.match(html, /Load synthetic sample/)
+    assert.match(html, /AI analysis has not been run for this drawing/)
+    assert.match(html, /Choose drawing \(PDF\)/)
+    assert.match(html, /Analyze with Local AI/)
+    assert.match(html, /data-testid="analyze-button"[^>]*disabled/, 'no drawing, no analysis')
+    assert.doesNotMatch(html, /Load synthetic sample|Development sample/, 'no sample in production')
     assert.match(html, /No deterministic results for this drawing/)
     assert.doesNotMatch(html, /finding-card/)
   })
@@ -427,4 +430,128 @@ test('UI01 the frontend logic and sample data contain no AI service endpoint', (
     const source = readFileSync(join(appRoot, file), 'utf8')
     assert.doesNotMatch(source, /11434|api\.openai|api\.anthropic|http:\/\/|https:\/\//, file)
   }
+})
+
+describe('HTTP service layer (stubbed fetch)', () => {
+  type Call = { url: string; init: RequestInit }
+  const calls: Call[] = []
+  const original = {
+    fetch: globalThis.fetch,
+    session: (globalThis as { sessionStorage?: unknown }).sessionStorage,
+    createObjectURL: URL.createObjectURL,
+  }
+  const store = new Map<string, string>([['machiningpro_token', 'tok-123']])
+
+  const respond = (status: number, body: unknown, type = 'application/json') =>
+    new Response(typeof body === 'string' ? body : JSON.stringify(body), {
+      status,
+      headers: { 'content-type': type },
+    })
+
+  const install = (handler: (call: Call) => Response) => {
+    calls.length = 0
+    globalThis.fetch = (async (url: string, init: RequestInit = {}) => {
+      const call = { url, init }
+      calls.push(call)
+      return handler(call)
+    }) as typeof fetch
+  }
+
+  before(() => {
+    ;(globalThis as { sessionStorage?: unknown }).sessionStorage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: () => {},
+      removeItem: () => {},
+    }
+    URL.createObjectURL = () => 'blob:stub'
+  })
+  after(() => {
+    globalThis.fetch = original.fetch
+    ;(globalThis as { sessionStorage?: unknown }).sessionStorage = original.session
+    URL.createObjectURL = original.createObjectURL
+  })
+
+  const authOf = (call: Call) => (call.init.headers as Record<string, string>).Authorization
+
+  test('every request carries the session token and targets only this app API', async () => {
+    install(() => respond(200, { job_id: 'j' }))
+    const api = render.drawingAnalysisApi
+    await api.start('d'.repeat(32), { ai_enabled: true, page_number: 1, image_index: 1 })
+    await api.get('d'.repeat(32), 'j'.repeat(32))
+    await api.review('d'.repeat(32), 'j'.repeat(32), 'vlm-ev-1', { action: 'ACCEPT' })
+    assert.ok(calls.every(call => authOf(call) === 'Bearer tok-123'))
+    assert.ok(calls.every(call => call.url.startsWith('/api/drawings/')))
+    assert.doesNotMatch(calls.map(c => c.url).join(' '), /11434|http:|https:|ollama/i)
+    const [start, get, review] = calls
+    assert.equal(start.init.method, 'POST')
+    assert.equal(start.url, `/api/drawings/${'d'.repeat(32)}/analysis`)
+    assert.deepEqual(JSON.parse(String(start.init.body)), {
+      ai_enabled: true,
+      page_number: 1,
+      image_index: 1,
+    })
+    assert.equal(get.url, `/api/drawings/${'d'.repeat(32)}/analysis/${'j'.repeat(32)}`)
+    assert.equal(review.init.method, 'PUT')
+    assert.match(review.url, /\/reviews\/vlm-ev-1$/)
+    assert.deepEqual(JSON.parse(String(review.init.body)), { action: 'ACCEPT' })
+  })
+
+  test('the review request never carries a reviewer identity (the server derives it)', async () => {
+    install(() => respond(200, {}))
+    await render.drawingAnalysisApi.review('d', 'j', 'e', { action: 'EDIT', value: '100 mm' })
+    const body = JSON.parse(String(calls[0].init.body))
+    assert.deepEqual(Object.keys(body).sort(), ['action', 'value'])
+  })
+
+  test('upload posts multipart form data with the token and no JSON content type', async () => {
+    install(() => respond(201, { drawing_id: 'd' }))
+    await render.drawingAnalysisApi.upload(new File(['%PDF-1.4'], 'x.pdf', { type: 'application/pdf' }))
+    const [call] = calls
+    assert.equal(call.url, '/api/drawings')
+    assert.ok(call.init.body instanceof FormData)
+    assert.equal((call.init.headers as Record<string, string>)['Content-Type'], undefined)
+    assert.equal(authOf(call), 'Bearer tok-123')
+  })
+
+  test('structured errors surface only the safe error code', async () => {
+    install(() => respond(503, { detail: { error_code: 'AI_DISABLED' } }))
+    await assert.rejects(
+      () => render.drawingAnalysisApi.start('d', { ai_enabled: true, page_number: 1, image_index: 1 }),
+      (error: { code?: string; status?: number; message?: string }) =>
+        error.code === 'AI_DISABLED' && error.status === 503,
+    )
+    install(() => respond(500, 'Traceback (most recent call last): secret', 'text/plain'))
+    await assert.rejects(
+      () => render.drawingAnalysisApi.get('d', 'j'),
+      (error: { code?: string; message?: string }) =>
+        error.code === 'REQUEST_FAILED' && !/Traceback|secret/.test(String(error.message)),
+    )
+  })
+
+  test('the preview is fetched with the token and exposed as an object URL', async () => {
+    install(() => new Response(new Blob(['png']), { status: 200 }))
+    const url = await render.drawingAnalysisApi.preview('d', 1)
+    assert.equal(url, 'blob:stub')
+    assert.equal(authOf(calls[0]), 'Bearer tok-123')
+  })
+})
+
+describe('production route has no sample data', () => {
+  test('UI02 the page source gates every sample import behind the development flag', () => {
+    const page = readFileSync(join(appRoot, 'src', 'pages', 'TechnicalDrawingIntelligencePage.tsx'), 'utf8')
+    assert.match(page, /import\.meta\.env\.DEV/)
+    assert.match(page, /lazy\(\(\) => import\('\.\.\/components\/drawing-review\/DevPreview'\)\)/)
+    assert.doesNotMatch(page, /from '\.\.\/data\/sampleDrawingReview/)
+    assert.doesNotMatch(page, /Load synthetic sample|drLoadSample/)
+    assert.match(page, /useAnalysisController\(drawingAnalysisApi\)/)
+    const app = readFileSync(join(appRoot, 'src', 'App.tsx'), 'utf8')
+    assert.match(app, /TechnicalDrawingIntelligencePage reviewer=\{user\}/)
+  })
+
+  test('UI02 the rendered production page starts idle, uploads need the user, AI is never auto-started', () => {
+    const html = render.renderPage('engineer-1')
+    assert.match(html, /data-testid="upload-button"/)
+    assert.doesNotMatch(html, /data-testid="finding-card"|Development sample|data-testid="preview-state"/)
+    assert.doesNotMatch(html, /\d\s?%/)
+  })
 })
