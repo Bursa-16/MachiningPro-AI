@@ -22,7 +22,10 @@ from backend.interoperability.drawing import (
 from backend.interoperability.vlm_assist import AiAssistedDrawingExtractor
 from backend.interoperability.vlm_drawing import (
     DrawingVlmAssistConfig,
+    DrawingVlmEvidenceKind,
+    DrawingVlmLegibility,
     DrawingVlmReconciliationStatus,
+    VlmLimits,
 )
 from backend.interoperability.vlm_ollama import (
     OllamaConfigurationError,
@@ -30,7 +33,10 @@ from backend.interoperability.vlm_ollama import (
     OllamaTransportFailure,
     OllamaVlmConfig,
     OllamaVlmProvider,
+    build_instructions,
+    build_output_schema,
     http_transport,
+    normalize_allowed_references,
     parse_loopback_base_url,
 )
 from backend.interoperability.vlm_provider import (
@@ -38,6 +44,7 @@ from backend.interoperability.vlm_provider import (
     VlmErrorCode,
     VlmLocality,
     VlmProviderError,
+    VlmTaskKind,
 )
 from backend.interoperability.vlm_request import (
     VlmPreparationConfig,
@@ -577,6 +584,144 @@ class TestPipeline:
     def test_t36_openai_selection_does_not_enable_ollama(self):
         with pytest.raises(OllamaConfigurationError):
             OllamaVlmConfig.from_environment({"MACHININGPRO_AI_PROVIDER": "openai"})
+
+
+# ---------------------------------------------------------------------------
+# FREE_LOCAL_AI_06A — provider schema and prompt aligned with the R3B contract
+# ---------------------------------------------------------------------------
+
+
+def _reference_enum(schema: dict) -> list:
+    return schema["properties"]["items"]["items"]["properties"]["evidence_reference"]["enum"]
+
+
+def _schema(*references: str) -> dict:
+    return build_output_schema(_request(), normalize_allowed_references(references))
+
+
+class TestEvidenceReferenceAlignment:
+    def test_t01_null_is_always_allowed(self):
+        assert None in _reference_enum(_schema()) and None in _reference_enum(_schema("t1"))
+
+    def test_t06_no_request_derived_reference_constrains_to_null(self):
+        provider = _provider()
+        assert _reference_enum(_body(provider)["format"]) == [None]  # infer passes none
+        assert _reference_enum(_schema()) == [None]
+
+    def test_t02_t07_request_derived_references_form_a_closed_enum(self):
+        assert _reference_enum(_schema("t2", "t1")) == [None, "t1", "t2"]
+
+    def test_t08_duplicates_are_removed(self):
+        assert _reference_enum(_schema("t1", "t1", "t2", "t1")) == [None, "t1", "t2"]
+
+    def test_t09_ordering_and_output_are_deterministic(self):
+        provider = _provider()
+        request = _request(provider)
+        first = provider.build_body(request, ["b", "a", "c"])
+        assert first == provider.build_body(request, ("c", "b", "a", "a"))
+        assert _reference_enum(json.loads(first)["format"]) == [None, "a", "b", "c"]
+
+    def test_t03_t04_text_read_from_the_drawing_never_enters_the_enum(self):
+        provider = _provider(config=OllamaVlmConfig(max_context_chars=100))
+        request = _request(provider, context_text=("HOLE 20 MM", "100 mm"))
+        body = json.loads(provider.build_body(request))
+        assert _reference_enum(body["format"]) == [None]
+        enum_text = json.dumps(body["format"]["properties"]["items"]["items"]["properties"])
+        assert "HOLE" not in enum_text and "100 mm" not in enum_text
+
+    def test_free_form_references_are_not_expressible_in_the_schema(self):
+        field = _schema("t1")["properties"]["items"]["items"]["properties"]["evidence_reference"]
+        assert set(field) == {"enum"}
+
+    @pytest.mark.parametrize("bad", ["", "   ", "a\nb", "x" * 129, 5, None, b"t1"])
+    def test_t05_invalid_reference_identifiers_cannot_enter_the_schema(self, bad):
+        with pytest.raises(ValueError):
+            normalize_allowed_references([bad])
+
+    def test_the_reference_set_is_bounded(self):
+        with pytest.raises(ValueError):
+            normalize_allowed_references([f"t{i}" for i in range(65)])
+
+    def test_t10_prompt_forbids_free_form_evidence_reference(self):
+        text = build_instructions(VlmTaskKind.TRANSCRIBE, ())
+        assert "evidence_reference is NOT a place for text read from the drawing" in text
+        assert "a dimension value or a description" in text
+        assert "Never invent an identifier" in text
+
+    def test_t11_prompt_instructs_null_when_no_supplied_reference_applies(self):
+        none = build_instructions(VlmTaskKind.TRANSCRIBE, ())
+        assert "evidence_reference must always be null" in none
+        some = build_instructions(VlmTaskKind.GDT_CHARACTERISTIC, ("t1", "t2"))
+        assert "unless one of these identifiers applies: t1, t2" in some
+        assert "If none applies, use null" in some
+
+    def test_the_sent_prompt_matches_the_builder(self):
+        provider = _provider()
+        request = _request(provider)
+        sent = _body(provider, request)["messages"][0]["content"]
+        assert sent == build_instructions(request.task_kind, ())
+
+    def test_schema_is_not_looser_than_r3b_on_keys_enums_and_ranges(self):
+        schema = _schema()
+        item = schema["properties"]["items"]["items"]
+        assert schema["additionalProperties"] is False and item["additionalProperties"] is False
+        keys = {
+            "candidate_type",
+            "value",
+            "legibility",
+            "box",
+            "confidence",
+            "evidence_reference",
+        }
+        assert set(item["required"]) == set(item["properties"]) == keys
+        limits = VlmLimits()
+        props = item["properties"]
+        assert props["candidate_type"]["enum"] == [k.value for k in DrawingVlmEvidenceKind]
+        assert props["legibility"]["enum"] == [k.value for k in DrawingVlmLegibility]
+        assert (props["confidence"]["minimum"], props["confidence"]["maximum"]) == (0, 1)
+        assert props["value"]["minLength"] == 1
+        assert props["value"]["maxLength"] == limits.raw_candidate_chars
+        assert props["box"]["minItems"] == props["box"]["maxItems"] == 4
+        request = _request()
+        assert props["box"]["items"]["minimum"] == 0
+        assert props["box"]["items"]["maximum"] == max(
+            request.image_width_px, request.image_height_px
+        )
+        assert schema["properties"]["items"]["maxItems"] == limits.items_per_response
+
+    def test_t12_a_valid_null_reference_response_passes_r3b(self):
+        item = _item(evidence_reference=None)
+        _, outcome = _run(FakeTransport(body=_chat(items=[item])))
+        assert outcome.advisory.status is DrawingIngestionStatus.VALID
+
+    def test_t12_a_valid_trigger_reference_response_passes_r3b(self):
+        _, outcome = _run(FakeTransport(body=_chat(items=[_item(evidence_reference="t1")])))
+        assert outcome.advisory.status is DrawingIngestionStatus.VALID
+
+    @pytest.mark.parametrize("reference", ["HOLE 20 MM", "100 mm", "t99", "", 5, ["t1"]])
+    def test_t13_invented_or_text_references_fail_closed_at_r3b(self, reference):
+        _, outcome = _run(FakeTransport(body=_chat(items=[_item(evidence_reference=reference)])))
+        assert outcome.advisory.status is DrawingIngestionStatus.FAILED
+        assert outcome.advisory.diagnostics == ("VLM_RESPONSE_EVIDENCE_REFERENCE",)
+        assert outcome.advisory.evidence == ()
+
+    def test_t14_t15_authority_advisory_and_deterministic_result_unchanged(self):
+        _, outcome = _run(FakeTransport(body=_chat()))  # _run asserts the base is untouched
+        (evidence,) = outcome.advisory.evidence
+        assert evidence.source_location.authority is DrawingExtractionAuthority.ADVISORY
+
+    def test_t16_to_t20_no_fallback_loopback_and_profile_unchanged(self):
+        transport = FakeTransport(status=500)
+        _run(transport)
+        assert {call["host"] for call in transport.calls} == {"127.0.0.1"}
+        assert {json.loads(call["body"])["model"] for call in transport.calls} == {
+            "granite3.2-vision:2b"
+        }
+        options = _body()["options"]
+        assert (options["num_gpu"], options["num_ctx"], options["temperature"]) == (0, 8192, 0)
+        assert _body()["stream"] is False
+        with pytest.raises(OllamaConfigurationError):
+            parse_loopback_base_url("http://192.168.1.2:11434")
 
 
 # ---------------------------------------------------------------------------
