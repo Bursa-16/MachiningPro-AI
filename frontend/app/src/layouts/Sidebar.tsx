@@ -16,7 +16,9 @@ function loadPrefs(): SidebarPrefs {
     const raw = localStorage.getItem(SIDEBAR_KEY)
     if (raw) return JSON.parse(raw)
   } catch { /* ignore */ }
-  return { collapsed: false, pinned: true, openGroups: ['engineering'] }
+  // First visit on a phone-width screen: start collapsed so content keeps its width.
+  const narrow = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches
+  return { collapsed: !!narrow, pinned: true, openGroups: ['engineering'] }
 }
 
 function savePrefs(p: SidebarPrefs) {

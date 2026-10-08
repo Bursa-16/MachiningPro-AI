@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import AppShell from './layouts/AppShell'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
+import TechnicalDrawingIntelligencePage from './pages/TechnicalDrawingIntelligencePage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   return (
@@ -62,7 +63,7 @@ function ProtectedRoutes() {
         <Route path="app/cad-drawing/cad-import" element={capability('CAD Import')} />
         <Route
           path="app/cad-drawing/technical-drawing-intelligence"
-          element={capability('Technical Drawing Intelligence')}
+          element={<TechnicalDrawingIntelligencePage reviewer={user} />}
         />
 
         {/* Planning & Quality */}

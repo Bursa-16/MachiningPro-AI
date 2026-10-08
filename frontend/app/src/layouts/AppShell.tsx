@@ -47,13 +47,13 @@ export default function AppShell({ user, role, onLogout }: {
           <span className="text-tp-text-3 font-normal text-[10px] ml-1.5">alpha</span>
         </Link>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 truncate">
           <Breadcrumb pathname={location.pathname} />
         </div>
 
         <div className="shrink-0 flex items-center gap-3">
           <AiStatusBadge />
-          <div className="flex items-center gap-2 text-xs">
+          <div className="hidden items-center gap-2 text-xs sm:flex">
             <span className="text-tp-text-2">{user}</span>
             <span className="text-tp-text-3 text-[10px]">({role})</span>
           </div>

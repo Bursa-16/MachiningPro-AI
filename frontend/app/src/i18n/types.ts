@@ -220,4 +220,76 @@ export interface TranslationDictionary {
   validationDef: string
   verificationDef: string
   qualificationDef: string
+
+  // Technical Drawing Intelligence - human review
+  drPageTitle: string
+  drPageSubtitle: string
+  drReviewRequired: string
+  drSessionNote: string
+  drDrawing: string
+  drNoDrawing: string
+  drLoadSample: string
+  drSampleNote: string
+  drDeterministicResult: string
+  drDeterministicHint: string
+  drNoDeterministic: string
+  drAiSuggestion: string
+  drHumanConfirmed: string
+  drRejected: string
+  drEditedByHuman: string
+  drPendingReview: string
+  drAdvisory: string
+  drPanelTitle: string
+  drAccept: string
+  drReject: string
+  drEdit: string
+  drSaveEdit: string
+  drCancel: string
+  drEditValueLabel: string
+  drAiOriginalValue: string
+  drHumanValue: string
+  drFindingType: string
+  drConfidence: string
+  drNoConfidence: string
+  drProvider: string
+  drModel: string
+  drRegion: string
+  drSource: string
+  drSourceRegion: string
+  drSourceRegionNote: string
+  drModelBoxLegacy: string
+  drSelectFinding: string
+  drCompared: string
+  drCorroborated: string
+  drConflict: string
+  drAdvisoryOnly: string
+  drOtherComparison: string
+  drReviewHistory: string
+  drReviewedBy: string
+  drNotRecorded: string
+  drCountPending: string
+  drCountAccepted: string
+  drCountEdited: string
+  drCountRejected: string
+  drEditBlank: string
+  drEditTooLong: string
+  drEditControl: string
+  drEditUnchanged: string
+  drNoFindings: string
+  drStateIdle: string
+  drStateNotConnected: string
+  drStateDisabled: string
+  drStateOllama: string
+  drStateModel: string
+  drStateTimeout: string
+  drStateValidation: string
+  drStateUnknown: string
+  drDeterministicStillAvailable: string
+  drPhasePreparing: string
+  drPhaseAnalyzing: string
+  drPhaseAi: string
+  drPhaseValidating: string
+  drPhaseReady: string
+  drSlowNote: string
+  drPreviewStates: string
 }
