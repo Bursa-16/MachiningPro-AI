@@ -1,0 +1,45 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "REAL_DRAWING_DEMO_QUALIFICATION",
+  "creation_method": "Generated from a primitive drawing description; rasterised with Pillow at 2x supersampling; embedded as an 8-bit DeviceGray FlateDecode image",
+  "customer_data": "NO",
+  "derived_from": null,
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/Q10.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "Q10",
+  "raster_file": "raster/Q10.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "e11516468b818620c436237e10f1f7c2ff49eeeb241610aec0c2dd9327d259c9",
+  "sha256_raster": "70f4abe34cb93b639c7acd74afd85422e6aee7273d80c5829557309d43372bb4",
+  "sha256_source": "e937c8b7d0bc37cc36d7852367c9faca85e2cfd6fa2f28caed77da8547a6fbc2",
+  "source_file": "sources/Q10.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Large flange plate near the whole-image size limit",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

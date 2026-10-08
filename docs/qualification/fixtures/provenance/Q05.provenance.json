@@ -1,0 +1,45 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "REAL_DRAWING_DEMO_QUALIFICATION",
+  "creation_method": "Generated from a primitive drawing description; rasterised with Pillow at 2x supersampling; embedded as an 8-bit DeviceGray FlateDecode image",
+  "customer_data": "NO",
+  "derived_from": null,
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/Q05.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "Q05",
+  "raster_file": "raster/Q05.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "94c2b69657758baaf9b7a048bd26587c3a60ef3bde7b1c67d7b02ff8ab7f8417",
+  "sha256_raster": "230b4e426959d9abc34dff024e4fe49fb8b4ce03e4c347d377200cf809306dfa",
+  "sha256_source": "f197f8f1ccb296abed65a84ad6341b0544cc1b591ce79bcee7025beef4586a83",
+  "source_file": "sources/Q05.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Notched block - several dimensions in one view",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

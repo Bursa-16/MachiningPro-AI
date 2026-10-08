@@ -1,0 +1,45 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "REAL_DRAWING_DEMO_QUALIFICATION",
+  "creation_method": "Generated from a primitive drawing description; rasterised with Pillow at 2x supersampling; embedded as an 8-bit DeviceGray FlateDecode image",
+  "customer_data": "NO",
+  "derived_from": null,
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/Q01.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "Q01",
+  "raster_file": "raster/Q01.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "690ec7c721c8a0425264aebef965c12297ff2d2aa0f05c8bc69674afc421fda7",
+  "sha256_raster": "a8ab9b2486244ba362c276a434cb0af55e6dd43e3beb42284acaeb162b32c151",
+  "sha256_source": "7ad682408582542c626590437c0e7a416db562192def9be578073da06392fb87",
+  "source_file": "sources/Q01.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Plate with one hole - control fixture",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 0,
+    "circle": 1,
+    "line": 15,
+    "poly": 9,
+    "rect": 17
+  },
+  "image_px": [
+    1200,
+    900
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q08",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q08-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "100 mm",
+      "text_bbox_px": [
+        408,
+        201,
+        492,
+        216
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q08-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "60 mm",
+      "text_bbox_px": [
+        792,
+        403,
+        863,
+        418
+      ]
+    },
+    {
+      "drawn_as": "DATUM_LABEL",
+      "group": null,
+      "intent_id": "Q08-I003",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "A",
+      "text_bbox_px": [
+        411,
+        601,
+        425,
+        616
+      ]
+    },
+    {
+      "drawn_as": "DATUM_LABEL",
+      "group": null,
+      "intent_id": "Q08-I004",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "B",
+      "text_bbox_px": [
+        125,
+        403,
+        139,
+        418
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-FLATNESS",
+      "intent_id": "Q08-I005",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "FLATNESS",
+      "text_bbox_px": [
+        892,
+        163,
+        1002,
+        178
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-FLATNESS",
+      "intent_id": "Q08-I006",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "0.05 mm",
+      "text_bbox_px": [
+        1028,
+        163,
+        1116,
+        178
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-POSITION",
+      "intent_id": "Q08-I007",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "POSITION",
+      "text_bbox_px": [
+        112,
+        653,
+        214,
+        668
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-POSITION",
+      "intent_id": "Q08-I008",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DIA 0.2 mm",
+      "text_bbox_px": [
+        240,
+        653,
+        356,
+        668
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-POSITION",
+      "intent_id": "Q08-I009",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "A",
+      "text_bbox_px": [
+        383,
+        653,
+        397,
+        668
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-POSITION",
+      "intent_id": "Q08-I010",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "B",
+      "text_bbox_px": [
+        423,
+        653,
+        437,
+        668
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-CIRCULARITY",
+      "intent_id": "Q08-I011",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "CIRCULARITY",
+      "text_bbox_px": [
+        662,
+        653,
+        802,
+        668
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-CIRCULARITY",
+      "intent_id": "Q08-I012",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "0.02 mm",
+      "text_bbox_px": [
+        828,
+        653,
+        916,
+        668
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-SYMMETRY",
+      "intent_id": "Q08-I013",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "SYMMETRY",
+      "text_bbox_px": [
+        873,
+        493,
+        992,
+        508
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-SYMMETRY",
+      "intent_id": "Q08-I014",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "0.1 mm",
+      "text_bbox_px": [
+        1017,
+        493,
+        1093,
+        508
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-SYMMETRY",
+      "intent_id": "Q08-I015",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "A",
+      "text_bbox_px": [
+        1119,
+        493,
+        1133,
+        508
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-NEGATIVE-PERPENDICULARITY",
+      "intent_id": "Q08-I016",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "PERPENDICULARITY",
+      "text_bbox_px": [
+        113,
+        163,
+        324,
+        178
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-NEGATIVE-PERPENDICULARITY",
+      "intent_id": "Q08-I017",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "0.1 mm",
+      "text_bbox_px": [
+        349,
+        163,
+        425,
+        178
+      ]
+    },
+    {
+      "drawn_as": "GDT_CELL",
+      "group": "FRAME-NEGATIVE-PERPENDICULARITY",
+      "intent_id": "Q08-I018",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "A",
+      "text_bbox_px": [
+        451,
+        163,
+        465,
+        178
+      ]
+    }
+  ]
+}

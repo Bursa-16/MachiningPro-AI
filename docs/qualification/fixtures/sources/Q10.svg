@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1400" viewBox="0 0 2000 1400">
+<rect width="2000" height="1400" fill="#ffffff"/>
+<g fill="none" stroke="#000000" stroke-linecap="butt">
+<line x1="380.00" y1="400.00" x2="1500.00" y2="400.00" stroke-width="3.0"/>
+<line x1="1500.00" y1="400.00" x2="1500.00" y2="850.00" stroke-width="3.0"/>
+<line x1="1500.00" y1="850.00" x2="1350.00" y2="1000.00" stroke-width="3.0"/>
+<line x1="1350.00" y1="1000.00" x2="300.00" y2="1000.00" stroke-width="3.0"/>
+<line x1="300.00" y1="1000.00" x2="300.00" y2="480.00" stroke-width="3.0"/>
+<path d="M 300.00 480.00 A 80 80 0 0 1 380.00 400.00" stroke-width="3.0"/>
+<line x1="300.00" y1="394.00" x2="300.00" y2="322.00" stroke-width="1.6"/>
+<line x1="600.00" y1="394.00" x2="600.00" y2="322.00" stroke-width="1.6"/>
+<line x1="300.00" y1="330.00" x2="600.00" y2="330.00" stroke-width="1.6"/>
+<polygon points="300.00,330.00 286.00,334.50 286.00,325.50" fill="#000000" stroke="none"/>
+<polygon points="600.00,330.00 614.00,325.50 614.00,334.50" fill="#000000" stroke="none"/>
+<line x1="600.00" y1="394.00" x2="600.00" y2="322.00" stroke-width="1.6"/>
+<line x1="900.00" y1="394.00" x2="900.00" y2="322.00" stroke-width="1.6"/>
+<line x1="600.00" y1="330.00" x2="900.00" y2="330.00" stroke-width="1.6"/>
+<polygon points="600.00,330.00 586.00,334.50 586.00,325.50" fill="#000000" stroke="none"/>
+<polygon points="900.00,330.00 914.00,325.50 914.00,334.50" fill="#000000" stroke="none"/>
+<line x1="900.00" y1="394.00" x2="900.00" y2="322.00" stroke-width="1.6"/>
+<line x1="1200.00" y1="394.00" x2="1200.00" y2="322.00" stroke-width="1.6"/>
+<line x1="900.00" y1="330.00" x2="1200.00" y2="330.00" stroke-width="1.6"/>
+<polygon points="900.00,330.00 886.00,334.50 886.00,325.50" fill="#000000" stroke="none"/>
+<polygon points="1200.00,330.00 1214.00,325.50 1214.00,334.50" fill="#000000" stroke="none"/>
+<line x1="1200.00" y1="394.00" x2="1200.00" y2="322.00" stroke-width="1.6"/>
+<line x1="1500.00" y1="394.00" x2="1500.00" y2="322.00" stroke-width="1.6"/>
+<line x1="1200.00" y1="330.00" x2="1500.00" y2="330.00" stroke-width="1.6"/>
+<polygon points="1200.00,330.00 1186.00,334.50 1186.00,325.50" fill="#000000" stroke="none"/>
+<polygon points="1500.00,330.00 1514.00,325.50 1514.00,334.50" fill="#000000" stroke="none"/>
+<line x1="300.00" y1="394.00" x2="300.00" y2="252.00" stroke-width="1.6"/>
+<line x1="1500.00" y1="394.00" x2="1500.00" y2="252.00" stroke-width="1.6"/>
+<line x1="300.00" y1="260.00" x2="1500.00" y2="260.00" stroke-width="1.6"/>
+<polygon points="300.00,260.00 286.00,264.50 286.00,255.50" fill="#000000" stroke="none"/>
+<polygon points="1500.00,260.00 1514.00,255.50 1514.00,264.50" fill="#000000" stroke="none"/>
+<line x1="1506.00" y1="400.00" x2="1598.00" y2="400.00" stroke-width="1.6"/>
+<line x1="1506.00" y1="600.00" x2="1598.00" y2="600.00" stroke-width="1.6"/>
+<line x1="1590.00" y1="400.00" x2="1590.00" y2="600.00" stroke-width="1.6"/>
+<polygon points="1590.00,400.00 1585.50,386.00 1594.50,386.00" fill="#000000" stroke="none"/>
+<polygon points="1590.00,600.00 1594.50,614.00 1585.50,614.00" fill="#000000" stroke="none"/>
+<line x1="1506.00" y1="600.00" x2="1598.00" y2="600.00" stroke-width="1.6"/>
+<line x1="1506.00" y1="800.00" x2="1598.00" y2="800.00" stroke-width="1.6"/>
+<line x1="1590.00" y1="600.00" x2="1590.00" y2="800.00" stroke-width="1.6"/>
+<polygon points="1590.00,600.00 1585.50,586.00 1594.50,586.00" fill="#000000" stroke="none"/>
+<polygon points="1590.00,800.00 1594.50,814.00 1585.50,814.00" fill="#000000" stroke="none"/>
+<line x1="1506.00" y1="800.00" x2="1598.00" y2="800.00" stroke-width="1.6"/>
+<line x1="1506.00" y1="1000.00" x2="1598.00" y2="1000.00" stroke-width="1.6"/>
+<line x1="1590.00" y1="800.00" x2="1590.00" y2="1000.00" stroke-width="1.6"/>
+<polygon points="1590.00,800.00 1585.50,786.00 1594.50,786.00" fill="#000000" stroke="none"/>
+<polygon points="1590.00,1000.00 1594.50,1014.00 1585.50,1014.00" fill="#000000" stroke="none"/>
+<circle cx="600" cy="700" r="60" stroke-width="3.0"/>
+<line x1="524.00" y1="700.00" x2="676.00" y2="700.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="600.00" y1="624.00" x2="600.00" y2="776.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<circle cx="1200" cy="700" r="90" stroke-width="3.0"/>
+<line x1="1094.00" y1="700.00" x2="1306.00" y2="700.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="1200.00" y1="594.00" x2="1200.00" y2="806.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="600.00" y1="760.00" x2="600.00" y2="810.00" stroke-width="1.6"/>
+<polygon points="600.00,760.00 604.50,774.00 595.50,774.00" fill="#000000" stroke="none"/>
+<line x1="1200.00" y1="790.00" x2="1200.00" y2="850.00" stroke-width="1.6"/>
+<polygon points="1200.00,790.00 1204.50,804.00 1195.50,804.00" fill="#000000" stroke="none"/>
+<line x1="323.40" y1="423.40" x2="250.00" y2="350.00" stroke-width="1.6"/>
+<polygon points="323.40,423.40 310.32,416.68 316.68,410.32" fill="#000000" stroke="none"/>
+<line x1="1425.00" y1="925.00" x2="1330.00" y2="860.00" stroke-width="1.6"/>
+<polygon points="1425.00,925.00 1410.90,920.81 1415.99,913.38" fill="#000000" stroke="none"/>
+</g>
+<g fill="#000000" font-family="sans-serif">
+<text x="450.00" y="321.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">30 mm</text>
+<text x="750.00" y="321.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">35 mm</text>
+<text x="1050.00" y="321.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">30 mm</text>
+<text x="1350.00" y="321.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">25 mm</text>
+<text x="900.00" y="251.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">120 mm</text>
+<text x="1602.00" y="500.00" font-size="26" text-anchor="start" dominant-baseline="central">20 mm</text>
+<text x="1602.00" y="700.00" font-size="26" text-anchor="start" dominant-baseline="central">22 mm</text>
+<text x="1602.00" y="900.00" font-size="26" text-anchor="start" dominant-baseline="central">18 mm</text>
+<text x="600.00" y="845.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">DIA 12 mm</text>
+<text x="1200.00" y="885.00" font-size="26" text-anchor="middle" dominant-baseline="alphabetic">DIA 18 mm</text>
+<text x="244.00" y="350.00" font-size="26" text-anchor="end" dominant-baseline="central">R8 mm</text>
+<text x="1318.00" y="860.00" font-size="26" text-anchor="end" dominant-baseline="central">45°</text>
+<text x="300.00" y="1230.00" font-size="24" text-anchor="start" dominant-baseline="alphabetic">NOTES:</text>
+<text x="300.00" y="1270.00" font-size="24" text-anchor="start" dominant-baseline="alphabetic">1. BREAK SHARP EDGES.</text>
+<text x="300.00" y="1310.00" font-size="24" text-anchor="start" dominant-baseline="alphabetic">2. ALL DIMENSIONS IN MM.</text>
+</g></svg>

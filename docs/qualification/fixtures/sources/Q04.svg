@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+<rect width="800" height="600" fill="#ffffff"/>
+<g fill="none" stroke="#000000" stroke-linecap="butt">
+<polygon points="120.00,140.00 536.00,140.00 600.00,204.00 600.00,460.00 240.00,460.00 120.00,391.00" stroke-width="3.0"/>
+<line x1="120.00" y1="134.00" x2="120.00" y2="88.00" stroke-width="1.6"/>
+<line x1="600.00" y1="134.00" x2="600.00" y2="88.00" stroke-width="1.6"/>
+<line x1="120.00" y1="96.00" x2="600.00" y2="96.00" stroke-width="1.6"/>
+<polygon points="120.00,96.00 106.00,100.50 106.00,91.50" fill="#000000" stroke="none"/>
+<polygon points="600.00,96.00 614.00,91.50 614.00,100.50" fill="#000000" stroke="none"/>
+<line x1="606.00" y1="140.00" x2="708.00" y2="140.00" stroke-width="1.6"/>
+<line x1="606.00" y1="460.00" x2="708.00" y2="460.00" stroke-width="1.6"/>
+<line x1="700.00" y1="140.00" x2="700.00" y2="460.00" stroke-width="1.6"/>
+<polygon points="700.00,140.00 695.50,126.00 704.50,126.00" fill="#000000" stroke="none"/>
+<polygon points="700.00,460.00 704.50,474.00 695.50,474.00" fill="#000000" stroke="none"/>
+<line x1="536.00" y1="140.00" x2="706.00" y2="140.00" stroke-width="1.6"/>
+<line x1="568.00" y1="172.00" x2="480.00" y2="226.00" stroke-width="1.6"/>
+<polygon points="568.00,172.00 558.42,183.16 553.71,175.49" fill="#000000" stroke="none"/>
+<line x1="180.00" y1="425.50" x2="110.00" y2="500.00" stroke-width="1.6"/>
+<polygon points="180.00,425.50 173.69,438.78 167.13,432.62" fill="#000000" stroke="none"/>
+</g>
+<g fill="#000000" font-family="sans-serif">
+<text x="360.00" y="87.00" font-size="22" text-anchor="middle" dominant-baseline="alphabetic">60 mm</text>
+<text x="712.00" y="300.00" font-size="22" text-anchor="start" dominant-baseline="central">40 mm</text>
+<text x="470.00" y="226.00" font-size="22" text-anchor="end" dominant-baseline="central">45°</text>
+<text x="100.00" y="500.00" font-size="22" text-anchor="end" dominant-baseline="central">30°</text>
+<text x="300.00" y="540.00" font-size="22" text-anchor="start" dominant-baseline="alphabetic">CHAMFER AND ANGLE CUT</text>
+</g></svg>

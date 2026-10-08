@@ -1,0 +1,50 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "QUALIFICATION_PROBE",
+  "creation_method": "Same primitives as Q10 with every coordinate, font size and line width multiplied by 1.3",
+  "customer_data": "NO",
+  "derived_from": "Q10",
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "expected_probe_behaviour": "job FAILED with INVALID_REGION before any model inference; deterministic result still shown",
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "image_px": [
+    2600,
+    1820
+  ],
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/P-OVER_Q10_oversize.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "P-OVER_Q10",
+  "raster_file": "raster/P-OVER_Q10_oversize.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "267580c327f3bb5b7de0e86447ea190e6ca638ce24d2d2424da6dc5f125cd616",
+  "sha256_raster": "b0f290d0c3f8f642cef423fbf64b7ada77fd026d31ad1cca01a1ad20ae0a3036",
+  "sha256_source": "e937c8b7d0bc37cc36d7852367c9faca85e2cfd6fa2f28caed77da8547a6fbc2",
+  "source_file": "sources/Q10.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Q10 re-rendered at 1.3x above the R3D limits (probe P-OVER)",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

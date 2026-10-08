@@ -1,0 +1,45 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "REAL_DRAWING_DEMO_QUALIFICATION",
+  "creation_method": "Generated from a primitive drawing description; rasterised with Pillow at 2x supersampling; embedded as an 8-bit DeviceGray FlateDecode image",
+  "customer_data": "NO",
+  "derived_from": null,
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/Q09.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "Q09",
+  "raster_file": "raster/Q09.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "13b52bd3df387f308420c2cfaffbc1eb367d6ff03de11c8fc5091866b4ea5934",
+  "sha256_raster": "41a2702ed612700a95efbcc6effcfaf96a199b4047d926a7ad8860b7687b9dd4",
+  "sha256_source": "60132e4bda38f7695785673d250c8989dcc8dea9a0c78c73875268697683d3d9",
+  "source_file": "sources/Q09.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Dense four-view sheet (mm and inch)",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

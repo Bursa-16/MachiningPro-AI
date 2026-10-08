@@ -1,0 +1,46 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "QUALIFICATION_PROBE",
+  "creation_method": "Same primitives as Q01 written as PDF drawing operators with built-in Helvetica; no image",
+  "customer_data": "NO",
+  "derived_from": "Q01",
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "expected_probe_behaviour": "AI job refused with INVALID_REGION; deterministic result still shown",
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/P-VEC_Q01_vector.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "P-VEC_Q01",
+  "raster_file": null,
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "41b5b8234a9080cd055f0bc46076b57c821bb2343fb050e64ec4a2a167a598b9",
+  "sha256_raster": null,
+  "sha256_source": "7ad682408582542c626590437c0e7a416db562192def9be578073da06392fb87",
+  "source_file": "sources/Q01.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Q01 as a vector-only PDF (probe P-VEC)",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

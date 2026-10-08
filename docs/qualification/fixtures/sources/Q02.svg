@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+<rect width="800" height="600" fill="#ffffff"/>
+<g fill="none" stroke="#000000" stroke-linecap="butt">
+<rect x="80" y="120" width="640" height="360" stroke-width="3.0"/>
+<circle cx="240" cy="300" r="80" stroke-width="3.0"/>
+<circle cx="520" cy="300" r="48" stroke-width="3.0"/>
+<line x1="142.00" y1="300.00" x2="338.00" y2="300.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="240.00" y1="202.00" x2="240.00" y2="398.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="454.00" y1="300.00" x2="586.00" y2="300.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="520.00" y1="234.00" x2="520.00" y2="366.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="80.00" y1="114.00" x2="80.00" y2="76.00" stroke-width="1.6"/>
+<line x1="720.00" y1="114.00" x2="720.00" y2="76.00" stroke-width="1.6"/>
+<line x1="80.00" y1="84.00" x2="720.00" y2="84.00" stroke-width="1.6"/>
+<polygon points="80.00,84.00 66.00,88.50 66.00,79.50" fill="#000000" stroke="none"/>
+<polygon points="720.00,84.00 734.00,79.50 734.00,88.50" fill="#000000" stroke="none"/>
+<line x1="240.00" y1="220.00" x2="240.00" y2="186.00" stroke-width="1.6"/>
+<polygon points="240.00,220.00 235.50,206.00 244.50,206.00" fill="#000000" stroke="none"/>
+<line x1="520.00" y1="348.00" x2="520.00" y2="392.00" stroke-width="1.6"/>
+<polygon points="520.00,348.00 524.50,362.00 515.50,362.00" fill="#000000" stroke="none"/>
+</g>
+<g fill="#000000" font-family="sans-serif">
+<text x="400.00" y="75.00" font-size="22" text-anchor="middle" dominant-baseline="alphabetic">80 mm</text>
+<text x="240.00" y="172.00" font-size="22" text-anchor="middle" dominant-baseline="alphabetic">DIA 20 mm</text>
+<text x="520.00" y="420.00" font-size="22" text-anchor="middle" dominant-baseline="alphabetic">DIA 12 mm</text>
+<text x="80.00" y="548.00" font-size="22" text-anchor="start" dominant-baseline="alphabetic">2 HOLES THRU ALL</text>
+</g></svg>

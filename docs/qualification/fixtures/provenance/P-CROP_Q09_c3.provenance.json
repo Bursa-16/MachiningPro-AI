@@ -1,0 +1,55 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "QUALIFICATION_PROBE",
+  "creation_method": "Exact crop of the Q09 raster at pixel box [0, 650, 900, 1300] (zone boundaries lie in blank gutters)",
+  "crop_box_px": [
+    0,
+    650,
+    900,
+    1300
+  ],
+  "customer_data": "NO",
+  "derived_from": "Q09",
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "image_px": [
+    900,
+    650
+  ],
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/P-CROP_Q09_c3.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "P-CROP_Q09_c3",
+  "raster_file": "raster/P-CROP_Q09_c3.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "27d36b5cd0ad8a09b944b3159361f135f9fcc1b2eb4f7a45186857ad6ac42ffe",
+  "sha256_raster": "479120869e254543855fd1506c762d570015bfbf7065e9419f00f6f3ad2e3b56",
+  "sha256_source": "60132e4bda38f7695785673d250c8989dcc8dea9a0c78c73875268697683d3d9",
+  "source_file": "sources/Q09.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Q09 quadrant c3 (probe P-CROP)",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

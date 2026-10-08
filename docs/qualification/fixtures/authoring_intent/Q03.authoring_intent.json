@@ -1,0 +1,75 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 3,
+    "circle": 1,
+    "line": 9,
+    "poly": 3,
+    "rect": 0
+  },
+  "image_px": [
+    800,
+    600
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q03",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q03-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "R5 mm",
+      "text_bbox_px": [
+        32,
+        105,
+        104,
+        120
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q03-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "R12 mm",
+      "text_bbox_px": [
+        698,
+        89,
+        783,
+        104
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q03-I003",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "R8 mm",
+      "text_bbox_px": [
+        698,
+        517,
+        770,
+        532
+      ]
+    },
+    {
+      "drawn_as": "LABEL",
+      "group": null,
+      "intent_id": "Q03-I004",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "FILLETED CORNER PLATE",
+      "text_bbox_px": [
+        100,
+        545,
+        367,
+        560
+      ]
+    }
+  ]
+}

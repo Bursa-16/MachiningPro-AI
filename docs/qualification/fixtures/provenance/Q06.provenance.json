@@ -1,0 +1,45 @@
+{
+  "author_signoff": "PENDING",
+  "author_type": "SELF_AUTHORED",
+  "authored_on": "2026-10-08",
+  "created_for": "REAL_DRAWING_DEMO_QUALIFICATION",
+  "creation_method": "Generated from a primitive drawing description; rasterised with Pillow at 2x supersampling; embedded as an 8-bit DeviceGray FlateDecode image",
+  "customer_data": "NO",
+  "derived_from": null,
+  "drawing_author": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "generator": "docs/qualification/fixtures/generate_fixtures.py v1.0",
+  "ground_truth_reviewer": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "license_status": "PROJECT_AUTHORED_INTERNAL_QUALIFICATION_ASSET",
+  "pdf_file": "pdf/Q06.pdf",
+  "personal_data": "NO",
+  "proprietary_external_data": "NO",
+  "provenance_approval": "PENDING",
+  "provenance_approver": {
+    "date": null,
+    "identifier": null,
+    "status": "PENDING"
+  },
+  "provenance_status": "AUTHORED_PENDING_SIGNOFF",
+  "qual_id": "Q06",
+  "raster_file": "raster/Q06.png",
+  "record_type": "PROVENANCE",
+  "role_overlap_note": null,
+  "sha256_pdf": "de7df545a4de8fa779d3465a8379a3cf7b4fd812bf6655d64523b0ece4171526",
+  "sha256_raster": "d7ffa481a2b0a5f76d9113dc9e7ce9272bd209d95347f06b5c0c54ec8b6b4145",
+  "sha256_source": "1cd1614918fd86411c6e96c91f2ed41dcd1242aec5a954a0f1001f0e16b7b3e0",
+  "source_file": "sources/Q06.drawing.json",
+  "source_origin": "MachiningPro AI qualification fixture",
+  "title": "Bracket with notes and a fictional title block",
+  "toolchain": {
+    "pillow": "12.3.0",
+    "python": "3.12.7"
+  }
+}

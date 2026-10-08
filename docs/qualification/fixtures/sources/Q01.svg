@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">
+<rect width="480" height="320" fill="#ffffff"/>
+<g fill="none" stroke="#000000" stroke-linecap="butt">
+<rect x="40" y="70" width="320" height="192" stroke-width="3.0"/>
+<circle cx="200" cy="166" r="32" stroke-width="3.0"/>
+<line x1="156.00" y1="166.00" x2="244.00" y2="166.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="200.00" y1="122.00" x2="200.00" y2="210.00" stroke-width="1.2" stroke-dasharray="14 5"/>
+<line x1="40.00" y1="64.00" x2="40.00" y2="40.00" stroke-width="1.6"/>
+<line x1="360.00" y1="64.00" x2="360.00" y2="40.00" stroke-width="1.6"/>
+<line x1="40.00" y1="48.00" x2="360.00" y2="48.00" stroke-width="1.6"/>
+<polygon points="40.00,48.00 26.00,52.50 26.00,43.50" fill="#000000" stroke="none"/>
+<polygon points="360.00,48.00 374.00,43.50 374.00,52.50" fill="#000000" stroke="none"/>
+<line x1="366.00" y1="70.00" x2="396.00" y2="70.00" stroke-width="1.6"/>
+<line x1="366.00" y1="262.00" x2="396.00" y2="262.00" stroke-width="1.6"/>
+<line x1="388.00" y1="70.00" x2="388.00" y2="262.00" stroke-width="1.6"/>
+<polygon points="388.00,70.00 383.50,56.00 392.50,56.00" fill="#000000" stroke="none"/>
+<polygon points="388.00,262.00 392.50,276.00 383.50,276.00" fill="#000000" stroke="none"/>
+</g>
+<g fill="#000000" font-family="sans-serif">
+<text x="200.00" y="39.00" font-size="24" text-anchor="middle" dominant-baseline="alphabetic">100 MM</text>
+<text x="400.00" y="166.00" font-size="24" text-anchor="start" dominant-baseline="central">60 MM</text>
+<text x="200.00" y="236.00" font-size="24" text-anchor="middle" dominant-baseline="alphabetic">HOLE 20 MM</text>
+</g></svg>

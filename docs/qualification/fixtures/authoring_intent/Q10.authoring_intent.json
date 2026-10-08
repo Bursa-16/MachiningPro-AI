@@ -1,0 +1,229 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 1,
+    "circle": 2,
+    "line": 37,
+    "poly": 20,
+    "rect": 0
+  },
+  "image_px": [
+    2000,
+    1400
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q10",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "30 mm",
+      "text_bbox_px": [
+        410,
+        303,
+        490,
+        321
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "35 mm",
+      "text_bbox_px": [
+        710,
+        303,
+        790,
+        321
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I003",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "30 mm",
+      "text_bbox_px": [
+        1010,
+        303,
+        1090,
+        321
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I004",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "25 mm",
+      "text_bbox_px": [
+        1310,
+        303,
+        1390,
+        321
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I005",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "120 mm",
+      "text_bbox_px": [
+        852,
+        233,
+        947,
+        251
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I006",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "20 mm",
+      "text_bbox_px": [
+        1602,
+        492,
+        1682,
+        510
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I007",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "22 mm",
+      "text_bbox_px": [
+        1602,
+        692,
+        1682,
+        710
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I008",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "18 mm",
+      "text_bbox_px": [
+        1602,
+        892,
+        1682,
+        910
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I009",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DIA 12 mm",
+      "text_bbox_px": [
+        535,
+        827,
+        664,
+        845
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I010",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DIA 18 mm",
+      "text_bbox_px": [
+        1135,
+        867,
+        1264,
+        885
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I011",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "R8 mm",
+      "text_bbox_px": [
+        163,
+        342,
+        244,
+        360
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q10-I012",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "45\u00b0",
+      "text_bbox_px": [
+        1280,
+        852,
+        1318,
+        870
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q10-I013",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "NOTES:",
+      "text_bbox_px": [
+        300,
+        1214,
+        383,
+        1230
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q10-I014",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "1. BREAK SHARP EDGES.",
+      "text_bbox_px": [
+        300,
+        1254,
+        563,
+        1270
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q10-I015",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "2. ALL DIMENSIONS IN MM.",
+      "text_bbox_px": [
+        300,
+        1294,
+        593,
+        1310
+      ]
+    }
+  ]
+}

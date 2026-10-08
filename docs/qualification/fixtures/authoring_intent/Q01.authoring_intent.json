@@ -1,0 +1,61 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 0,
+    "circle": 1,
+    "line": 8,
+    "poly": 4,
+    "rect": 1
+  },
+  "image_px": [
+    480,
+    320
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q01",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q01-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "100 MM",
+      "text_bbox_px": [
+        156,
+        23,
+        243,
+        39
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q01-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "60 MM",
+      "text_bbox_px": [
+        400,
+        159,
+        473,
+        175
+      ]
+    },
+    {
+      "drawn_as": "LABEL",
+      "group": null,
+      "intent_id": "Q01-I003",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "HOLE 20 MM",
+      "text_bbox_px": [
+        129,
+        220,
+        270,
+        236
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 0,
+    "circle": 0,
+    "line": 9,
+    "poly": 7,
+    "rect": 0
+  },
+  "image_px": [
+    800,
+    600
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q04",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q04-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "60 mm",
+      "text_bbox_px": [
+        324,
+        72,
+        395,
+        87
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q04-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "40 mm",
+      "text_bbox_px": [
+        712,
+        293,
+        783,
+        308
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q04-I003",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "45\u00b0",
+      "text_bbox_px": [
+        437,
+        218,
+        470,
+        234
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q04-I004",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "30\u00b0",
+      "text_bbox_px": [
+        67,
+        492,
+        100,
+        508
+      ]
+    },
+    {
+      "drawn_as": "LABEL",
+      "group": null,
+      "intent_id": "Q04-I005",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "CHAMFER AND ANGLE CUT",
+      "text_bbox_px": [
+        300,
+        525,
+        580,
+        540
+      ]
+    }
+  ]
+}

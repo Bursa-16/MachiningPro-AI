@@ -1,0 +1,75 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 0,
+    "circle": 2,
+    "line": 9,
+    "poly": 4,
+    "rect": 1
+  },
+  "image_px": [
+    800,
+    600
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q02",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q02-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "80 mm",
+      "text_bbox_px": [
+        364,
+        60,
+        435,
+        75
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q02-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DIA 20 mm",
+      "text_bbox_px": [
+        184,
+        157,
+        296,
+        172
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q02-I003",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DIA 12 mm",
+      "text_bbox_px": [
+        464,
+        405,
+        576,
+        420
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q02-I004",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "2 HOLES THRU ALL",
+      "text_bbox_px": [
+        80,
+        533,
+        278,
+        548
+      ]
+    }
+  ]
+}

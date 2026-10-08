@@ -1,0 +1,358 @@
+{
+  "generator_version": "1.0",
+  "height": 900,
+  "items": [
+    {
+      "t": "rect",
+      "w": 3.0,
+      "x0": 200,
+      "x1": 650,
+      "y0": 220,
+      "y1": 445
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.6,
+      "x0": 200,
+      "x1": 200,
+      "y0": 214,
+      "y1": 167
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.6,
+      "x0": 650,
+      "x1": 650,
+      "y0": 214,
+      "y1": 167
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.6,
+      "x0": 200,
+      "x1": 650,
+      "y0": 175,
+      "y1": 175
+    },
+    {
+      "fill": true,
+      "pts": [
+        [
+          200,
+          175
+        ],
+        [
+          186.0,
+          179.5
+        ],
+        [
+          186.0,
+          170.5
+        ]
+      ],
+      "t": "poly",
+      "w": 1
+    },
+    {
+      "fill": true,
+      "pts": [
+        [
+          650,
+          175
+        ],
+        [
+          664.0,
+          170.5
+        ],
+        [
+          664.0,
+          179.5
+        ]
+      ],
+      "t": "poly",
+      "w": 1
+    },
+    {
+      "anchor": "ms",
+      "group": null,
+      "s": "90 mm",
+      "size": 24,
+      "t": "text",
+      "tag": "DIMENSION",
+      "x": 425.0,
+      "y": 166
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.6,
+      "x0": 656,
+      "x1": 718,
+      "y0": 220,
+      "y1": 220
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.6,
+      "x0": 656,
+      "x1": 718,
+      "y0": 445,
+      "y1": 445
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.6,
+      "x0": 710,
+      "x1": 710,
+      "y0": 220,
+      "y1": 445
+    },
+    {
+      "fill": true,
+      "pts": [
+        [
+          710,
+          220
+        ],
+        [
+          705.5,
+          206.0
+        ],
+        [
+          714.5,
+          206.0
+        ]
+      ],
+      "t": "poly",
+      "w": 1
+    },
+    {
+      "fill": true,
+      "pts": [
+        [
+          710,
+          445
+        ],
+        [
+          714.5,
+          459.0
+        ],
+        [
+          705.5,
+          459.0
+        ]
+      ],
+      "t": "poly",
+      "w": 1
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "45 mm",
+      "size": 24,
+      "t": "text",
+      "tag": "DIMENSION",
+      "x": 722,
+      "y": 332.5
+    },
+    {
+      "anchor": "ls",
+      "group": null,
+      "s": "NOTES:",
+      "size": 22,
+      "t": "text",
+      "tag": "NOTE",
+      "x": 200,
+      "y": 560
+    },
+    {
+      "anchor": "ls",
+      "group": null,
+      "s": "1. BREAK SHARP EDGES.",
+      "size": 22,
+      "t": "text",
+      "tag": "NOTE",
+      "x": 200,
+      "y": 598
+    },
+    {
+      "anchor": "ls",
+      "group": null,
+      "s": "2. DEBURR ALL SURFACES.",
+      "size": 22,
+      "t": "text",
+      "tag": "NOTE",
+      "x": 200,
+      "y": 636
+    },
+    {
+      "anchor": "ls",
+      "group": null,
+      "s": "3. MATERIAL PER TITLE BLOCK.",
+      "size": 22,
+      "t": "text",
+      "tag": "NOTE",
+      "x": 200,
+      "y": 674
+    },
+    {
+      "t": "rect",
+      "w": 2.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 600,
+      "y1": 880
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "PART NAME: TEST BRACKET",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 617.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 635.0,
+      "y1": 635.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "DRAWING NO: QUAL-Q06",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 652.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 670.0,
+      "y1": 670.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "MATERIAL: GENERIC STEEL",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 687.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 705.0,
+      "y1": 705.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "SCALE: 1:1",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 722.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 740.0,
+      "y1": 740.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "SHEET: 1 OF 1",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 757.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 775.0,
+      "y1": 775.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "REV: A",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 792.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 810.0,
+      "y1": 810.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "DATE: 2026-10-08",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 827.5
+    },
+    {
+      "dash": null,
+      "t": "line",
+      "w": 1.5,
+      "x0": 700,
+      "x1": 1160,
+      "y0": 845.0,
+      "y1": 845.0
+    },
+    {
+      "anchor": "lm",
+      "group": null,
+      "s": "UNITS: MM",
+      "size": 22,
+      "t": "text",
+      "tag": "TITLE_FIELD",
+      "x": 714,
+      "y": 862.5
+    }
+  ],
+  "qual_id": "Q06",
+  "title": "Bracket with notes and a fictional title block",
+  "width": 1200
+}

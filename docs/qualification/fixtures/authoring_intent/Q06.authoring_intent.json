@@ -1,0 +1,215 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 0,
+    "circle": 0,
+    "line": 13,
+    "poly": 4,
+    "rect": 2
+  },
+  "image_px": [
+    1200,
+    900
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q06",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q06-I001",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "90 mm",
+      "text_bbox_px": [
+        387,
+        150,
+        462,
+        166
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q06-I002",
+      "matches_deterministic_dimension_token_grammar": true,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "45 mm",
+      "text_bbox_px": [
+        722,
+        326,
+        797,
+        342
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q06-I003",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "NOTES:",
+      "text_bbox_px": [
+        200,
+        545,
+        277,
+        560
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q06-I004",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "1. BREAK SHARP EDGES.",
+      "text_bbox_px": [
+        200,
+        583,
+        447,
+        598
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q06-I005",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "2. DEBURR ALL SURFACES.",
+      "text_bbox_px": [
+        200,
+        621,
+        474,
+        636
+      ]
+    },
+    {
+      "drawn_as": "NOTE",
+      "group": null,
+      "intent_id": "Q06-I006",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "3. MATERIAL PER TITLE BLOCK.",
+      "text_bbox_px": [
+        200,
+        659,
+        522,
+        674
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I007",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "PART NAME: TEST BRACKET",
+      "text_bbox_px": [
+        714,
+        610,
+        1003,
+        626
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I008",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DRAWING NO: QUAL-Q06",
+      "text_bbox_px": [
+        714,
+        646,
+        970,
+        662
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I009",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "MATERIAL: GENERIC STEEL",
+      "text_bbox_px": [
+        714,
+        680,
+        994,
+        696
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I010",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "SCALE: 1:1",
+      "text_bbox_px": [
+        714,
+        716,
+        823,
+        730
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I011",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "SHEET: 1 OF 1",
+      "text_bbox_px": [
+        714,
+        750,
+        858,
+        766
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I012",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "REV: A",
+      "text_bbox_px": [
+        714,
+        786,
+        779,
+        800
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I013",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "DATE: 2026-10-08",
+      "text_bbox_px": [
+        714,
+        820,
+        899,
+        836
+      ]
+    },
+    {
+      "drawn_as": "TITLE_FIELD",
+      "group": null,
+      "intent_id": "Q06-I014",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": false,
+      "printed_text": "UNITS: MM",
+      "text_bbox_px": [
+        714,
+        856,
+        826,
+        870
+      ]
+    }
+  ]
+}

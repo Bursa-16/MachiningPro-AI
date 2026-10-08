@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<rect width="1200" height="900" fill="#ffffff"/>
+<g fill="none" stroke="#000000" stroke-linecap="butt">
+<rect x="200" y="220" width="450" height="225" stroke-width="3.0"/>
+<line x1="200.00" y1="214.00" x2="200.00" y2="167.00" stroke-width="1.6"/>
+<line x1="650.00" y1="214.00" x2="650.00" y2="167.00" stroke-width="1.6"/>
+<line x1="200.00" y1="175.00" x2="650.00" y2="175.00" stroke-width="1.6"/>
+<polygon points="200.00,175.00 186.00,179.50 186.00,170.50" fill="#000000" stroke="none"/>
+<polygon points="650.00,175.00 664.00,170.50 664.00,179.50" fill="#000000" stroke="none"/>
+<line x1="656.00" y1="220.00" x2="718.00" y2="220.00" stroke-width="1.6"/>
+<line x1="656.00" y1="445.00" x2="718.00" y2="445.00" stroke-width="1.6"/>
+<line x1="710.00" y1="220.00" x2="710.00" y2="445.00" stroke-width="1.6"/>
+<polygon points="710.00,220.00 705.50,206.00 714.50,206.00" fill="#000000" stroke="none"/>
+<polygon points="710.00,445.00 714.50,459.00 705.50,459.00" fill="#000000" stroke="none"/>
+<rect x="700" y="600" width="460" height="280" stroke-width="2.5"/>
+<line x1="700.00" y1="635.00" x2="1160.00" y2="635.00" stroke-width="1.5"/>
+<line x1="700.00" y1="670.00" x2="1160.00" y2="670.00" stroke-width="1.5"/>
+<line x1="700.00" y1="705.00" x2="1160.00" y2="705.00" stroke-width="1.5"/>
+<line x1="700.00" y1="740.00" x2="1160.00" y2="740.00" stroke-width="1.5"/>
+<line x1="700.00" y1="775.00" x2="1160.00" y2="775.00" stroke-width="1.5"/>
+<line x1="700.00" y1="810.00" x2="1160.00" y2="810.00" stroke-width="1.5"/>
+<line x1="700.00" y1="845.00" x2="1160.00" y2="845.00" stroke-width="1.5"/>
+</g>
+<g fill="#000000" font-family="sans-serif">
+<text x="425.00" y="166.00" font-size="24" text-anchor="middle" dominant-baseline="alphabetic">90 mm</text>
+<text x="722.00" y="332.50" font-size="24" text-anchor="start" dominant-baseline="central">45 mm</text>
+<text x="200.00" y="560.00" font-size="22" text-anchor="start" dominant-baseline="alphabetic">NOTES:</text>
+<text x="200.00" y="598.00" font-size="22" text-anchor="start" dominant-baseline="alphabetic">1. BREAK SHARP EDGES.</text>
+<text x="200.00" y="636.00" font-size="22" text-anchor="start" dominant-baseline="alphabetic">2. DEBURR ALL SURFACES.</text>
+<text x="200.00" y="674.00" font-size="22" text-anchor="start" dominant-baseline="alphabetic">3. MATERIAL PER TITLE BLOCK.</text>
+<text x="714.00" y="617.50" font-size="22" text-anchor="start" dominant-baseline="central">PART NAME: TEST BRACKET</text>
+<text x="714.00" y="652.50" font-size="22" text-anchor="start" dominant-baseline="central">DRAWING NO: QUAL-Q06</text>
+<text x="714.00" y="687.50" font-size="22" text-anchor="start" dominant-baseline="central">MATERIAL: GENERIC STEEL</text>
+<text x="714.00" y="722.50" font-size="22" text-anchor="start" dominant-baseline="central">SCALE: 1:1</text>
+<text x="714.00" y="757.50" font-size="22" text-anchor="start" dominant-baseline="central">SHEET: 1 OF 1</text>
+<text x="714.00" y="792.50" font-size="22" text-anchor="start" dominant-baseline="central">REV: A</text>
+<text x="714.00" y="827.50" font-size="22" text-anchor="start" dominant-baseline="central">DATE: 2026-10-08</text>
+<text x="714.00" y="862.50" font-size="22" text-anchor="start" dominant-baseline="central">UNITS: MM</text>
+</g></svg>

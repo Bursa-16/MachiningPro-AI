@@ -1,0 +1,103 @@
+{
+  "frozen_ground_truth": false,
+  "graphics": {
+    "arc": 0,
+    "circle": 1,
+    "line": 27,
+    "poly": 12,
+    "rect": 0
+  },
+  "image_px": [
+    1200,
+    900
+  ],
+  "note": "What was deliberately drawn, written by the generator. This is NOT the scored ground truth: ground truth is independently reviewed and frozen in a later task.",
+  "qual_id": "Q07",
+  "record_type": "AUTHORING_INTENT",
+  "text_items": [
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q07-I001",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": true,
+      "printed_text": "132.0 \u00b10.1 mm",
+      "text_bbox_px": [
+        514,
+        226,
+        665,
+        241
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q07-I002",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": true,
+      "printed_text": "60 +0.2/-0.1 mm",
+      "text_bbox_px": [
+        992,
+        442,
+        1157,
+        459
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q07-I003",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": true,
+      "printed_text": "40 +0.1/0 mm",
+      "text_bbox_px": [
+        440,
+        635,
+        580,
+        652
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q07-I004",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": true,
+      "printed_text": "20 +0/-0.05 mm",
+      "text_bbox_px": [
+        644,
+        542,
+        804,
+        559
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q07-I005",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": true,
+      "printed_text": "120.0 \u00b10.05 mm",
+      "text_bbox_px": [
+        478,
+        716,
+        642,
+        731
+      ]
+    },
+    {
+      "drawn_as": "DIMENSION",
+      "group": null,
+      "intent_id": "Q07-I006",
+      "matches_deterministic_dimension_token_grammar": false,
+      "matches_deterministic_tolerance_grammar": true,
+      "printed_text": "36 \u00b10.2 mm",
+      "text_bbox_px": [
+        68,
+        503,
+        188,
+        518
+      ]
+    }
+  ]
+}
