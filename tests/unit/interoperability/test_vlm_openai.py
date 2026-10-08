@@ -969,6 +969,7 @@ class TestStaticAudit:
                     if {"identity", "capabilities", "infer"} <= methods:
                         implementers.append((path.name, node.name))
         assert sorted(implementers) == [
+            ("vlm_ollama.py", "OllamaVlmProvider"),
             ("vlm_openai.py", "OpenAiVlmProvider"),
             ("vlm_providers.py", "DisabledVlmProvider"),
             ("vlm_providers.py", "MockVlmProvider"),
