@@ -22,6 +22,7 @@ from backend.interoperability.drawing import (
 from backend.interoperability.vlm_assist import AiAssistedDrawingExtractor
 from backend.interoperability.vlm_drawing import (
     DrawingVlmAssistConfig,
+    DrawingVlmBoxBasis,
     DrawingVlmEvidenceKind,
     DrawingVlmLegibility,
     DrawingVlmReconciliationStatus,
@@ -51,12 +52,19 @@ from backend.interoperability.vlm_request import (
     extractor_inputs,
     prepare_vlm_requests,
 )
-from backend.interoperability.vlm_response import VLM_RESPONSE_SCHEMA_VERSION
+from backend.interoperability.vlm_response import (
+    VLM_RESPONSE_SCHEMA_VERSION,
+    VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION,
+)
 from tests.unit.interoperability.test_vlm_request import _PDF, _base, _dimension, _region
 
 _PROMPT = "machiningpro.drawing-vlm.v1"
 _ASSIST = DrawingVlmAssistConfig(enabled=True)
 _C = OllamaConfigurationErrorCode
+V2 = VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION
+# The pre-existing pipeline tests exercise the legacy v1 contract (model-supplied box).
+_V1 = OllamaVlmConfig(response_schema_version=VLM_RESPONSE_SCHEMA_VERSION)
+_V2 = OllamaVlmConfig()
 _ENV = {"MACHININGPRO_AI_PROVIDER": "ollama"}
 _BACKEND = Path(vlm_ollama.__file__).parents[1]
 
@@ -124,7 +132,7 @@ def _chat(text: str | None = None, *, items=None, **overrides) -> bytes:
 
 def _provider(transport=None, config=None) -> OllamaVlmProvider:
     return OllamaVlmProvider(
-        config or OllamaVlmConfig(), transport=transport or FakeTransport(body=_chat())
+        config or _V1, transport=transport or FakeTransport(body=_chat())
     )
 
 
@@ -139,8 +147,8 @@ def _request(provider=None, **changes):
     return replace(request, **changes) if changes else request
 
 
-def _run(transport, *, reconcile=False, retry_sleep=None):
-    provider = _provider(transport)
+def _run(transport, *, reconcile=False, retry_sleep=None, config=None):
+    provider = _provider(transport, config)
     requests, regions = extractor_inputs(_prepared(provider))
     base = _base(_dimension())
     before = repr(base)
@@ -722,6 +730,183 @@ class TestEvidenceReferenceAlignment:
         assert _body()["stream"] is False
         with pytest.raises(OllamaConfigurationError):
             parse_loopback_base_url("http://192.168.1.2:11434")
+
+
+# ---------------------------------------------------------------------------
+# FREE_LOCAL_AI_07 — text-only response contract v2 (region extent)
+# ---------------------------------------------------------------------------
+
+
+def _item_v2(**overrides) -> dict:
+    item = _item(**overrides)
+    item.pop("box", None)
+    return item
+
+
+def _chat_v2(*, items=None, **overrides) -> bytes:
+    return _chat(items=[_item_v2()] if items is None else items, **overrides)
+
+
+def _item_properties(schema: dict) -> dict:
+    return schema["properties"]["items"]["items"]["properties"]
+
+
+class TestTextOnlyContractV2:
+    def test_the_ollama_default_is_the_text_only_contract(self):
+        assert OllamaVlmConfig().response_schema_version == V2
+        assert OllamaVlmConfig.from_environment(_ENV).response_schema_version == V2
+
+    def test_v1_stays_selectable_explicitly_or_by_environment(self):
+        assert _V1.response_schema_version == VLM_RESPONSE_SCHEMA_VERSION
+        env = {**_ENV, "MACHININGPRO_OLLAMA_RESPONSE_SCHEMA": "v1"}
+        assert OllamaVlmConfig.from_environment(env).response_schema_version == (
+            VLM_RESPONSE_SCHEMA_VERSION
+        )
+        env["MACHININGPRO_OLLAMA_RESPONSE_SCHEMA"] = "v2"
+        assert OllamaVlmConfig.from_environment(env).response_schema_version == V2
+
+    @pytest.mark.parametrize("value", ["v3", "1", "latest", "machiningpro"])
+    def test_unknown_contract_selection_is_refused(self, value):
+        env = {**_ENV, "MACHININGPRO_OLLAMA_RESPONSE_SCHEMA": value}
+        with pytest.raises(OllamaConfigurationError):
+            OllamaVlmConfig.from_environment(env)
+        with pytest.raises(OllamaConfigurationError):
+            OllamaVlmConfig(response_schema_version=value)
+
+    def test_local07_t27_the_v2_schema_has_no_box_property(self):
+        provider = _provider(config=_V2)
+        schema = _body(provider)["format"]
+        item = schema["properties"]["items"]["items"]
+        assert "box" not in _item_properties(schema) and "box" not in item["required"]
+        assert item["additionalProperties"] is False
+        assert "box" in json.dumps(_item_properties(_body(_provider(config=_V1))["format"]))
+
+    def test_v2_keeps_every_other_06a_constraint(self):
+        schema = _body(_provider(config=_V2))["format"]
+        props = _item_properties(schema)
+        assert props["evidence_reference"] == {"enum": [None]}
+        assert set(props) == {
+            "candidate_type", "value", "legibility", "confidence", "evidence_reference"
+        }
+        assert props["candidate_type"]["enum"] == [k.value for k in DrawingVlmEvidenceKind]
+        assert props["legibility"]["enum"] == [k.value for k in DrawingVlmLegibility]
+
+    def test_v2_references_remain_request_bounded(self):
+        provider = _provider(config=_V2)
+        request = _request(provider)
+        body = json.loads(provider.build_body(request, ["t2", "t1", "t1"]))
+        reference = _item_properties(body["format"])["evidence_reference"]
+        assert reference == {"enum": [None, "t1", "t2"]}
+
+    def test_local07_t28_the_v2_prompt_does_not_ask_for_a_box(self):
+        text = build_instructions(VlmTaskKind.TRANSCRIBE, (), V2)
+        assert "box" not in text.lower() and "coordinates [" not in text
+        assert "Do not give any position or coordinates" in text
+        assert "evidence_reference must always be null" in text
+        assert "box (integer pixel coordinates" in build_instructions(
+            VlmTaskKind.TRANSCRIBE, (), VLM_RESPONSE_SCHEMA_VERSION
+        )
+
+    def test_local07_t29_the_v1_builders_default_is_unchanged(self):
+        request = _request()
+        assert build_instructions(VlmTaskKind.TRANSCRIBE, ()) == build_instructions(
+            VlmTaskKind.TRANSCRIBE, (), VLM_RESPONSE_SCHEMA_VERSION
+        )
+        assert "box" in _item_properties(build_output_schema(request))
+
+    def test_the_sent_prompt_and_schema_follow_the_configured_contract(self):
+        for config, version in ((_V1, VLM_RESPONSE_SCHEMA_VERSION), (_V2, V2)):
+            provider = _provider(config=config)
+            request = _request(provider)
+            body = _body(provider, request)
+            assert body["messages"][0]["content"] == build_instructions(
+                request.task_kind, (), version
+            )
+            assert body["format"] == build_output_schema(request, (), version)
+
+    def test_an_unknown_builder_version_is_refused(self):
+        with pytest.raises(ValueError):
+            build_instructions(VlmTaskKind.TRANSCRIBE, (), "other")
+        with pytest.raises(ValueError):
+            build_output_schema(_request(), (), "other")
+
+    def test_the_envelope_carries_the_configured_schema_version(self):
+        provider = _provider(FakeTransport(body=_chat_v2()), _V2)
+        document = json.loads(_infer(provider).payload)
+        assert document["schema_version"] == V2
+        assert document["items"] == [_item_v2()]
+        assert _V2.response_schema_version == V2
+
+    def test_local07_t04_t06_t07_valid_v2_response_reaches_r3b_with_the_region_extent(self):
+        provider, outcome = _run(FakeTransport(body=_chat_v2()), config=_V2)
+        advisory = outcome.advisory
+        assert advisory.status is DrawingIngestionStatus.VALID
+        (evidence,) = advisory.evidence
+        (region,) = advisory.regions
+        assert evidence.box_basis is DrawingVlmBoxBasis.REGION_EXTENT
+        assert evidence.source_location.bounding_box == region.pdf_box
+        assert evidence.source_location.authority is DrawingExtractionAuthority.ADVISORY
+        assert evidence.model == provider.identity() and evidence.region_id == region.region_id
+
+    def test_v1_through_the_provider_keeps_the_model_pixel_box_basis(self):
+        _, outcome = _run(FakeTransport(body=_chat()), config=_V1)
+        (evidence,) = outcome.advisory.evidence
+        assert evidence.box_basis is DrawingVlmBoxBasis.MODEL_PIXEL_BOX
+
+    def test_local07_t05_a_model_box_under_v2_fails_closed(self):
+        items = [{**_item_v2(), "box": [0, 0, 100, 100]}]
+        _, outcome = _run(FakeTransport(body=_chat(items=items)), config=_V2)
+        assert outcome.advisory.status is DrawingIngestionStatus.FAILED
+        assert outcome.advisory.diagnostics == ("VLM_RESPONSE_UNKNOWN_FIELD",)
+        assert outcome.advisory.evidence == ()
+
+    def test_the_observed_granite_failure_shape_now_passes(self):
+        # Three transcriptions with null references and no boxes, as the live run produced
+        # minus the nonphysical boxes.
+        items = [
+            _item_v2(value="100 MM", evidence_reference=None, confidence=1),
+            _item_v2(value="60 MM", evidence_reference=None, confidence=1),
+            _item_v2(value="HOLE 20 MM", evidence_reference=None, confidence=1),
+        ]
+        _, outcome = _run(FakeTransport(body=_chat(items=items)), config=_V2)
+        assert outcome.advisory.status is DrawingIngestionStatus.VALID
+        assert [e.raw_candidate for e in outcome.advisory.evidence] == [
+            "100 MM", "60 MM", "HOLE 20 MM"
+        ]
+        assert len({e.source_location.bounding_box for e in outcome.advisory.evidence}) == 1
+
+    @pytest.mark.parametrize("reference", ["HOLE 20 MM", "t99", "", 5])
+    def test_v2_invalid_references_fail_closed_at_r3b(self, reference):
+        body = _chat(items=[_item_v2(evidence_reference=reference)])
+        _, outcome = _run(FakeTransport(body=body), config=_V2)
+        assert outcome.advisory.diagnostics == ("VLM_RESPONSE_EVIDENCE_REFERENCE",)
+
+    def test_v2_missing_or_blank_text_fails_closed(self):
+        _, outcome = _run(FakeTransport(body=_chat(items=[_item_v2(value="")])), config=_V2)
+        assert outcome.advisory.diagnostics == ("VLM_RESPONSE_VALUE_INVALID",)
+
+    def test_local07_t25_t32_deterministic_evidence_unchanged_and_reconciliation_compatible(self):
+        _, plain = _run(FakeTransport(body=_chat_v2()), config=_V2)  # _run checks the base
+        assert plain.advisory.findings == ()
+        _, reconciled = _run(FakeTransport(body=_chat_v2()), reconcile=True, config=_V2)
+        (finding,) = reconciled.advisory.findings
+        assert finding.status is DrawingVlmReconciliationStatus.CORROBORATED
+        (evidence,) = reconciled.advisory.evidence
+        assert evidence.box_basis is DrawingVlmBoxBasis.REGION_EXTENT
+        _, conflict = _run(
+            FakeTransport(body=_chat_v2(items=[_item_v2(value="26 mm")])),
+            reconcile=True,
+            config=_V2,
+        )
+        assert conflict.advisory.findings[0].status is DrawingVlmReconciliationStatus.CONFLICT
+
+    def test_v2_profile_loopback_and_no_fallback_are_unchanged(self):
+        transport = FakeTransport(status=500)
+        _run(transport, config=_V2)
+        assert {call["host"] for call in transport.calls} == {"127.0.0.1"}
+        options = _body(_provider(config=_V2))["options"]
+        assert (options["num_gpu"], options["num_ctx"], options["temperature"]) == (0, 8192, 0)
+        assert _body(_provider(config=_V2))["stream"] is False
 
 
 # ---------------------------------------------------------------------------

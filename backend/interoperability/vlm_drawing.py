@@ -102,6 +102,21 @@ class DrawingVlmLegibility(StrEnum):
 
 
 @unique
+class DrawingVlmBoxBasis(StrEnum):
+    """Where the bounding box of a piece of VLM evidence came from.
+
+    ``MODEL_PIXEL_BOX``: the model returned pixel coordinates (response schema v1) and
+    they were mapped onto the region. ``REGION_EXTENT``: the model returned no
+    coordinates (text-only schema v2) and the box is the deterministic R3D source
+    region. A region extent means "supported by this bounded region", never "the model
+    localized this exact text".
+    """
+
+    MODEL_PIXEL_BOX = "MODEL_PIXEL_BOX"
+    REGION_EXTENT = "REGION_EXTENT"
+
+
+@unique
 class DrawingVlmValidationStatus(StrEnum):
     VALID = "VALID"
     REJECTED = "REJECTED"
@@ -394,6 +409,7 @@ class DrawingVlmEvidence:
     normalized_datum: DrawingDatumReference | None = None
     reported_confidence: Decimal | None = None
     rejection_rationale: DrawingVlmRationale | None = None
+    box_basis: DrawingVlmBoxBasis = DrawingVlmBoxBasis.MODEL_PIXEL_BOX
 
     def __post_init__(self) -> None:
         _validate_identifier(self.evidence_id, "DrawingVlmEvidence.evidence_id")
@@ -421,6 +437,8 @@ class DrawingVlmEvidence:
             raise ValueError(
                 "DrawingVlmEvidence.source_location.confidence must mirror reported_confidence"
             )
+        if not isinstance(self.box_basis, DrawingVlmBoxBasis):
+            raise TypeError("DrawingVlmEvidence.box_basis must be DrawingVlmBoxBasis")
         self._validate_normalized_fields()
         self._validate_status()
 
@@ -695,6 +713,7 @@ __all__ = [
     "DrawingAssistedIngestionResult",
     "DrawingEvidenceOrigin",
     "DrawingVlmAssistConfig",
+    "DrawingVlmBoxBasis",
     "DrawingVlmEvidence",
     "DrawingVlmEvidenceKind",
     "DrawingVlmFinding",

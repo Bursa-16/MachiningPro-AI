@@ -32,6 +32,7 @@ from backend.interoperability.drawing import (
     DrawingSourceLocation,
 )
 from backend.interoperability.vlm_drawing import (
+    DrawingVlmBoxBasis,
     DrawingVlmEvidence,
     DrawingVlmEvidenceKind,
     DrawingVlmLegibility,
@@ -42,6 +43,12 @@ from backend.interoperability.vlm_drawing import (
 from backend.interoperability.vlm_provider import VlmRequest, VlmResponse
 
 VLM_RESPONSE_SCHEMA_VERSION = "machiningpro.drawing-vlm.response.v1"
+# v2 is text-only: the model returns no box and the evidence receives the deterministic
+# R3D region extent (box_basis=REGION_EXTENT). v1 is unchanged and still requires a box.
+VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION = "machiningpro.drawing-vlm.response.v2"
+_ACCEPTED_SCHEMA_VERSIONS = frozenset(
+    {VLM_RESPONSE_SCHEMA_VERSION, VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION}
+)
 
 _ADAPTER_ID = "machiningpro.vlm-assist"
 _PARSER_IDENTITY = DrawingParserIdentity(_ADAPTER_ID, "1.0.0")
@@ -59,6 +66,7 @@ _TOP_LEVEL_KEYS = frozenset(
     }
 )
 _ITEM_REQUIRED_KEYS = frozenset({"candidate_type", "value", "legibility", "box"})
+_TEXT_ONLY_ITEM_REQUIRED_KEYS = frozenset({"candidate_type", "value", "legibility"})
 _ITEM_OPTIONAL_KEYS = frozenset({"confidence", "evidence_reference"})
 
 
@@ -85,6 +93,7 @@ class VlmResponseErrorCode(StrEnum):
     BOX = "BOX"
     EVIDENCE_REFERENCE = "EVIDENCE_REFERENCE"
     PROVENANCE_INVALID = "PROVENANCE_INVALID"
+    REGION_EXTENT = "REGION_EXTENT"
 
 
 class VlmResponseError(Exception):
@@ -200,6 +209,23 @@ def _pdf_box(
     )
 
 
+def _region_extent(request: VlmRequest, region: DrawingVlmRegion) -> DrawingBoundingBox:
+    """The deterministic R3D region box, validated before it is attached to AI evidence.
+
+    The region must have non-zero area and its pixel crop must match the image the model
+    saw. Nothing is repaired or replaced: an invalid region rejects the response.
+    """
+    box = region.pdf_box
+    x0, y0, x1, y1 = region.crop_px
+    if (
+        not (box.x0 < box.x1 and box.top < box.bottom)
+        or x1 - x0 != request.image_width_px
+        or y1 - y0 != request.image_height_px
+    ):
+        raise _reject(VlmResponseErrorCode.REGION_EXTENT)
+    return box
+
+
 def _evidence_id(request: VlmRequest, region: DrawingVlmRegion, sample: int, index: int) -> str:
     seed = "\x1f".join((request.request_id, region.region_id, str(sample), str(index)))
     return "vlm-ev-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:24]
@@ -230,8 +256,14 @@ def parse_vlm_response(
     if not isinstance(document, dict):
         raise _reject(VlmResponseErrorCode.TOP_LEVEL_TYPE)
     _check_keys(document, _TOP_LEVEL_KEYS)
-    if document["schema_version"] != VLM_RESPONSE_SCHEMA_VERSION:
+    schema_version = document["schema_version"]
+    if not isinstance(schema_version, str) or schema_version not in _ACCEPTED_SCHEMA_VERSIONS:
         raise _reject(VlmResponseErrorCode.SCHEMA_VERSION)
+    text_only = schema_version == VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION
+    required_item_keys = _TEXT_ONLY_ITEM_REQUIRED_KEYS if text_only else _ITEM_REQUIRED_KEYS
+    box_basis = (
+        DrawingVlmBoxBasis.REGION_EXTENT if text_only else DrawingVlmBoxBasis.MODEL_PIXEL_BOX
+    )
     model = request.model
     if (
         document["request_id"] != request.request_id
@@ -252,7 +284,7 @@ def parse_vlm_response(
     for index, item in enumerate(items):
         if not isinstance(item, dict):
             raise _reject(VlmResponseErrorCode.ITEMS_INVALID)
-        _check_keys(item, _ITEM_REQUIRED_KEYS, _ITEM_OPTIONAL_KEYS)
+        _check_keys(item, required_item_keys, _ITEM_OPTIONAL_KEYS)
         try:
             kind = DrawingVlmEvidenceKind(item["candidate_type"])
         except (ValueError, TypeError) as exc:
@@ -263,8 +295,11 @@ def parse_vlm_response(
         except (ValueError, TypeError) as exc:
             raise _reject(VlmResponseErrorCode.LEGIBILITY) from exc
         confidence = _confidence(item.get("confidence"))
-        pixel_box = _box_px(item["box"], request.image_width_px, request.image_height_px)
-        box = _pdf_box(pixel_box, request, region)
+        if text_only:
+            box = _region_extent(request, region)
+        else:
+            pixel_box = _box_px(item["box"], request.image_width_px, request.image_height_px)
+            box = _pdf_box(pixel_box, request, region)
         reference = item.get("evidence_reference")
         if reference is not None and (
             not isinstance(reference, str) or reference not in region.trigger_evidence_ids
@@ -301,6 +336,7 @@ def parse_vlm_response(
                     sample_index=sample_index,
                     validation_status=DrawingVlmValidationStatus.VALID,
                     reported_confidence=confidence,
+                    box_basis=box_basis,
                 )
             )
         except (TypeError, ValueError) as exc:
@@ -310,6 +346,7 @@ def parse_vlm_response(
 
 __all__ = [
     "VLM_RESPONSE_SCHEMA_VERSION",
+    "VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION",
     "VlmResponseError",
     "VlmResponseErrorCode",
     "parse_vlm_response",

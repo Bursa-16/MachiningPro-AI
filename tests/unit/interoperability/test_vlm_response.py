@@ -29,6 +29,7 @@ from backend.interoperability.drawing import (
 from backend.interoperability.vlm_assist import AiAssistedDrawingExtractor
 from backend.interoperability.vlm_drawing import (
     DrawingVlmAssistConfig,
+    DrawingVlmBoxBasis,
     DrawingVlmEvidenceKind,
     DrawingVlmLegibility,
     DrawingVlmRegion,
@@ -622,3 +623,165 @@ def test_t23_response_module_has_no_network_sdk_env_clock_or_random_imports():
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
     names |= {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
     assert not names & {"environ", "getenv", "open", "socket", "urlopen"}
+
+
+# ---------------------------------------------------------------------------
+# FREE_LOCAL_AI_07 — text-only response schema v2 (region extent), v1 unchanged
+# ---------------------------------------------------------------------------
+
+_V2 = vlm_response.VLM_TEXT_ONLY_RESPONSE_SCHEMA_VERSION
+
+
+def _item_v2(**overrides) -> dict:
+    item = {
+        "candidate_type": "DIMENSION",
+        "value": "25 mm",
+        "legibility": "CLEAR",
+        "confidence": 0.87,
+    }
+    item.update(overrides)
+    return {key: value for key, value in item.items() if value is not ...}
+
+
+def _body_v2(items=None, **overrides) -> dict:
+    body = _body([_item_v2()] if items is None else items, schema_version=_V2)
+    body.update(overrides)
+    return {key: value for key, value in body.items() if value is not ...}
+
+
+class TestV1Unchanged:
+    def test_local07_t01_v1_still_requires_a_model_box(self):
+        _rejected(_body(items=[_item(box=...)]), _CODE.MISSING_FIELD)
+
+    def test_local07_t02_v1_invalid_boxes_fail_exactly_as_before(self):
+        for box in ([5, 5, 1, 1], [0, 100, 100, 100], [0, 0, 5000, 5000], [1, 2, 3]):
+            _rejected(_body(items=[_item(box=box)]), _CODE.BOX)
+
+    def test_local07_t03_v1_default_box_basis_is_the_model_pixel_box(self):
+        (evidence,) = _parse(_body())
+        assert evidence.box_basis is DrawingVlmBoxBasis.MODEL_PIXEL_BOX
+
+    def test_the_v1_schema_version_constant_is_unchanged(self):
+        assert VLM_RESPONSE_SCHEMA_VERSION == "machiningpro.drawing-vlm.response.v1"
+        assert _V2 == "machiningpro.drawing-vlm.response.v2"
+
+
+class TestTextOnlyV2:
+    def test_local07_t04_valid_item_without_a_model_box_is_accepted(self):
+        (evidence,) = _parse(_body_v2())
+        assert evidence.raw_candidate == "25 mm"
+        assert evidence.validation_status is DrawingVlmValidationStatus.VALID
+
+    @pytest.mark.parametrize("box", [[10, 5, 60, 17], [0, 0, 1, 1], None, "x", []])
+    def test_local07_t05_a_model_supplied_box_is_unknown_field(self, box):
+        _rejected(_body_v2(items=[_item_v2(box=box)]), _CODE.UNKNOWN_FIELD)
+
+    def test_local07_t06_t07_evidence_receives_the_deterministic_region_extent(self):
+        region = _region()
+        (evidence,) = _parse(_body_v2(), region=region)
+        box = evidence.source_location.bounding_box
+        assert (box.x0, box.top, box.x1, box.bottom) == (
+            region.pdf_box.x0,
+            region.pdf_box.top,
+            region.pdf_box.x1,
+            region.pdf_box.bottom,
+        )
+        assert evidence.box_basis is DrawingVlmBoxBasis.REGION_EXTENT
+
+    def test_every_item_gets_the_same_region_extent(self):
+        items = [_item_v2(value="25 mm"), _item_v2(value="HOLE 20 MM")]
+        evidence = _parse(_body_v2(items=items))
+        assert len({e.source_location.bounding_box for e in evidence}) == 1
+        assert {e.box_basis for e in evidence} == {DrawingVlmBoxBasis.REGION_EXTENT}
+
+    @pytest.mark.parametrize(
+        ("x0", "top", "x1", "bottom"),
+        [("100", "200", "100", "250"), ("100", "250", "200", "250")],
+    )
+    def test_local07_t08_t09_a_region_without_area_fails_closed(self, x0, top, x1, bottom):
+        region = replace(_region(), pdf_box=_box(x0, top, x1, bottom))
+        _rejected(_body_v2(), _CODE.REGION_EXTENT, region=region)
+
+    @pytest.mark.parametrize("crop", [(10, 20, 110, 80), (10, 20, 100, 70), (0, 0, 400, 300)])
+    def test_local07_t10_a_region_that_does_not_match_the_crop_fails_closed(self, crop):
+        _rejected(_body_v2(), _CODE.REGION_EXTENT, region=replace(_region(), crop_px=crop))
+
+    def test_an_invalid_region_never_yields_a_replacement_box(self):
+        region = replace(_region(), pdf_box=_box("100", "200", "100", "250"))
+        with pytest.raises(VlmResponseError):
+            _parse(_body_v2(), region=region)
+
+    def test_local07_t11_to_t14_the_model_cannot_change_any_region_coordinate(self):
+        region = _region()
+        for key in ("x0", "top", "x1", "bottom", "pdf_box", "region_extent", "box_basis"):
+            _rejected(_body_v2(items=[_item_v2(**{key: 1})]), _CODE.UNKNOWN_FIELD)
+        (evidence,) = _parse(_body_v2(), region=region)
+        assert evidence.source_location.bounding_box == region.pdf_box
+
+    def test_local07_t15_t16_region_and_request_identity_are_preserved(self):
+        region = _region()
+        (evidence,) = _parse(_body_v2(), region=region)
+        assert evidence.region_id == region.region_id
+        assert evidence.request_id == _REQUEST_ID
+        assert region.region_id in evidence.source_location.source_object_ids
+        assert region.raster_source.image_object_id in evidence.source_location.source_object_ids
+
+    def test_local07_t17_t18_t19_provider_model_and_prompt_identity_are_preserved(self):
+        (evidence,) = _parse(_body_v2())
+        assert evidence.model == _MODEL
+        assert evidence.prompt_contract_version == _request().prompt_contract_version
+
+    def test_local07_t20_the_schema_version_must_be_known(self):
+        unknown = "machiningpro.drawing-vlm.response.v3"
+        _rejected(_body_v2(schema_version=unknown), _CODE.SCHEMA_VERSION)
+        _rejected(_body_v2(schema_version=2), _CODE.SCHEMA_VERSION)
+        _rejected(_body_v2(schema_version=["x"]), _CODE.SCHEMA_VERSION)
+
+    def test_a_v2_document_cannot_carry_v1_box_semantics_and_vice_versa(self):
+        _rejected(_body(schema_version=_V2), _CODE.UNKNOWN_FIELD)  # v1 item shape under v2
+        _rejected(_body_v2(schema_version=VLM_RESPONSE_SCHEMA_VERSION), _CODE.MISSING_FIELD)
+
+    def test_local07_t21_t22_evidence_reference_stays_bounded_by_the_region(self):
+        trigger = _region().trigger_evidence_ids[0]
+        (evidence,) = _parse(_body_v2(items=[_item_v2(evidence_reference=trigger)]))
+        assert trigger in evidence.source_location.source_object_ids
+        for reference in ("HOLE 20 MM", "invented", "", 5):
+            body = _body_v2(items=[_item_v2(evidence_reference=reference)])
+            _rejected(body, _CODE.EVIDENCE_REFERENCE)
+
+    def test_local07_t23_a_null_reference_is_allowed(self):
+        assert _parse(_body_v2(items=[_item_v2(evidence_reference=None)]))
+
+    def test_other_v2_fields_stay_as_strict_as_v1(self):
+        _rejected(_body_v2(items=[_item_v2(confidence=87)]), _CODE.CONFIDENCE)
+        _rejected(_body_v2(items=[_item_v2(candidate_type="WELD")]), _CODE.CANDIDATE_TYPE)
+        _rejected(_body_v2(items=[_item_v2(value="")]), _CODE.VALUE_INVALID)
+        _rejected(_body_v2(items=[_item_v2(legibility="MAYBE")]), _CODE.LEGIBILITY)
+        _rejected(_body_v2(items=[_item_v2(candidate_type=...)]), _CODE.MISSING_FIELD)
+        _rejected(_body_v2(request_id="vlm-req-other"), _CODE.IDENTITY_MISMATCH)
+
+    def test_local07_t24_t25_t26_authority_stays_advisory_and_nothing_is_promoted(self):
+        import backend.interoperability.vlm_assist as vlm_assist
+
+        before = repr(_base_result())
+        base, outcome = _assist([_bytes(_body_v2())])
+        assert outcome.result is base and repr(outcome.result) == before
+        assert outcome.advisory.status is DrawingIngestionStatus.VALID
+        (evidence,) = outcome.advisory.evidence
+        assert evidence.source_location.authority is DrawingExtractionAuthority.ADVISORY
+        assert evidence.box_basis is DrawingVlmBoxBasis.REGION_EXTENT
+        assert outcome.result.document.all_dimensions == ()
+        assert vlm_assist.AUTO_PROMOTION_ALLOWED is False
+        assert vlm_assist.DETERMINISTIC_EVIDENCE_OVERWRITE_ALLOWED is False
+
+    def test_v2_rejection_in_the_orchestrator_is_a_stable_code_with_no_evidence(self):
+        _, outcome = _assist([_bytes(_body_v2(items=[_item_v2(box=[0, 0, 1, 1])]))])
+        assert outcome.advisory.status is DrawingIngestionStatus.FAILED
+        assert outcome.advisory.diagnostics == ("VLM_RESPONSE_UNKNOWN_FIELD",)
+        assert outcome.advisory.evidence == ()
+
+    def test_box_basis_is_a_closed_enum(self):
+        assert {m.value for m in DrawingVlmBoxBasis} == {"MODEL_PIXEL_BOX", "REGION_EXTENT"}
+        (evidence,) = _parse(_body())
+        with pytest.raises(TypeError):
+            replace(evidence, box_basis="REGION_EXTENT")
