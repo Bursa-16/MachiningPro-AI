@@ -718,12 +718,12 @@ class TestCanonicalExchangeDocument:
 class TestStage4Regression:
     """Verify Stage 4A–4C contracts are not broken by Stage 4D."""
 
-    def test_registry_has_three_adapters(self) -> None:
+    def test_registry_has_adapters(self) -> None:
         from backend.interoperability.adapters.registry_helpers import (
             build_default_adapter_registry,
         )
         registry = build_default_adapter_registry()
-        assert len(registry) == 3
+        assert len(registry) >= 9  # STEP, IGES, DXF, STL, OBJ, 3MF, NC, RASTER, SVG
 
     def test_registry_find_step(self) -> None:
         from backend.interoperability.adapters.registry_helpers import (

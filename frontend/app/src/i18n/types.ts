@@ -304,4 +304,25 @@ export interface TranslationDictionary {
   drWholeImageNote: string
   drServerSessionNote: string
   drSampleBadge: string
+
+  // Universal Engineering Import
+  drImportInfoTitle: string
+  drFileName: string
+  drDetectedFormat: string
+  drFormatFamily: string
+  drImportStatus: string
+  drEntityCount: string
+  drCapabilityLevel: string
+  drImportSuccess: string
+  drImportPartial: string
+  drImportFailed: string
+  drImportUnsupported: string
+  drImportUnrecognized: string
+  drImportUploading: string
+  drDrawingAnalysisNote: string
+  drNonPdfNote: string
+  drCadNote: string
+  drMeshNote: string
+  drNcNote: string
+  drImportError: string
 }

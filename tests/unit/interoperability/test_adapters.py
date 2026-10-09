@@ -623,9 +623,9 @@ class TestCompleteFileIngestion:
 # ---------------------------------------------------------------------------
 
 class TestRegistryIntegration:
-    def test_build_default_registry_has_three_adapters(self) -> None:
+    def test_build_default_registry_has_adapters(self) -> None:
         registry = build_default_adapter_registry()
-        assert len(registry) == 3
+        assert len(registry) >= 9  # STEP, IGES, DXF, STL, OBJ, 3MF, NC, RASTER, SVG
 
     def test_registry_has_step_adapter(self) -> None:
         registry = build_default_adapter_registry()
@@ -660,7 +660,7 @@ class TestRegistryIntegration:
     def test_find_by_capability_recognize(self) -> None:
         registry = build_default_adapter_registry()
         results = registry.find_by_capability(AdapterCapability.RECOGNIZE)
-        assert len(results) == 3
+        assert len(results) >= 9  # all built-in adapters declare RECOGNIZE
 
     def test_registry_is_not_singleton(self) -> None:
         r1 = build_default_adapter_registry()

@@ -1,14 +1,19 @@
-import { Suspense, lazy, useMemo, useReducer, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { LoaderCircle, ShieldCheck, Upload } from 'lucide-react'
 import Panel from '../components/ui/Panel'
 import AiStatus from '../components/drawing-review/AiStatus'
 import AuthorityBadge from '../components/drawing-review/AuthorityBadge'
 import DrawingViewer from '../components/drawing-review/DrawingViewer'
+import EngineeringFileInfo from '../components/drawing-review/EngineeringFileInfo'
 import FindingCard from '../components/drawing-review/FindingCard'
 import { useLocale } from '../i18n'
 import { useAnalysisController } from '../hooks/useAnalysisController'
 import { aiStateFor, isJobActive } from '../lib/analysisController.ts'
 import { countByStatus, createReviewState, reviewReducer } from '../lib/drawingReview.ts'
+import { detectFormatByFile, NATIVE_ACCEPT } from '../lib/engineeringFormats'
+import type { FormatRoute } from '../lib/engineeringFormats'
+import { detectAndImport } from '../services/engineeringImport'
+import type { ImportResult } from '../services/engineeringImport'
 import { drawingAnalysisApi } from '../services/drawingAnalysis'
 import type { SamplePreview } from '../components/drawing-review/DevPreview'
 import type {
@@ -58,6 +63,28 @@ export default function TechnicalDrawingIntelligencePage({
   const [localReview, dispatch] = useReducer(localReducer, {})
   const [selected, setSelected] = useState<string | null>(null)
 
+  // Universal engineering import state (non-PDF files)
+  const [importRoute, setImportRoute] = useState<FormatRoute | null>(null)
+  const [importFileName, setImportFileName] = useState<string>('')
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+
+  // Revoke previous object URL when a new file is selected
+  const revokePreview = useCallback(() => {
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl)
+      setImagePreviewUrl(null)
+    }
+  }, [imagePreviewUrl])
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+    }
+  }, [imagePreviewUrl])
+
   const sampleMode = sample !== null
   const ai: AiAnalysisState = sample?.ai ?? aiStateFor(state)
   const findings = ai.kind === 'READY' ? ai.findings : []
@@ -103,7 +130,7 @@ export default function TechnicalDrawingIntelligencePage({
     )
   }
 
-  const canAnalyze = !sampleMode && state.drawing !== null && !state.uploading && !state.starting && !active
+  const canAnalyze = !sampleMode && state.drawing !== null && !state.uploading && !state.starting && !active && !importLoading
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6">
@@ -139,31 +166,61 @@ export default function TechnicalDrawingIntelligencePage({
                 ref={fileInput}
                 data-testid="upload-input"
                 type="file"
-                accept="application/pdf,.pdf"
+                accept={NATIVE_ACCEPT}
                 className="hidden"
                 onChange={e => {
                   const file = e.target.files?.[0]
                   e.target.value = ''
-                  if (file) {
+                  if (!file) return
+                  const detected = detectFormatByFile(file)
+                  const route = detected?.route ?? 'UNKNOWN'
+                  if (route === 'DRAWING_PDF') {
+                    // PDF → existing drawing-analysis pipeline
+                    setImportRoute(null)
+                    setImportResult(null)
+                    setImportError(null)
+                    revokePreview()
                     setSample(null)
                     setSelected(null)
                     void controller.upload(file)
+                  } else {
+                    // All other formats → universal import endpoint
+                    setImportRoute(route)
+                    setImportFileName(file.name)
+                    setImportResult(null)
+                    setImportError(null)
+                    setImportLoading(true)
+                    revokePreview()
+                    setSample(null)
+                    setSelected(null)
+                    if (route === 'DRAWING_IMAGE') {
+                      setImagePreviewUrl(URL.createObjectURL(file))
+                    }
+                    detectAndImport(file)
+                      .then(r => {
+                        setImportResult(r)
+                        setImportLoading(false)
+                      })
+                      .catch(() => {
+                        setImportError('import_failed')
+                        setImportLoading(false)
+                      })
                   }
                 }}
               />
               <button
                 type="button"
                 data-testid="upload-button"
-                disabled={state.uploading || active}
+                disabled={state.uploading || importLoading || active}
                 onClick={() => fileInput.current?.click()}
                 className={`${BUTTON} border-tp-border-strong text-tp-text hover:bg-tp-surface-2`}
               >
-                {state.uploading ? (
+                {(state.uploading || importLoading) ? (
                   <LoaderCircle size={14} className="animate-spin" aria-hidden="true" />
                 ) : (
                   <Upload size={14} aria-hidden="true" />
                 )}
-                {state.uploading ? t('drUploading') : t('drUploadDrawing')}
+                {state.uploading ? t('drUploading') : importLoading ? t('drImportUploading') : t('drUploadDrawing')}
               </button>
               <button
                 type="button"
@@ -186,6 +243,16 @@ export default function TechnicalDrawingIntelligencePage({
             )}
             {state.drawing && !sampleMode && (
               <p className="mt-2 text-xs text-tp-text-3">{t('drWholeImageNote')}</p>
+            )}
+            {/* Universal import info panel for non-PDF files */}
+            {importRoute && importRoute !== 'DRAWING_PDF' && (
+              <EngineeringFileInfo
+                fileName={importFileName}
+                route={importRoute}
+                result={importLoading ? null : importResult}
+                error={importError}
+                previewUrl={imagePreviewUrl}
+              />
             )}
           </Panel>
 
