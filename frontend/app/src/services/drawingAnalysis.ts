@@ -44,6 +44,17 @@ export const drawingAnalysisApi: AnalysisApi = {
     return json<DrawingSummary>(response)
   },
 
+  async uploadDxfRender(file: File): Promise<DrawingSummary> {
+    const form = new FormData()
+    form.append('file', file, file.name)
+    const response = await fetch(`${BASE}/upload-dxf-render`, {
+      method: 'POST',
+      headers: headers(),
+      body: form,
+    })
+    return json<DrawingSummary>(response)
+  },
+
   async preview(drawingId: string, pageNumber: number): Promise<string> {
     const response = await fetch(`${BASE}/${drawingId}/pages/${pageNumber}/preview`, {
       headers: headers(),

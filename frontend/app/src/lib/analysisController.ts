@@ -18,6 +18,7 @@ import type {
 
 export interface AnalysisApi {
   upload(file: File): Promise<DrawingSummary>
+  uploadDxfRender?(file: File): Promise<DrawingSummary>
   preview(drawingId: string, pageNumber: number): Promise<string>
   start(drawingId: string, request: StartAnalysisRequest): Promise<AnalysisJob>
   get(drawingId: string, jobId: string): Promise<AnalysisJob>
@@ -146,13 +147,12 @@ export class AnalysisController {
     this.listeners.clear()
   }
 
-  /** Reads the drawing deterministically. AI is never started by an upload. */
-  async upload(file: File): Promise<void> {
+  private async _doUpload(fn: (file: File) => Promise<DrawingSummary>, file: File): Promise<void> {
     if (this.state.uploading) return
     this.stopPolling()
     this.set({ ...INITIAL, uploading: true })
     try {
-      const drawing = await this.api.upload(file)
+      const drawing = await fn(file)
       this.set({ drawing, uploading: false })
       const first = drawing.pages[0]
       if (first) {
@@ -166,6 +166,17 @@ export class AnalysisController {
     } catch {
       this.set({ uploading: false, uploadFailed: true })
     }
+  }
+
+  /** Reads the drawing deterministically. AI is never started by an upload. */
+  upload(file: File): Promise<void> {
+    return this._doUpload(f => this.api.upload(f), file)
+  }
+
+  /** Like upload() but routes through the DXF-render endpoint (no OCR). */
+  uploadDxfRender(file: File): Promise<void> {
+    const fn = this.api.uploadDxfRender?.bind(this.api) ?? ((f: File) => this.api.upload(f))
+    return this._doUpload(fn, file)
   }
 
   /** Explicit, user-triggered. A second call while a job is active does nothing. */

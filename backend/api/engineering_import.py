@@ -23,8 +23,10 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
+from fastapi.responses import Response
 
 from backend.api.auth import verify_token
+from backend.api.dxf_render import png_to_single_page_pdf, render_dxf_to_png
 from backend.interoperability.adapters._base import ContentSniffer
 from backend.interoperability.adapters.registry_helpers import build_default_adapter_registry
 from backend.interoperability.enums import FormatFamily, NormalizationStatus
@@ -246,6 +248,13 @@ def import_file(
             if isinstance(v, (str, int, float, bool)) or v is None
         }
 
+    # If the format provides its own entity count in metadata (e.g. DXF header
+    # reports 843 entities before ezdxf is available), promote that count to the
+    # top-level field and remove it from the metadata block to avoid duplication.
+    display_entity_count = len(document.entity_refs)
+    if "entity_count" in entity_meta and isinstance(entity_meta["entity_count"], int):
+        display_entity_count = int(entity_meta.pop("entity_count"))
+
     # Fidelity summary
     fidelity_events = [
         {
@@ -265,8 +274,46 @@ def import_file(
         ),
         "import_status": import_status,
         "capability_level": document.capability_level.value,
-        "entity_count": len(document.entity_refs),
+        "entity_count": display_entity_count,
         "metadata": entity_meta,
         "fidelity_events": fidelity_events[:10],  # cap at 10 for API response
         "adapter_id": document.adapter_id,
     }
+
+
+@router.post("/dxf-as-pdf")
+def dxf_as_pdf(
+    file: UploadFile = File(...),  # noqa: B008
+    _user: dict[str, Any] = Depends(require_user),  # noqa: B008
+) -> Response:
+    """Render a DXF file to a raster image and return it wrapped in a single-page PDF.
+
+    The returned PDF is accepted by POST /api/drawings (passes %PDF- magic-bytes
+    check, parseable by pdfplumber) so the DXF geometry can flow through the
+    existing drawing-analysis + Ollama AI pipeline.
+
+    LOCAL_ONLY: uses Pillow only.  No ezdxf, no cloud, no paid API.
+    AI_AUTHORITY=ADVISORY: the rendered image is advisory VLM input only.
+    SOURCE_DXF_OVERWRITE_ALLOWED=NO: input bytes are never mutated.
+    """
+    data = file.file.read(MAX_IMPORT_BYTES + 1)
+    if not data:
+        raise HTTPException(422, detail={"error_code": "EMPTY_FILE"})
+    if len(data) > MAX_IMPORT_BYTES:
+        raise HTTPException(413, detail={"error_code": "FILE_TOO_LARGE"})
+
+    try:
+        text = data.decode("utf-8", errors="replace")
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(422, detail={"error_code": "DECODE_FAILED"}) from exc
+
+    png_bytes = render_dxf_to_png(text)
+    if png_bytes is None:
+        raise HTTPException(
+            422,
+            detail={"error_code": "RENDER_FAILED",
+                    "message": "DXF contains no renderable geometry (LINE/CIRCLE/ARC/LWPOLYLINE)"},
+        )
+
+    pdf_bytes = png_to_single_page_pdf(png_bytes)
+    return Response(content=pdf_bytes, media_type="application/pdf")

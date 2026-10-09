@@ -47,7 +47,7 @@ from backend.interoperability.drawing import (
     DrawingIngestionStatus,
     DrawingRasterSource,
 )
-from backend.interoperability.pdf_drawing import PdfDrawingParser
+from backend.interoperability.pdf_drawing import PdfDrawingParser, VectorPdfDrawingParser
 from backend.interoperability.raster_drawing import (
     RasterDocumentSnapshot,
     RasterImageSnapshot,
@@ -314,6 +314,37 @@ class AnalysisService:
         try:
             base = PdfDrawingParser().parse(source_id, f"{drawing_id}.pdf", content)
         except Exception:  # noqa: BLE001 - fail closed; no parser text reaches the client
+            raise ApiFailure(422, ErrorCode.INVALID_DRAWING.value) from None
+        snapshot = raster.snapshot
+        has_images = snapshot is not None and any(page.images for page in snapshot.pages)
+        if base.diagnostics.status in (
+            DrawingIngestionStatus.FAILED,
+            DrawingIngestionStatus.UNSUPPORTED,
+        ) and not has_images:
+            raise ApiFailure(422, ErrorCode.INVALID_DRAWING.value)
+        with self._lock:
+            self._drawings[drawing_id] = _Drawing(drawing_id, source_id, content, base, snapshot)
+            self._evict()
+        return self.drawing_summary(drawing_id)
+
+    def upload_dxf_render(self, content: bytes) -> dict[str, Any]:
+        """Register a DXF-rendered PDF without running OCR.
+
+        Identical to ``upload()`` but uses ``VectorPdfDrawingParser`` (Phase 1B
+        vector-only) instead of ``PdfDrawingParser`` (which adds Phase 1C OCR).
+        DXF renders carry no readable text; skipping OCR eliminates the
+        pytesseract call that causes the upload spinner to hang indefinitely.
+        """
+        if len(content) > MAX_UPLOAD_BYTES:
+            raise ApiFailure(413, ErrorCode.INVALID_DRAWING.value)
+        if not content or content[:1024].find(b"%PDF-") < 0:
+            raise ApiFailure(422, ErrorCode.INVALID_DRAWING.value)
+        drawing_id = secrets.token_hex(16)
+        source_id = f"upload::{drawing_id}.pdf"
+        raster = inspect_raster_pdf(content, source_id)
+        try:
+            base = VectorPdfDrawingParser().parse(source_id, f"{drawing_id}.pdf", content)
+        except Exception:  # noqa: BLE001
             raise ApiFailure(422, ErrorCode.INVALID_DRAWING.value) from None
         snapshot = raster.snapshot
         has_images = snapshot is not None and any(page.images for page in snapshot.pages)
@@ -792,6 +823,15 @@ def upload_drawing(
     service: AnalysisService = Depends(get_service),  # noqa: B008
 ) -> dict[str, Any]:
     return _guard(lambda: service.upload(_read_limited(file)))
+
+
+@router.post("/upload-dxf-render", status_code=201)
+def upload_dxf_render(
+    file: UploadFile = File(...),  # noqa: B008
+    _user: dict[str, Any] = Depends(require_user),  # noqa: B008
+    service: AnalysisService = Depends(get_service),  # noqa: B008
+) -> dict[str, Any]:
+    return _guard(lambda: service.upload_dxf_render(_read_limited(file)))
 
 
 @router.get("/{drawing_id}")

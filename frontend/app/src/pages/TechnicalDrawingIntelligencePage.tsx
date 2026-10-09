@@ -12,7 +12,7 @@ import { aiStateFor, isJobActive } from '../lib/analysisController.ts'
 import { countByStatus, createReviewState, reviewReducer } from '../lib/drawingReview.ts'
 import { detectFormatByFile, NATIVE_ACCEPT } from '../lib/engineeringFormats'
 import type { FormatRoute } from '../lib/engineeringFormats'
-import { detectAndImport } from '../services/engineeringImport'
+import { detectAndImport, fetchDxfAsPdf } from '../services/engineeringImport'
 import type { ImportResult } from '../services/engineeringImport'
 import { drawingAnalysisApi } from '../services/drawingAnalysis'
 import type { SamplePreview } from '../components/drawing-review/DevPreview'
@@ -196,15 +196,46 @@ export default function TechnicalDrawingIntelligencePage({
                     if (route === 'DRAWING_IMAGE') {
                       setImagePreviewUrl(URL.createObjectURL(file))
                     }
-                    detectAndImport(file)
-                      .then(r => {
-                        setImportResult(r)
+                    if (route === 'DRAWING_VECTOR') {
+                      // DXF: parse metadata AND render to PDF for AI pipeline in parallel
+                      const capturedFile = file
+                      void Promise.allSettled([
+                        detectAndImport(capturedFile),
+                        fetchDxfAsPdf(capturedFile),
+                      ]).then(([importRes, pdfRes]) => {
+                        if (importRes.status === 'fulfilled') {
+                          setImportResult(importRes.value)
+                        } else {
+                          setImportError('import_failed')
+                        }
                         setImportLoading(false)
+                        // Feed the rendered DXF PDF into the drawing-analysis pipeline
+                        // only when both import metadata and render succeeded
+                        if (
+                          importRes.status === 'fulfilled' &&
+                          pdfRes.status === 'fulfilled' &&
+                          (importRes.value.import_status === 'SUCCESS' ||
+                            importRes.value.import_status === 'PARTIAL')
+                        ) {
+                          const pdfFile = new File(
+                            [pdfRes.value],
+                            capturedFile.name + '.pdf',
+                            { type: 'application/pdf' },
+                          )
+                          void controller.uploadDxfRender(pdfFile)
+                        }
                       })
-                      .catch(() => {
-                        setImportError('import_failed')
-                        setImportLoading(false)
-                      })
+                    } else {
+                      detectAndImport(file)
+                        .then(r => {
+                          setImportResult(r)
+                          setImportLoading(false)
+                        })
+                        .catch(() => {
+                          setImportError('import_failed')
+                          setImportLoading(false)
+                        })
+                    }
                   }
                 }}
               />
