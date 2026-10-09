@@ -54,7 +54,7 @@
 }
 
 :root {
-  --sidebar-w-expanded: 208px;
+  --sidebar-w-expanded: 280px;
   --sidebar-w-collapsed: 48px;
   --header-h: 48px;
   --breadcrumb-h: 28px;
@@ -68,6 +68,16 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Sidebar navigation accordion — Radix Collapsible requires keyframe animation, not CSS transition */
+@keyframes tp-nav-slide-down {
+  from { height: 0; }
+  to   { height: var(--radix-collapsible-content-height); }
+}
+@keyframes tp-nav-slide-up {
+  from { height: var(--radix-collapsible-content-height); }
+  to   { height: 0; }
 }
 
 .tabular-nums { font-variant-numeric: tabular-nums; }

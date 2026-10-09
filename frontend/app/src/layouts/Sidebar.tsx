@@ -85,7 +85,7 @@ export default function Sidebar({ role }: { role: string | null }) {
 
   const visibleGroups = NAV_GROUPS.filter(g => !g.adminOnly || isAdmin)
 
-  const sidebarWidth = effectivelyExpanded ? '208px' : '48px'
+  const sidebarWidth = effectivelyExpanded ? '280px' : '48px'
 
   return (
     <aside
@@ -159,10 +159,8 @@ export default function Sidebar({ role }: { role: string | null }) {
               </Collapsible.Trigger>
 
               <Collapsible.Content
-                style={{
-                  overflow: 'hidden',
-                  transition: 'height 150ms ease',
-                }}
+                style={{ overflow: 'hidden' }}
+                className="data-[state=open]:[animation:tp-nav-slide-down_150ms_ease_both] data-[state=closed]:[animation:tp-nav-slide-up_150ms_ease_both]"
               >
                 <div className="pb-1">
                   {group.items.map(item => {
