@@ -1,0 +1,130 @@
+{
+  "campaign_id": "DEMO-QUAL-01",
+  "qualification_version": "REAL_DRAWING_QUALIFICATION_01",
+  "plan_generated_on": "2026-10-09",
+  "plan_schema_version": "1.0",
+
+  "_note": "This file is the frozen execution contract. Do not change frozen_artifacts, provider_config, or run_counts without a new QUAL decision record.",
+
+  "frozen_artifacts": {
+    "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e",
+    "spec_path": "docs/qualification/REAL_DRAWING_DEMO_QUALIFICATION.md",
+    "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+    "fixture_manifest_path": "docs/qualification/fixtures/manifest.json",
+    "gt_manifest_sha256": "e11b2c949363583b8d2ebec18acd2ac26e7181882ed6ac275e831ebf39105757",
+    "gt_manifest_path": "docs/qualification/ground_truth/manifest.json",
+    "scoring_engine_sha256": "6ab51deab17ae128b45877e2f9dea4ea688d08db6a6dc14cb9d250f5472b170c",
+    "scoring_engine_path": "docs/qualification/scoring/score_qualification.py"
+  },
+
+  "drawing_groups": {
+    "CORE": ["Q01", "Q02", "Q05", "Q06", "Q07"],
+    "EXT_GATE": ["Q09", "Q10"],
+    "EXT": ["Q03", "Q04", "Q08"]
+  },
+
+  "probe_ids": {
+    "structural": ["P-VEC_Q01", "P-OVER_Q10", "P-DOWN"],
+    "conditional_g2": ["P-CROP_Q09_c1", "P-CROP_Q09_c2", "P-CROP_Q09_c3", "P-CROP_Q09_c4"]
+  },
+
+  "run_counts": {
+    "core_runs_per_drawing": 3,
+    "ext_gate_runs_per_drawing": 3,
+    "ext_runs_per_drawing": 1,
+    "baseline_recognition_inference_count": 24,
+    "structural_probe_expected_inference_count": 0,
+    "total_baseline_run_records": 27,
+    "conditional_p_crop_runs_per_crop": 3,
+    "conditional_p_crop_crops": 4,
+    "conditional_p_crop_total_if_triggered": 12,
+    "max_total_run_records_with_escalation": 39
+  },
+
+  "provider_config": {
+    "provider_id": "ollama.chat",
+    "model": "granite3.2-vision:2b",
+    "model_pinned": true,
+    "model_env": "MACHININGPRO_OLLAMA_MODEL",
+    "model_version_env": "MACHININGPRO_OLLAMA_MODEL_VERSION",
+    "base_url": "http://127.0.0.1:11434",
+    "base_url_env": "MACHININGPRO_OLLAMA_BASE_URL",
+    "loopback_only": true,
+    "request_timeout_seconds": 600,
+    "total_run_budget_seconds": 900,
+    "max_attempts_per_run": 1,
+    "automatic_retry_allowed": false,
+    "fallback_model_allowed": false,
+    "cloud_fallback_allowed": false,
+    "streaming": false,
+    "model_context_tokens": 8192,
+    "temperature": 0,
+    "num_gpu": 0,
+    "api_key_required": false,
+    "paid_api_required": false,
+    "cloud_ai_required": false
+  },
+
+  "ai_authority": "ADVISORY",
+  "deterministic_authority": "SPATIAL_DETERMINISTIC",
+  "model_pixel_box_authoritative": false,
+
+  "storage": {
+    "results_path_template": "docs/qualification/results/{campaign_id}/{qual_id}/{run_id}.json",
+    "logs_path_template": "docs/qualification/run_logs/{campaign_id}/{qual_id}/{run_id}.json"
+  },
+
+  "result_required_fields": [
+    "run_id", "qual_id", "run_number", "timestamp_utc", "fixture_sha256",
+    "gt_manifest_hash", "provider", "model", "job_status", "job_id",
+    "deterministic_findings", "ai_findings", "human_review_findings",
+    "r3b_status", "inference_elapsed_ms", "ocr_environment",
+    "warnings", "error_code", "error_detail", "model_call_count"
+  ],
+
+  "result_prohibited_fields": [
+    "secrets", "api_keys", "base64_image_payloads",
+    "absolute_personal_filesystem_paths", "sensitive_os_user_details"
+  ],
+
+  "execution_phases": [
+    {"phase": 1, "label": "preflight", "qual_ids": []},
+    {"phase": 2, "label": "core_easy", "qual_ids": ["Q01", "Q02"]},
+    {"phase": 3, "label": "core_medium_hard", "qual_ids": ["Q05", "Q06", "Q07"]},
+    {"phase": 4, "label": "ext_gate", "qual_ids": ["Q09", "Q10"]},
+    {"phase": 5, "label": "ext", "qual_ids": ["Q03", "Q04", "Q08"]},
+    {"phase": 6, "label": "structural_probes", "qual_ids": ["P-VEC_Q01", "P-OVER_Q10", "P-DOWN"]},
+    {"phase": 7, "label": "conditional_p_crop", "qual_ids": ["P-CROP_Q09_c1", "P-CROP_Q09_c2", "P-CROP_Q09_c3", "P-CROP_Q09_c4"], "condition": "G2_PRECONDITION_TRIGGERED"}
+  ],
+
+  "first_real_run_id": "Q01-R01",
+  "last_baseline_run_id": "Q08-R01",
+
+  "policy": {
+    "stop_after_each_run_validation": true,
+    "continue_after_job_failure": true,
+    "continue_after_r3b_rejection": true,
+    "batch_size": 3
+  },
+
+  "run_status_states": [
+    "PENDING", "RUNNING", "COMPLETED", "FAILED", "NEEDS_REVIEW", "SKIPPED_ALREADY_COMPLETE"
+  ],
+
+  "resume_semantics": {
+    "completed_artifact_validates": "SKIP",
+    "failed_artifact_exists": "REQUIRE_EXPLICIT_RERUN_AUTHORIZATION",
+    "running_residue_after_crash": "CLASSIFY_INTERRUPTED_DO_NOT_AUTO_RERUN",
+    "duplicate_inference_prevention": true
+  },
+
+  "duration_estimate": {
+    "data_label": "PLANNING_ESTIMATE_NOT_MEASURED",
+    "basis": "prior_observation_146s_to_177s_per_run",
+    "baseline_min_minutes": 58,
+    "baseline_expected_minutes": 65,
+    "baseline_worst_minutes": 71,
+    "max_with_conditional_p_crop_hours_min": 3.0,
+    "max_with_conditional_p_crop_hours_max": 3.6
+  }
+}
