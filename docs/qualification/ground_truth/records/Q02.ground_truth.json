@@ -1,0 +1,147 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "CORE",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q02.authoring_intent.json",
+    "authoring_intent_sha256": "6c6ed7f4f13a4016e237a5fd3be2ae5d25d9f005e41604f46f878f7b209b1834",
+    "source": "fixtures/sources/Q02.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    800,
+    600
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "80",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          364,
+          60,
+          435,
+          75
+        ],
+        "reference_only": true
+      },
+      "expected_text": "80 mm",
+      "expected_unit": "mm",
+      "expected_value": "80",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q02-T001",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "20",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          184,
+          157,
+          296,
+          172
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DIA 20 mm",
+      "expected_unit": "mm",
+      "expected_value": "20",
+      "feature_type": "DIAMETER",
+      "item_id": "Q02-T002",
+      "notes": "",
+      "prefix": "DIA",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "12",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          464,
+          405,
+          576,
+          420
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DIA 12 mm",
+      "expected_unit": "mm",
+      "expected_value": "12",
+      "feature_type": "DIAMETER",
+      "item_id": "Q02-T003",
+      "notes": "",
+      "prefix": "DIA",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          80,
+          533,
+          278,
+          548
+        ],
+        "reference_only": true
+      },
+      "expected_text": "2 HOLES THRU ALL",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q02-T004",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    }
+  ],
+  "pdf_sha256": "cc2116c61ac19636f3daee5fa837d06364707409e81e1598141248e98cc41ee2",
+  "qual_id": "Q02",
+  "raster_sha256": "d0b0fcf2893a747d7787c33ff103a144dc29e8a662449a41ade49fc05f711023",
+  "record_sha256": "d768f9969ed9e469fa21fd7ae681603efe49407363ece8c6f138968ca0cb1c0a",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "74d62fda761dc991c719d5a1e64898461d4f487f9911f52d09383df4c1a8ad6b",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

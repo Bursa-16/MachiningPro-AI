@@ -1,0 +1,119 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "CORE",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q01.authoring_intent.json",
+    "authoring_intent_sha256": "99edf3e743172f9d7fcb2126b6430327b7f4ca6746c41fd6b0bc9e2d06d5f119",
+    "source": "fixtures/sources/Q01.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    480,
+    320
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "100",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          156,
+          23,
+          243,
+          39
+        ],
+        "reference_only": true
+      },
+      "expected_text": "100 MM",
+      "expected_unit": "mm",
+      "expected_value": "100",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q01-T001",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "60",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          400,
+          159,
+          473,
+          175
+        ],
+        "reference_only": true
+      },
+      "expected_text": "60 MM",
+      "expected_unit": "mm",
+      "expected_value": "60",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q01-T002",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "20",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          129,
+          220,
+          270,
+          236
+        ],
+        "reference_only": true
+      },
+      "expected_text": "HOLE 20 MM",
+      "expected_unit": "mm",
+      "expected_value": "20",
+      "feature_type": "HOLE_CALLOUT",
+      "item_id": "Q01-T003",
+      "notes": "Authored label; the numeric part is 20 mm; diameter or depth is not stated.",
+      "required_for_demo": true,
+      "scoreable": true
+    }
+  ],
+  "pdf_sha256": "690ec7c721c8a0425264aebef965c12297ff2d2aa0f05c8bc69674afc421fda7",
+  "qual_id": "Q01",
+  "raster_sha256": "a8ab9b2486244ba362c276a434cb0af55e6dd43e3beb42284acaeb162b32c151",
+  "record_sha256": "f13018005eec99a56f5c08c521587f67d097802e626f4ae911c01e854c616e75",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "7ad682408582542c626590437c0e7a416db562192def9be578073da06392fb87",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

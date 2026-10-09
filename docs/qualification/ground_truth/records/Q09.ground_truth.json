@@ -1,0 +1,1158 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "EXT-GATE",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q09.authoring_intent.json",
+    "authoring_intent_sha256": "286d54fac7f79d49ea0f2a3984193c802a2c12b26c3413b2a98b60ebc74ac956",
+    "source": "fixtures/sources/Q09.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    1800,
+    1300
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "30",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          144,
+          146,
+          215,
+          161
+        ],
+        "reference_only": true
+      },
+      "expected_text": "30 mm",
+      "expected_unit": "mm",
+      "expected_value": "30",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T001",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "45",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          304,
+          146,
+          375,
+          161
+        ],
+        "reference_only": true
+      },
+      "expected_text": "45 mm",
+      "expected_unit": "mm",
+      "expected_value": "45",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T002",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "25",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          464,
+          146,
+          535,
+          161
+        ],
+        "reference_only": true
+      },
+      "expected_text": "25 mm",
+      "expected_unit": "mm",
+      "expected_value": "25",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T003",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "100",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          298,
+          86,
+          382,
+          101
+        ],
+        "reference_only": true
+      },
+      "expected_text": "100 mm",
+      "expected_unit": "mm",
+      "expected_value": "100",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T004",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "22",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          240,
+          723,
+          256
+        ],
+        "reference_only": true
+      },
+      "expected_text": "22 mm",
+      "expected_unit": "mm",
+      "expected_value": "22",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T005",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "28",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          316,
+          723,
+          330
+        ],
+        "reference_only": true
+      },
+      "expected_text": "28 mm",
+      "expected_unit": "mm",
+      "expected_value": "28",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T006",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "26",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          390,
+          723,
+          406
+        ],
+        "reference_only": true
+      },
+      "expected_text": "26 mm",
+      "expected_unit": "mm",
+      "expected_value": "26",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T007",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "24",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          466,
+          723,
+          480
+        ],
+        "reference_only": true
+      },
+      "expected_text": "24 mm",
+      "expected_unit": "mm",
+      "expected_value": "24",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T008",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "12",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          284,
+          447,
+          396,
+          462
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DIA 12 mm",
+      "expected_unit": "mm",
+      "expected_value": "12",
+      "feature_type": "DIAMETER",
+      "item_id": "Q09-T009",
+      "notes": "",
+      "prefix": "DIA",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "1.25",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1039,
+          145,
+          1120,
+          161
+        ],
+        "reference_only": true
+      },
+      "expected_text": "1.250 in",
+      "expected_unit": "inch",
+      "expected_value": "1.250",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T010",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "1.75",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1199,
+          145,
+          1280,
+          161
+        ],
+        "reference_only": true
+      },
+      "expected_text": "1.750 in",
+      "expected_unit": "inch",
+      "expected_value": "1.750",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T011",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "1",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1359,
+          145,
+          1440,
+          161
+        ],
+        "reference_only": true
+      },
+      "expected_text": "1.000 in",
+      "expected_unit": "inch",
+      "expected_value": "1.000",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T012",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "4",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1199,
+          85,
+          1280,
+          101
+        ],
+        "reference_only": true
+      },
+      "expected_text": "4.000 in",
+      "expected_unit": "inch",
+      "expected_value": "4.000",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T013",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "0.875",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1552,
+          240,
+          1633,
+          256
+        ],
+        "reference_only": true
+      },
+      "expected_text": "0.875 in",
+      "expected_unit": "inch",
+      "expected_value": "0.875",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T014",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "1.125",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1552,
+          314,
+          1633,
+          330
+        ],
+        "reference_only": true
+      },
+      "expected_text": "1.125 in",
+      "expected_unit": "inch",
+      "expected_value": "1.125",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T015",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "1",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1552,
+          390,
+          1633,
+          406
+        ],
+        "reference_only": true
+      },
+      "expected_text": "1.000 in",
+      "expected_unit": "inch",
+      "expected_value": "1.000",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T016",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "0.75",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1552,
+          464,
+          1633,
+          480
+        ],
+        "reference_only": true
+      },
+      "expected_text": "0.750 in",
+      "expected_unit": "inch",
+      "expected_value": "0.750",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T017",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "inch",
+      "expected_normalized_value": "0.5",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1179,
+          446,
+          1301,
+          462
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DIA 0.500 in",
+      "expected_unit": "inch",
+      "expected_value": "0.500",
+      "feature_type": "DIAMETER",
+      "item_id": "Q09-T018",
+      "notes": "",
+      "prefix": "DIA",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "25",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          120,
+          796,
+          240,
+          811
+        ],
+        "reference_only": true
+      },
+      "expected_text": "25 \u00b10.1 mm",
+      "expected_unit": "mm",
+      "expected_value": "25",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q09-T019",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": false,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.1",
+        "plus": "0.1",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "35",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          280,
+          796,
+          400,
+          811
+        ],
+        "reference_only": true
+      },
+      "expected_text": "35 \u00b10.1 mm",
+      "expected_unit": "mm",
+      "expected_value": "35",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q09-T020",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": false,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.1",
+        "plus": "0.1",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "20",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          440,
+          796,
+          560,
+          811
+        ],
+        "reference_only": true
+      },
+      "expected_text": "20 \u00b10.2 mm",
+      "expected_unit": "mm",
+      "expected_value": "20",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q09-T021",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": false,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.2",
+        "plus": "0.2",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "80",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          280,
+          736,
+          400,
+          751
+        ],
+        "reference_only": true
+      },
+      "expected_text": "80 \u00b10.2 mm",
+      "expected_unit": "mm",
+      "expected_value": "80",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q09-T022",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.2",
+        "plus": "0.2",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "20",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          890,
+          723,
+          906
+        ],
+        "reference_only": true
+      },
+      "expected_text": "20 mm",
+      "expected_unit": "mm",
+      "expected_value": "20",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T023",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "18",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          966,
+          723,
+          980
+        ],
+        "reference_only": true
+      },
+      "expected_text": "18 mm",
+      "expected_unit": "mm",
+      "expected_value": "18",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T024",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "22",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          1040,
+          723,
+          1056
+        ],
+        "reference_only": true
+      },
+      "expected_text": "22 mm",
+      "expected_unit": "mm",
+      "expected_value": "22",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T025",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "16",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          652,
+          1116,
+          723,
+          1130
+        ],
+        "reference_only": true
+      },
+      "expected_text": "16 mm",
+      "expected_unit": "mm",
+      "expected_value": "16",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T026",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "10",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          284,
+          1097,
+          396,
+          1112
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DIA 10 mm",
+      "expected_unit": "mm",
+      "expected_value": "10",
+      "feature_type": "DIAMETER",
+      "item_id": "Q09-T027",
+      "notes": "",
+      "prefix": "DIA",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "75",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1114,
+          736,
+          1185,
+          751
+        ],
+        "reference_only": true
+      },
+      "expected_text": "75 mm",
+      "expected_unit": "mm",
+      "expected_value": "75",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T028",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "30",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1372,
+          843,
+          1443,
+          858
+        ],
+        "reference_only": true
+      },
+      "expected_text": "30 mm",
+      "expected_unit": "mm",
+      "expected_value": "30",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q09-T029",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1480,
+          735,
+          1557,
+          750
+        ],
+        "reference_only": true
+      },
+      "expected_text": "NOTES:",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q09-T030",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1480,
+          771,
+          1727,
+          786
+        ],
+        "reference_only": true
+      },
+      "expected_text": "1. BREAK SHARP EDGES.",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q09-T031",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1480,
+          807,
+          1714,
+          822
+        ],
+        "reference_only": true
+      },
+      "expected_text": "2. DEBURR ALL EDGES.",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q09-T032",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1480,
+          843,
+          1712,
+          858
+        ],
+        "reference_only": true
+      },
+      "expected_text": "3. DIMENSIONS IN MM.",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q09-T033",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          990,
+          1303,
+          1006
+        ],
+        "reference_only": true
+      },
+      "expected_text": "PART NAME: TEST HOUSING",
+      "expected_unit": null,
+      "expected_value": "TEST HOUSING",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "part_name",
+      "field_label": "PART NAME",
+      "field_value": "TEST HOUSING",
+      "item_id": "Q09-T034",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1026,
+          1270,
+          1042
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DRAWING NO: QUAL-Q09",
+      "expected_unit": null,
+      "expected_value": "QUAL-Q09",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "drawing_number",
+      "field_label": "DRAWING NO",
+      "field_value": "QUAL-Q09",
+      "item_id": "Q09-T035",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1060,
+          1294,
+          1076
+        ],
+        "reference_only": true
+      },
+      "expected_text": "MATERIAL: GENERIC STEEL",
+      "expected_unit": null,
+      "expected_value": "GENERIC STEEL",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "material",
+      "field_label": "MATERIAL",
+      "field_value": "GENERIC STEEL",
+      "item_id": "Q09-T036",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1096,
+          1123,
+          1110
+        ],
+        "reference_only": true
+      },
+      "expected_text": "SCALE: 1:1",
+      "expected_unit": null,
+      "expected_value": "1:1",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "scale",
+      "field_label": "SCALE",
+      "field_value": "1:1",
+      "item_id": "Q09-T037",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1130,
+          1158,
+          1146
+        ],
+        "reference_only": true
+      },
+      "expected_text": "SHEET: 1 OF 1",
+      "expected_unit": null,
+      "expected_value": "1 OF 1",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "sheet",
+      "field_label": "SHEET",
+      "field_value": "1 OF 1",
+      "item_id": "Q09-T038",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1166,
+          1079,
+          1180
+        ],
+        "reference_only": true
+      },
+      "expected_text": "REV: A",
+      "expected_unit": null,
+      "expected_value": "A",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "revision",
+      "field_label": "REV",
+      "field_value": "A",
+      "item_id": "Q09-T039",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1200,
+          1199,
+          1216
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DATE: 2026-10-08",
+      "expected_unit": null,
+      "expected_value": "2026-10-08",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "date",
+      "field_label": "DATE",
+      "field_value": "2026-10-08",
+      "item_id": "Q09-T040",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "TITLE_FIELD_ALIAS_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          1014,
+          1236,
+          1126,
+          1250
+        ],
+        "reference_only": true
+      },
+      "expected_text": "UNITS: MM",
+      "expected_unit": null,
+      "expected_value": "MM",
+      "feature_type": "TITLE_BLOCK_TEXT",
+      "field_key": "unit",
+      "field_label": "UNITS",
+      "field_value": "MM",
+      "item_id": "Q09-T041",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    }
+  ],
+  "pdf_sha256": "13b52bd3df387f308420c2cfaffbc1eb367d6ff03de11c8fc5091866b4ea5934",
+  "qual_id": "Q09",
+  "raster_sha256": "41a2702ed612700a95efbcc6effcfaf96a199b4047d926a7ad8860b7687b9dd4",
+  "record_sha256": "80f1872ed8061aa882f31a5b444ee0fddfe1fcb4f6fb20799d589fb70d915c49",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "60132e4bda38f7695785673d250c8989dcc8dea9a0c78c73875268697683d3d9",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

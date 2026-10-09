@@ -1,0 +1,36 @@
+{
+  "ai_inference_expected": false,
+  "derived_from": null,
+  "derived_from_files": {},
+  "expected_behavior": "With the local AI service stopped, an explicitly started analysis job ends FAILED; the UI shows a safe failure state; the deterministic panel stays usable; no automatic retry occurs.",
+  "expected_error_or_gate": "job FAILED with OLLAMA_UNAVAILABLE",
+  "fixture_binding": "ANY_RECOGNITION_FIXTURE (suggested carrier: Q01); no dedicated fixture file",
+  "fixture_class": "STRUCTURAL_EXPECTATION",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "notes": "Behavioural probe without a fixture file. No recognition ground truth is defined for it.",
+  "pdf_sha256": null,
+  "qual_id": "P-DOWN",
+  "raster_sha256": null,
+  "record_sha256": "760675f8dbb539bb59f3c41b082f2519f9384a42867359512252f994e8870b1d",
+  "record_type": "PROBE_EXPECTATION",
+  "scored_as_recognition": false,
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": null,
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

@@ -1,0 +1,233 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "CORE",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q07.authoring_intent.json",
+    "authoring_intent_sha256": "f88ce8222fc6a5ed1640c8e6580ac3607c9281570d2bd2b57b57ec14f2752114",
+    "source": "fixtures/sources/Q07.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    1200,
+    900
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "132",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          514,
+          226,
+          665,
+          241
+        ],
+        "reference_only": true
+      },
+      "expected_text": "132.0 \u00b10.1 mm",
+      "expected_unit": "mm",
+      "expected_value": "132.0",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q07-T001",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.1",
+        "plus": "0.1",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "60",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          992,
+          442,
+          1157,
+          459
+        ],
+        "reference_only": true
+      },
+      "expected_text": "60 +0.2/-0.1 mm",
+      "expected_unit": "mm",
+      "expected_value": "60",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q07-T002",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "BILATERAL",
+        "minus": "0.1",
+        "plus": "0.2",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "40",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          440,
+          635,
+          580,
+          652
+        ],
+        "reference_only": true
+      },
+      "expected_text": "40 +0.1/0 mm",
+      "expected_unit": "mm",
+      "expected_value": "40",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q07-T003",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "UNILATERAL",
+        "minus": "0",
+        "plus": "0.1",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "20",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          644,
+          542,
+          804,
+          559
+        ],
+        "reference_only": true
+      },
+      "expected_text": "20 +0/-0.05 mm",
+      "expected_unit": "mm",
+      "expected_value": "20",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q07-T004",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "UNILATERAL",
+        "minus": "0.05",
+        "plus": "0",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "120",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          478,
+          716,
+          642,
+          731
+        ],
+        "reference_only": true
+      },
+      "expected_text": "120.0 \u00b10.05 mm",
+      "expected_unit": "mm",
+      "expected_value": "120.0",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q07-T005",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.05",
+        "plus": "0.05",
+        "unit": "mm"
+      }
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "36",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          68,
+          503,
+          188,
+          518
+        ],
+        "reference_only": true
+      },
+      "expected_text": "36 \u00b10.2 mm",
+      "expected_unit": "mm",
+      "expected_value": "36",
+      "feature_type": "TOLERANCE",
+      "item_id": "Q07-T006",
+      "notes": "Tolerance notation transcribed as authored.",
+      "required_for_demo": true,
+      "scoreable": true,
+      "tolerance": {
+        "kind": "SYMMETRIC",
+        "minus": "0.2",
+        "plus": "0.2",
+        "unit": "mm"
+      }
+    }
+  ],
+  "pdf_sha256": "7600bc26d678ef9084ec0ea04494647d05024ea273ac299d99f2fc529f0ffb11",
+  "qual_id": "Q07",
+  "raster_sha256": "b9972a225123fc1a229beff7be09ae591542ab9f14d7888343f558b5fbfca140",
+  "record_sha256": "17991da1958f5ecdd9020c373f170e83f6701da5f05cb3f114795dab5a233cdf",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "d9bcc74be612a8704550f84ffb24e26f72e33678066da7625011c0769f486c83",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

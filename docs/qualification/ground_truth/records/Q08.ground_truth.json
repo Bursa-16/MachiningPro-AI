@@ -1,0 +1,326 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "EXT",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q08.authoring_intent.json",
+    "authoring_intent_sha256": "0eea5abaf1a2a7a92b1b0d6753ba6bf0b2a055a6deb1683e3ea71ca0d936c916",
+    "source": "fixtures/sources/Q08.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    1200,
+    900
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "100",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          408,
+          201,
+          492,
+          216
+        ],
+        "reference_only": true
+      },
+      "expected_text": "100 mm",
+      "expected_unit": "mm",
+      "expected_value": "100",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q08-T001",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "60",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          792,
+          403,
+          863,
+          418
+        ],
+        "reference_only": true
+      },
+      "expected_text": "60 mm",
+      "expected_unit": "mm",
+      "expected_value": "60",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q08-T002",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          411,
+          601,
+          425,
+          616
+        ],
+        "reference_only": true
+      },
+      "expected_text": "A",
+      "expected_unit": null,
+      "expected_value": "A",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "DATUM_LABEL",
+      "item_id": "Q08-T003",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          125,
+          403,
+          139,
+          418
+        ],
+        "reference_only": true
+      },
+      "expected_text": "B",
+      "expected_unit": null,
+      "expected_value": "B",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "DATUM_LABEL",
+      "item_id": "Q08-T004",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "cells": [
+        "FLATNESS",
+        "0.05 mm"
+      ],
+      "characteristic": "FLATNESS",
+      "characteristic_allowlisted": true,
+      "deterministic_expectation": "GDT_FRAME_ALLOWLISTED",
+      "deterministic_scoreable": true,
+      "diameter_modifier": false,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "0.05",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          892,
+          163,
+          1116,
+          178
+        ],
+        "reference_only": true
+      },
+      "expected_text": "FLATNESS | 0.05 mm",
+      "expected_unit": "mm",
+      "expected_value": "0.05",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "FEATURE_CONTROL_FRAME",
+      "item_id": "Q08-T005",
+      "negative_case": false,
+      "notes": "Frame transcription only; no engineering meaning is added. Allowlisted characteristic.",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "cells": [
+        "POSITION",
+        "DIA 0.2 mm",
+        "A",
+        "B"
+      ],
+      "characteristic": "POSITION",
+      "characteristic_allowlisted": true,
+      "deterministic_expectation": "GDT_FRAME_ALLOWLISTED",
+      "deterministic_scoreable": true,
+      "diameter_modifier": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "0.2",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          112,
+          653,
+          437,
+          668
+        ],
+        "reference_only": true
+      },
+      "expected_text": "POSITION | DIA 0.2 mm | A | B",
+      "expected_unit": "mm",
+      "expected_value": "0.2",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "FEATURE_CONTROL_FRAME",
+      "item_id": "Q08-T006",
+      "negative_case": false,
+      "notes": "Frame transcription only; no engineering meaning is added. Allowlisted characteristic.",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "cells": [
+        "CIRCULARITY",
+        "0.02 mm"
+      ],
+      "characteristic": "CIRCULARITY",
+      "characteristic_allowlisted": true,
+      "deterministic_expectation": "GDT_FRAME_ALLOWLISTED",
+      "deterministic_scoreable": true,
+      "diameter_modifier": false,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "0.02",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          662,
+          653,
+          916,
+          668
+        ],
+        "reference_only": true
+      },
+      "expected_text": "CIRCULARITY | 0.02 mm",
+      "expected_unit": "mm",
+      "expected_value": "0.02",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "FEATURE_CONTROL_FRAME",
+      "item_id": "Q08-T007",
+      "negative_case": false,
+      "notes": "Frame transcription only; no engineering meaning is added. Allowlisted characteristic.",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "cells": [
+        "SYMMETRY",
+        "0.1 mm",
+        "A"
+      ],
+      "characteristic": "SYMMETRY",
+      "characteristic_allowlisted": true,
+      "deterministic_expectation": "GDT_FRAME_ALLOWLISTED",
+      "deterministic_scoreable": true,
+      "diameter_modifier": false,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "0.1",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          873,
+          493,
+          1133,
+          508
+        ],
+        "reference_only": true
+      },
+      "expected_text": "SYMMETRY | 0.1 mm | A",
+      "expected_unit": "mm",
+      "expected_value": "0.1",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "FEATURE_CONTROL_FRAME",
+      "item_id": "Q08-T008",
+      "negative_case": false,
+      "notes": "Frame transcription only; no engineering meaning is added. Allowlisted characteristic.",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "cells": [
+        "PERPENDICULARITY",
+        "0.1 mm",
+        "A"
+      ],
+      "characteristic": "PERPENDICULARITY",
+      "characteristic_allowlisted": false,
+      "deterministic_expectation": "GDT_FRAME_UNSUPPORTED_CHARACTERISTIC",
+      "deterministic_scoreable": true,
+      "diameter_modifier": false,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "0.1",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          113,
+          163,
+          465,
+          178
+        ],
+        "reference_only": true
+      },
+      "expected_text": "PERPENDICULARITY | 0.1 mm | A",
+      "expected_unit": "mm",
+      "expected_value": "0.1",
+      "feature_type": "GDT_TRANSCRIPTION",
+      "gdt_role": "FEATURE_CONTROL_FRAME",
+      "item_id": "Q08-T009",
+      "negative_case": true,
+      "notes": "Frame transcription only; no engineering meaning is added. NEGATIVE CASE: the characteristic is not on the deterministic allowlist; the deterministic path must not produce a frame for it.",
+      "required_for_demo": false,
+      "scoreable": true
+    }
+  ],
+  "pdf_sha256": "ac6d0a0ae6c85e51dd7a6fde7a5a2f7700368c21a0c62b489993981b3015604b",
+  "qual_id": "Q08",
+  "raster_sha256": "e0085b2d1e760fdb130e6cf2bbeafc0701859800ff9679a22b80df60dd603820",
+  "record_sha256": "9ccaaa847f22b879ab606ef537f2911420410f3a5d3834b337f28ecd75e6e7fc",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "b58a116edec4fc2957dc09a80b284da6e85e28c70309bc8d8af53472021ad601",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

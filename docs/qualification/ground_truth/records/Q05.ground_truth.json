@@ -1,0 +1,277 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "CORE",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q05.authoring_intent.json",
+    "authoring_intent_sha256": "844765d2125eddec34c4980451c7fe32a19745f9d4f5dc5ca22b1e50cc523f05",
+    "source": "fixtures/sources/Q05.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    1200,
+    900
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "140",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          505,
+          165,
+          594,
+          181
+        ],
+        "reference_only": true
+      },
+      "expected_text": "140 mm",
+      "expected_unit": "mm",
+      "expected_value": "140",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q05-T001",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "40",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          512,
+          207,
+          587,
+          223
+        ],
+        "reference_only": true
+      },
+      "expected_text": "40 mm",
+      "expected_unit": "mm",
+      "expected_value": "40",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q05-T002",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "80",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          992,
+          443,
+          1067,
+          459
+        ],
+        "reference_only": true
+      },
+      "expected_text": "80 mm",
+      "expected_unit": "mm",
+      "expected_value": "80",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q05-T003",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "25",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          333,
+          305,
+          408,
+          321
+        ],
+        "reference_only": true
+      },
+      "expected_text": "25 mm",
+      "expected_unit": "mm",
+      "expected_value": "25",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q05-T004",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "14",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          319,
+          513,
+          437,
+          529
+        ],
+        "reference_only": true
+      },
+      "expected_text": "DIA 14 mm",
+      "expected_unit": "mm",
+      "expected_value": "14",
+      "feature_type": "DIAMETER",
+      "item_id": "Q05-T005",
+      "notes": "",
+      "prefix": "DIA",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "6",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          958,
+          693,
+          1034,
+          709
+        ],
+        "reference_only": true
+      },
+      "expected_text": "R6 mm",
+      "expected_unit": "mm",
+      "expected_value": "6",
+      "feature_type": "RADIUS",
+      "item_id": "Q05-T006",
+      "notes": "",
+      "prefix": "R",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "65",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          324,
+          695,
+          400,
+          711
+        ],
+        "reference_only": true
+      },
+      "expected_text": "65 mm",
+      "expected_unit": "mm",
+      "expected_value": "65",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q05-T007",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "26",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          772,
+          578,
+          847,
+          594
+        ],
+        "reference_only": true
+      },
+      "expected_text": "26 mm",
+      "expected_unit": "mm",
+      "expected_value": "26",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q05-T008",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          200,
+          804,
+          310,
+          820
+        ],
+        "reference_only": true
+      },
+      "expected_text": "TOP VIEW",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q05-T009",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    }
+  ],
+  "pdf_sha256": "94c2b69657758baaf9b7a048bd26587c3a60ef3bde7b1c67d7b02ff8ab7f8417",
+  "qual_id": "Q05",
+  "raster_sha256": "230b4e426959d9abc34dff024e4fe49fb8b4ce03e4c347d377200cf809306dfa",
+  "record_sha256": "fe67708bea60d86589ff2a3a53217b596be472b7831dd8603194b4b44e07c5cc",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "f197f8f1ccb296abed65a84ad6341b0544cc1b591ce79bcee7025beef4586a83",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

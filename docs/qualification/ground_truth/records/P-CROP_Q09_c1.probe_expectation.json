@@ -1,0 +1,111 @@
+{
+  "ai_inference_expected": true,
+  "contained_item_crop_regions_px": {
+    "Q09-T001": [
+      144,
+      146,
+      215,
+      161
+    ],
+    "Q09-T002": [
+      304,
+      146,
+      375,
+      161
+    ],
+    "Q09-T003": [
+      464,
+      146,
+      535,
+      161
+    ],
+    "Q09-T004": [
+      298,
+      86,
+      382,
+      101
+    ],
+    "Q09-T005": [
+      652,
+      240,
+      723,
+      256
+    ],
+    "Q09-T006": [
+      652,
+      316,
+      723,
+      330
+    ],
+    "Q09-T007": [
+      652,
+      390,
+      723,
+      406
+    ],
+    "Q09-T008": [
+      652,
+      466,
+      723,
+      480
+    ],
+    "Q09-T009": [
+      284,
+      447,
+      396,
+      462
+    ]
+  },
+  "contained_item_ids": [
+    "Q09-T001",
+    "Q09-T002",
+    "Q09-T003",
+    "Q09-T004",
+    "Q09-T005",
+    "Q09-T006",
+    "Q09-T007",
+    "Q09-T008",
+    "Q09-T009"
+  ],
+  "crop_box_px_in_q09": [
+    0,
+    0,
+    900,
+    650
+  ],
+  "derived_from": "Q09",
+  "derived_from_files": {
+    "provenance": "fixtures/provenance/P-CROP_Q09_c1.provenance.json"
+  },
+  "expected_behavior": "A normal analysis job on the crop; its findings are scored only against the Q09 ground-truth items that lie inside this crop.",
+  "expected_error_or_gate": "none (crop is within the R3D limits)",
+  "fixture_class": "PROBE_EXPECTATION",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "notes": "References Q09 items by id; no text or dimension ground truth is duplicated here. Each Q09 item lies in exactly one crop (zone boundaries are blank gutters).",
+  "parent_qual_id": "Q09",
+  "pdf_sha256": "e907758eb13f70717906a6919a324b4586e128f32f9f4e412cf5f2ef358f775c",
+  "qual_id": "P-CROP_Q09_c1",
+  "raster_sha256": "6263d96bcd93749c11811c911bcdbda175951f75ac6ec135149622dfff8fa896",
+  "record_sha256": "6d1a2be4fa2866c1f83001fa0bf75f3d749cae36da66c89d1efbbe5e1b29695c",
+  "record_type": "PROBE_EXPECTATION",
+  "scored_as_recognition": true,
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": null,
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

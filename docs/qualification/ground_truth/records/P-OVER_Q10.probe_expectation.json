@@ -1,0 +1,37 @@
+{
+  "ai_inference_expected": false,
+  "derived_from": "Q10",
+  "derived_from_files": {
+    "provenance": "fixtures/provenance/P-OVER_Q10.provenance.json"
+  },
+  "expected_behavior": "Upload is accepted; the analysis job starts and then fails during request preparation because the whole-image region exceeds the R3D limits; the deterministic result remains shown; the model is never called.",
+  "expected_error_or_gate": "job FAILED with INVALID_REGION (R3D CROP_EDGE_LIMIT / CROP_PIXEL_LIMIT)",
+  "fixture_class": "STRUCTURAL_EXPECTATION",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "notes": "2600x1820 raster: longest edge above 2048 px and pixel count above 4,194,304. No recognition ground truth is defined for it.",
+  "pdf_sha256": "267580c327f3bb5b7de0e86447ea190e6ca638ce24d2d2424da6dc5f125cd616",
+  "qual_id": "P-OVER_Q10",
+  "raster_sha256": "b0f290d0c3f8f642cef423fbf64b7ada77fd026d31ad1cca01a1ad20ae0a3036",
+  "record_sha256": "72e98eccb727234de98056679b73a2196be230da333b9e960fbe13ac251b2775",
+  "record_type": "PROBE_EXPECTATION",
+  "scored_as_recognition": false,
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": null,
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

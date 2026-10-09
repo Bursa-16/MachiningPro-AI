@@ -1,0 +1,171 @@
+{
+  "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+  "demo_class": "EXT",
+  "derived_from_files": {
+    "authoring_intent": "fixtures/authoring_intent/Q04.authoring_intent.json",
+    "authoring_intent_sha256": "84bd92243aa8b2c47b5c8cdc63f92aa0ac52063157ffe98beaff982a677489d0",
+    "source": "fixtures/sources/Q04.drawing.json"
+  },
+  "fixture_class": "RECOGNITION_GROUND_TRUTH",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "image_px": [
+    800,
+    600
+  ],
+  "items": [
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "60",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          324,
+          72,
+          395,
+          87
+        ],
+        "reference_only": true
+      },
+      "expected_text": "60 mm",
+      "expected_unit": "mm",
+      "expected_value": "60",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q04-T001",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "mm",
+      "expected_normalized_value": "40",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          712,
+          293,
+          783,
+          308
+        ],
+        "reference_only": true
+      },
+      "expected_text": "40 mm",
+      "expected_unit": "mm",
+      "expected_value": "40",
+      "feature_type": "LINEAR_DIMENSION",
+      "item_id": "Q04-T002",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "degree",
+      "expected_normalized_value": "45",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          437,
+          218,
+          470,
+          234
+        ],
+        "reference_only": true
+      },
+      "expected_text": "45\u00b0",
+      "expected_unit": "degree",
+      "expected_value": "45",
+      "feature_type": "ANGLE",
+      "item_id": "Q04-T003",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "DIMENSION_GRAMMAR_ACCEPTED",
+      "deterministic_scoreable": true,
+      "expected_normalized_unit": "degree",
+      "expected_normalized_value": "30",
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          67,
+          492,
+          100,
+          508
+        ],
+        "reference_only": true
+      },
+      "expected_text": "30\u00b0",
+      "expected_unit": "degree",
+      "expected_value": "30",
+      "feature_type": "ANGLE",
+      "item_id": "Q04-T004",
+      "notes": "",
+      "required_for_demo": true,
+      "scoreable": true
+    },
+    {
+      "deterministic_expectation": "NONE",
+      "deterministic_scoreable": false,
+      "expected_normalized_unit": null,
+      "expected_normalized_value": null,
+      "expected_region": {
+        "coordinate_system": "FIXTURE_RASTER_PX_TOP_LEFT",
+        "note": "ground-truth reference region; never a model box",
+        "page": 1,
+        "px": [
+          300,
+          525,
+          580,
+          540
+        ],
+        "reference_only": true
+      },
+      "expected_text": "CHAMFER AND ANGLE CUT",
+      "expected_unit": null,
+      "expected_value": null,
+      "feature_type": "GENERAL_TEXT",
+      "item_id": "Q04-T005",
+      "notes": "",
+      "required_for_demo": false,
+      "scoreable": true
+    }
+  ],
+  "pdf_sha256": "dc1402e0e0ffc5f947679fa187cb0a8da3e9bc992900eeb9ccc119ba59d856da",
+  "qual_id": "Q04",
+  "raster_sha256": "e11f163d74a5fa68b5f3953701558c87da8f8f1be4f073fb4a96ae19e7ca8bee",
+  "record_sha256": "73457a6e86c5242de6e4022bbbefac597a0cdb6bef95e3cdf0c6588610bcce7e",
+  "record_type": "RECOGNITION_GROUND_TRUTH",
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": "66fd637dbe26d93d80226e7cef9ea535f387311fca0e4eb0488e0146ee21b567",
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}

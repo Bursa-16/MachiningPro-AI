@@ -1,0 +1,146 @@
+{
+  "ai_inference_expected": true,
+  "contained_item_crop_regions_px": {
+    "Q09-T028": [
+      214,
+      86,
+      285,
+      101
+    ],
+    "Q09-T029": [
+      472,
+      193,
+      543,
+      208
+    ],
+    "Q09-T030": [
+      580,
+      85,
+      657,
+      100
+    ],
+    "Q09-T031": [
+      580,
+      121,
+      827,
+      136
+    ],
+    "Q09-T032": [
+      580,
+      157,
+      814,
+      172
+    ],
+    "Q09-T033": [
+      580,
+      193,
+      812,
+      208
+    ],
+    "Q09-T034": [
+      114,
+      340,
+      403,
+      356
+    ],
+    "Q09-T035": [
+      114,
+      376,
+      370,
+      392
+    ],
+    "Q09-T036": [
+      114,
+      410,
+      394,
+      426
+    ],
+    "Q09-T037": [
+      114,
+      446,
+      223,
+      460
+    ],
+    "Q09-T038": [
+      114,
+      480,
+      258,
+      496
+    ],
+    "Q09-T039": [
+      114,
+      516,
+      179,
+      530
+    ],
+    "Q09-T040": [
+      114,
+      550,
+      299,
+      566
+    ],
+    "Q09-T041": [
+      114,
+      586,
+      226,
+      600
+    ]
+  },
+  "contained_item_ids": [
+    "Q09-T028",
+    "Q09-T029",
+    "Q09-T030",
+    "Q09-T031",
+    "Q09-T032",
+    "Q09-T033",
+    "Q09-T034",
+    "Q09-T035",
+    "Q09-T036",
+    "Q09-T037",
+    "Q09-T038",
+    "Q09-T039",
+    "Q09-T040",
+    "Q09-T041"
+  ],
+  "crop_box_px_in_q09": [
+    900,
+    650,
+    1800,
+    1300
+  ],
+  "derived_from": "Q09",
+  "derived_from_files": {
+    "provenance": "fixtures/provenance/P-CROP_Q09_c4.provenance.json"
+  },
+  "expected_behavior": "A normal analysis job on the crop; its findings are scored only against the Q09 ground-truth items that lie inside this crop.",
+  "expected_error_or_gate": "none (crop is within the R3D limits)",
+  "fixture_class": "PROBE_EXPECTATION",
+  "fixture_manifest_sha256": "a1d3eef221f6a3bf15999d1e91c924f0492814d899add40871b0a351ab1ac0a1",
+  "frozen_on": "2026-10-08",
+  "ground_truth_review": {
+    "named_human_review": "NOT_RECORDED",
+    "named_reviewer": null,
+    "note": "No named reviewer is assigned for the initial internal qualification (ROLE_SEPARATION_REQUIRED = NO). The role is recorded; no identity is asserted.",
+    "performed_by": "ROLE_ONLY_AUTOMATED_DERIVATION_FROM_FIXTURE_SOURCES",
+    "role": "GROUND_TRUTH_REVIEWER",
+    "signoff": "FROZEN"
+  },
+  "ground_truth_status": "FROZEN",
+  "ground_truth_version": "1.0",
+  "notes": "References Q09 items by id; no text or dimension ground truth is duplicated here. Each Q09 item lies in exactly one crop (zone boundaries are blank gutters).",
+  "parent_qual_id": "Q09",
+  "pdf_sha256": "67bd57e502ba508fbce7e560e4112cab806e32810bbea1f66b9e2b3e6973fac9",
+  "qual_id": "P-CROP_Q09_c4",
+  "raster_sha256": "f4f936bf10161f120c4f375cffb174f49dd56a7193016546cc12c171601d2a01",
+  "record_sha256": "48513111fc51a1cbe8005383c6c63976d2d2e25589c506b354aa088987617261",
+  "record_type": "PROBE_EXPECTATION",
+  "scored_as_recognition": true,
+  "source_basis": [
+    "SELF_AUTHORED_FIXTURE_SOURCE",
+    "AUTHORING_INTENT",
+    "VISIBLE_FIXTURE_CONTENT",
+    "FROZEN_SPEC"
+  ],
+  "source_sha256": null,
+  "spec_sha256": "fc4061b495316702b2d8a908abb34e5a6d55d0fd42a17408ec7d6f0d4611277e"
+}
