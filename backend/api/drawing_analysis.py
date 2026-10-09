@@ -767,6 +767,7 @@ class ReviewRequest(BaseModel):
 
     action: Literal["ACCEPT", "REJECT", "EDIT"]
     value: str | None = None
+    reviewer: str | None = None  # accepted but ignored; auth user from JWT is used
 
 
 router = APIRouter(prefix="/api/drawings", tags=["drawing-analysis"])

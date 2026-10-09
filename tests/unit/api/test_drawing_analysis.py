@@ -714,7 +714,17 @@ class TestReview:
         assert self._put(client, auth, (drawing_id, job_id), "vlm-ev-missing", action="ACCEPT").status_code == 404
         evidence = _job(client, auth, drawing_id, job_id)["findings"][0]["evidence_id"]
         assert self._put(client, auth, (drawing_id, job_id), evidence, action="ACCEPT_ALL").status_code == 422
-        assert self._put(client, auth, (drawing_id, job_id), evidence, action="ACCEPT", reviewer="evil").status_code == 422
+        # reviewer field is now accepted (no longer extra-forbidden); auth identity is still from JWT
+        assert self._put(client, auth, (drawing_id, job_id), evidence, action="ACCEPT", reviewer="evil").status_code == 200
+
+    def test_client_reviewer_field_is_ignored_jwt_identity_is_authoritative(self, auth):
+        """Regression: reviewer supplied by the client must not become the recorded identity."""
+        _, client, drawing_id, job_id, evidence, _ = self._completed(auth)
+        response = self._put(client, auth, (drawing_id, job_id), evidence[0], action="ACCEPT", reviewer="evil")
+        assert response.status_code == 200
+        record = response.json()
+        assert record["reviewed_by"] == "engineer-1", "JWT sub must be used, not the client-supplied reviewer"
+        assert record["reviewed_by"] != "evil"
 
     def test_a_failed_job_has_no_reviewable_evidence(self, auth):
         service, transport, client = _make(FakeTransport(error=ConnectionRefusedError()))
