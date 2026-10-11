@@ -60,6 +60,8 @@ export default function TechnicalDrawingIntelligencePage({
 
   // Development-only sample mode; null in production builds.
   const [sample, setSample] = useState<SamplePreview | null>(null)
+  // Incremented each time a real file is selected so the DevPreview select resets to "—".
+  const [devPreviewResetKey, setDevPreviewResetKey] = useState(0)
   const [localReview, dispatch] = useReducer(localReducer, {})
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -108,6 +110,12 @@ export default function TechnicalDrawingIntelligencePage({
   const applySample = (next: SamplePreview) => {
     setSample(next)
     setSelected(null)
+    // Clear real-file state so sample findings are never shown beside real-file metadata.
+    setImportResult(null)
+    setImportFileName('')
+    setImportRoute(null)
+    setImportError(null)
+    revokePreview()
     dispatch({
       type: 'RESET',
       state: createReviewState(next.ai.kind === 'READY' ? next.ai.findings : []),
@@ -153,7 +161,7 @@ export default function TechnicalDrawingIntelligencePage({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0 space-y-4">
-          <Panel title={t('drDrawing')} subtitle={sampleMode ? t('drSampleNote') : undefined}>
+          <Panel title={t('drDrawing')} subtitle={sampleMode ? t('drSampleNote') : (importFileName || undefined)}>
             <DrawingViewer
               loaded={drawingLoaded}
               region={region}
@@ -181,6 +189,7 @@ export default function TechnicalDrawingIntelligencePage({
                     setImportError(null)
                     revokePreview()
                     setSample(null)
+                    setDevPreviewResetKey(k => k + 1)
                     setSelected(null)
                     void controller.upload(file)
                   } else {
@@ -192,6 +201,7 @@ export default function TechnicalDrawingIntelligencePage({
                     setImportLoading(true)
                     revokePreview()
                     setSample(null)
+                    setDevPreviewResetKey(k => k + 1)
                     setSelected(null)
                     if (route === 'DRAWING_IMAGE') {
                       setImagePreviewUrl(URL.createObjectURL(file))
@@ -363,7 +373,7 @@ export default function TechnicalDrawingIntelligencePage({
 
               {DevPreview && (
                 <Suspense fallback={null}>
-                  <DevPreview onSelect={applySample} />
+                  <DevPreview key={devPreviewResetKey} onSelect={applySample} />
                 </Suspense>
               )}
             </div>
