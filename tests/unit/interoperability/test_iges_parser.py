@@ -444,3 +444,66 @@ def test_accepts_missing_s_section_with_nonzero_terminate_s_count() -> None:
     model = parse_iges_bytes(data)
 
     assert model.section_counts["S"] == 0
+
+
+def test_accepts_null_sender_and_receiver_product_id_and_null_unit_name() -> None:
+    """ANSYS-generated files omit sender/receiver product IDs and unit name.
+
+    These are represented as consecutive commas (null parameters) in the G
+    section stream. The parser must return None for the product IDs and derive
+    the canonical unit short name from the unit flag.
+    """
+    from tests.unit.interoperability.iges_fixtures import (
+        _chunks,
+        join_records,
+    )
+    from tests.unit.interoperability.iges_fixtures import (
+        record as iges_record,
+    )
+
+    # Build a minimal IGES with null sender_product_id, null receiver_product_id,
+    # and null unit_name (field 15).  unit_flag=6 (metres).
+    g_stream = (
+        "1H,,1H;,,"                    # fields 1-2 (delimiters) + null field 3
+        "11Hfixture.igs,"              # field 4: file_name
+        "5HANSYS,"                     # field 5: native_system_id
+        "17HIGES parser tests,"        # field 6: preprocessor_version
+        "32,38,6,308,15,,"             # fields 7-11 + null field 12
+        "1,6,,"                        # fields 13-14 (model_scale, unit_flag=6) + null 15
+        "1,1,"                         # fields 16-17
+        "15H20260921.120000,"          # field 18: creation_timestamp
+        "0.001,1000,"                  # fields 19-20
+        "6HOpenAI,12HMachiningPro,"    # fields 21-22
+        "11,0,15H20260921.120000;"     # fields 23-25
+    )
+    g_records = [
+        iges_record(chunk, "G", i)
+        for i, chunk in enumerate(_chunks(g_stream, 72), 1)
+    ]
+    # One minimal LINE entity for D/P sections
+    d1_payload = (
+        "     110       1       0       0"
+        "       0       0       0       0"
+        "00000000"
+    )
+    d2_payload = (
+        "     110       0       0       1"
+        "       0       0       0    LINE"
+        "       0"
+    )
+    d1 = iges_record(d1_payload, "D", 1)
+    d2 = iges_record(d2_payload, "D", 2)
+    p1 = iges_record(f"{'110,0,0,0,1,2,3;':<64}{'1':>8}", "P", 1)
+    terminate = iges_record(
+        f"S{0:>7}G{len(g_records):>7}D{2:>7}P{1:>7}",
+        "T",
+        1,
+    )
+    data = join_records(*g_records, d1, d2, p1, terminate)
+
+    model = parse_iges_bytes(data)
+
+    assert model.global_section.sender_product_id is None
+    assert model.global_section.receiver_product_id is None
+    assert model.global_section.unit_flag == 6
+    assert model.global_section.unit_name == "M"

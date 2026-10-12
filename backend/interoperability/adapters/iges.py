@@ -69,6 +69,8 @@ _IGES_ENTITY_NAMES: dict[int, str] = {
     198: "Toroidal Surface",
     212: "General Note",
     314: "Color Definition",
+    320: "Attribute Table Instance",
+    322: "Attribute Definition Table",
     502: "Vertex List",
     504: "Edge List",
     508: "Loop",

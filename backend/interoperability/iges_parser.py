@@ -96,8 +96,8 @@ _DEFAULT_LIMITS = IgesLimits()
 class IgesGlobalSection:
     parameter_delimiter: str
     record_delimiter: str
-    sender_product_id: str
-    receiver_product_id: str
+    sender_product_id: str | None
+    receiver_product_id: str | None
     file_name: str | None
     native_system_id: str | None
     preprocessor_version: str | None
@@ -400,9 +400,14 @@ def _parse_global(
     unit_flag = _parse_int(tokens[13], "unit flag")
     if unit_flag not in _MM_PER_UNIT_FLAG:
         raise IgesParseError(f"unsupported unit flag {unit_flag}")
-    unit_name = _parse_hollerith(tokens[14], "unit name").strip().upper()
-    if unit_name not in _UNIT_NAMES[unit_flag]:
-        raise IgesParseError(f"unit name conflicts with unit flag {unit_flag}")
+    if tokens[14]:
+        unit_name = _parse_hollerith(tokens[14], "unit name").strip().upper()
+        if unit_name not in _UNIT_NAMES[unit_flag]:
+            raise IgesParseError(f"unit name conflicts with unit flag {unit_flag}")
+    else:
+        # Real-world generators (e.g. ANSYS) omit the unit name field when the
+        # unit flag alone is sufficient; derive the canonical short name from it.
+        unit_name = min(_UNIT_NAMES[unit_flag], key=len)
     minimum_resolution = (
         _parse_decimal(tokens[18], "minimum resolution") if tokens[18] else None
     )
@@ -423,8 +428,8 @@ def _parse_global(
     return IgesGlobalSection(
         parameter_delimiter=parameter_delimiter,
         record_delimiter=record_delimiter,
-        sender_product_id=_parse_hollerith(tokens[2], "sender product id"),
-        receiver_product_id=_parse_hollerith(tokens[11], "receiver product id"),
+        sender_product_id=optional_hollerith(2, "sender product id"),
+        receiver_product_id=optional_hollerith(11, "receiver product id"),
         file_name=optional_hollerith(3, "file name"),
         native_system_id=optional_hollerith(4, "native system id"),
         preprocessor_version=optional_hollerith(5, "preprocessor version"),
