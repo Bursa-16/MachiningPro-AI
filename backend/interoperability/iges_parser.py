@@ -44,16 +44,16 @@ _MM_PER_UNIT_FLAG = {
     11: Decimal("0.0000254"),
 }
 _UNIT_NAMES = {
-    1: {"IN", "INCH"},
-    2: {"MM"},
-    4: {"FT", "FOOT"},
-    5: {"MI", "MILE"},
-    6: {"M"},
-    7: {"KM"},
-    8: {"MIL"},
-    9: {"UM", "MICRON"},
-    10: {"CM"},
-    11: {"UIN", "MICROINCH"},
+    1:  {"IN", "INCH", "INCHES"},
+    2:  {"MM", "MILLIMETER", "MILLIMETRE"},
+    4:  {"FT", "FOOT", "FEET"},
+    5:  {"MI", "MILE", "MILES"},
+    6:  {"M", "METER", "METRE", "METERS", "METRES"},
+    7:  {"KM", "KILOMETER", "KILOMETRE", "KILOMETERS", "KILOMETRES"},
+    8:  {"MIL", "MILS"},
+    9:  {"UM", "MICRON", "MICRONS"},
+    10: {"CM", "CENTIMETER", "CENTIMETRE", "CENTIMETERS", "CENTIMETRES"},
+    11: {"UIN", "MICROINCH", "MICROINCHES"},
 }
 
 
@@ -180,11 +180,23 @@ def _split_physical_records(data: bytes, limits: IgesLimits) -> tuple[_PhysicalR
     for physical_number, raw in enumerate(lines, start=1):
         if raw.endswith(b"\r"):
             raw = raw[:-1]
-        if len(raw) != 80:
+        line_len = len(raw)
+        if line_len > 80:
             raise IgesParseError(
-                f"IGES physical record must be exactly 80 bytes, got {len(raw)}",
+                f"IGES physical record too long ({line_len} bytes); expected 80",
                 sequence=physical_number,
             )
+        if line_len < 9:
+            raise IgesParseError(
+                f"IGES physical record too short ({line_len} bytes); expected 80",
+                sequence=physical_number,
+            )
+        if line_len < 80:
+            # Many IGES generators strip trailing spaces from the 72-character
+            # free-data field while keeping the 8-byte trailer (section code +
+            # 7-digit sequence number) intact at the end of the record.
+            # Reconstruct the canonical 80-byte record by re-padding the data field.
+            raw = raw[:-8].ljust(72) + raw[-8:]
         section = chr(raw[72])
         sequence_text = raw[73:80].decode("ascii")
         if section not in _SECTION_ORDER:
@@ -231,7 +243,10 @@ def _validate_sections(
             )
         grouped[record.section].append(record)
 
-    missing = [name for name, values in grouped.items() if not values]
+    # S (Start) section is required by IGES 5.3 spec but many real-world generators
+    # omit it entirely; tolerate its absence rather than rejecting the file.
+    required_sections = {k for k in _SECTION_ORDER if k != "S"}
+    missing = [name for name in required_sections if not grouped[name]]
     if missing:
         raise IgesParseError(f"missing required IGES section(s): {', '.join(missing)}")
     if len(grouped["T"]) != 1:
@@ -242,6 +257,10 @@ def _validate_sections(
         raise IgesParseError("malformed IGES Terminate section", section="T", sequence=1)
     declared = dict(zip(("S", "G", "D", "P"), map(int, match.groups()), strict=True))
     observed = {name: len(grouped[name]) for name in ("S", "G", "D", "P")}
+    # When the S section is absent, accept any declared S count in the Terminate
+    # record (some generators omit S records but still write S=1 in T).
+    if observed["S"] == 0 and declared["S"] != observed["S"]:
+        declared = {**declared, "S": 0}
     if declared != observed:
         raise IgesParseError(
             "Terminate section counts do not match records: "

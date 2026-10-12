@@ -49,17 +49,20 @@ export default function EngineeringFileInfo({ fileName, route, result, error, pr
 
   const familyNote = () => {
     if (!result) return null
+    // Positive notes are only meaningful when the import actually succeeded or
+    // partially succeeded; suppress them when the adapter reported a failure.
+    const failed = result.import_status === 'FAILED' || result.import_status === 'PARSE_ERROR'
     switch (route) {
       case 'DRAWING_IMAGE':
         return t('drNonPdfNote')
       case 'DRAWING_VECTOR':
         return t('drDrawingAnalysisNote')
       case 'CAD_GEOMETRY':
-        return t('drCadNote')
+        return failed ? null : t('drCadNote')
       case 'MESH_GEOMETRY':
-        return t('drMeshNote')
+        return failed ? null : t('drMeshNote')
       case 'NC_PROGRAM':
-        return t('drNcNote')
+        return failed ? null : t('drNcNote')
       default:
         return null
     }

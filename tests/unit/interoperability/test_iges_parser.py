@@ -122,13 +122,42 @@ def test_rejects_malformed_physical_or_section_structure(mutator, message: str) 
         parse_iges_bytes(mutator(make_iges()))
 
 
-@pytest.mark.parametrize("delta", [-1, 1])
-def test_rejects_non_80_column_record(delta: int) -> None:
+@pytest.mark.parametrize(
+    ("delta", "message"),
+    [
+        # Removing the last byte of a sequence number corrupts the 8-byte trailer
+        # (section code lands on a space → invalid section code), not a simple
+        # short-line that can be padded.
+        (-1, "section code"),
+        # One extra byte makes the record too long.
+        (1, "too long"),
+    ],
+)
+def test_rejects_corrupted_or_oversized_record(delta: int, message: str) -> None:
     records = make_iges().splitlines()
     records[0] = records[0][:-1] if delta < 0 else records[0] + b"X"
 
-    with pytest.raises(IgesParseError, match="80 bytes"):
+    with pytest.raises(IgesParseError, match=message):
         parse_iges_bytes(b"\n".join(records) + b"\n")
+
+
+def test_accepts_short_lines_with_stripped_trailing_spaces() -> None:
+    """Real-world: generators that strip trailing spaces from the 72-char data field."""
+    data = make_iges()
+    short_lines: list[bytes] = []
+    for line in data.split(b"\n"):
+        if not line:
+            continue
+        # Strip trailing spaces from positions 0-71 only; keep section+seq at the end
+        data_part = line[:72].rstrip()
+        trailer = line[72:]
+        short_lines.append(data_part + trailer)
+    short_data = b"\n".join(short_lines) + b"\n"
+
+    model = parse_iges_bytes(short_data)
+
+    assert model.section_counts["G"] >= 1
+    assert len(model.entities) == 1
 
 
 @pytest.mark.parametrize(
@@ -344,3 +373,74 @@ def test_reference_depth_limit_is_independent_of_directory_order() -> None:
             ),
             limits=IgesLimits(max_reference_depth=1),
         )
+
+
+# ---------------------------------------------------------------------------
+# Real-world tolerance: common deviations found in files from shipping CAD
+# and geometry pipeline exporters.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("unit_flag", "unit_name"),
+    [
+        (2, "MILLIMETER"),
+        (2, "MILLIMETRE"),
+        (6, "METER"),
+        (6, "METRE"),
+        (6, "METERS"),
+        (1, "INCHES"),
+        (4, "FEET"),
+        (7, "KILOMETER"),
+        (7, "KILOMETRE"),
+        (9, "MICRON"),
+        (10, "CENTIMETER"),
+        (10, "CENTIMETRE"),
+        (11, "MICROINCH"),
+    ],
+)
+def test_accepts_common_unit_name_aliases(unit_flag: int, unit_name: str) -> None:
+    """Unit name aliases used by real-world IGES exporters are tolerated."""
+    model = parse_iges_bytes(make_iges(unit_flag=unit_flag, unit_name=unit_name))
+
+    assert model.global_section.unit_flag == unit_flag
+
+
+def test_accepts_missing_s_section_with_s_zero_in_terminate() -> None:
+    """Generators that omit S records and correctly declare S=0 in the T record."""
+    lines = make_iges().split(b"\n")
+    import re as _re
+
+    rebuilt: list[bytes] = []
+    for line in lines:
+        if not line:
+            continue
+        section = chr(line[72])
+        if section == "S":
+            continue
+        if section == "T":
+            payload = line[:72].decode("ascii").rstrip()
+            m = _re.fullmatch(r"S\s*(\d+)G\s*(\d+)D\s*(\d+)P\s*(\d+)\s*", payload)
+            assert m
+            _, g, d, p = m.groups()
+            new_payload = f"S{0:>7}G{int(g):>7}D{int(d):>7}P{int(p):>7}"
+            rebuilt.append(f"{new_payload:<72}".encode("ascii") + line[72:])
+        else:
+            rebuilt.append(line)
+    data = b"\n".join(rebuilt) + b"\n"
+
+    model = parse_iges_bytes(data)
+
+    assert model.section_counts["S"] == 0
+    assert model.section_counts["G"] >= 1
+
+
+def test_accepts_missing_s_section_with_nonzero_terminate_s_count() -> None:
+    """Generators that omit S records but still declare S=1 in the T record."""
+    lines = make_iges().split(b"\n")
+    # Drop S records; leave T record unchanged (still declares S=1)
+    data = b"\n".join(line for line in lines if line and chr(line[72]) != "S") + b"\n"
+
+    model = parse_iges_bytes(data)
+
+    assert model.section_counts["S"] == 0
