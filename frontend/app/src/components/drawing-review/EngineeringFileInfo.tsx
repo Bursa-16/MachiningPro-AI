@@ -58,7 +58,8 @@ export default function EngineeringFileInfo({ fileName, route, result, error, pr
       case 'DRAWING_VECTOR':
         return t('drDrawingAnalysisNote')
       case 'CAD_GEOMETRY':
-        return failed ? null : t('drCadNote')
+        if (failed) return null
+        return result.has_renderable_geometry ? t('drCadNote') : t('drCadStructureNote')
       case 'MESH_GEOMETRY':
         return failed ? null : t('drMeshNote')
       case 'NC_PROGRAM':

@@ -264,6 +264,14 @@ def import_file(
         for e in (document.fidelity_report.events if document.fidelity_report else [])
     ]
 
+    from backend.interoperability.geometry import CanonicalGeometry
+
+    geom = document.geometry
+    has_renderable_geometry = (
+        isinstance(geom, CanonicalGeometry)
+        and (len(geom.curves) > 0 or len(geom.surfaces) > 0)
+    )
+
     return {
         "file_name": filename,
         "format_id": document.format_descriptor.format_id,
@@ -275,6 +283,7 @@ def import_file(
         "import_status": import_status,
         "capability_level": document.capability_level.value,
         "entity_count": display_entity_count,
+        "has_renderable_geometry": has_renderable_geometry,
         "metadata": entity_meta,
         "fidelity_events": fidelity_events[:10],  # cap at 10 for API response
         "adapter_id": document.adapter_id,

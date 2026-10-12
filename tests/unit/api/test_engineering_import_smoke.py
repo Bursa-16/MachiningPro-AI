@@ -289,3 +289,60 @@ class TestSmoke05Iges:
         assert len(doc.entity_refs) > 0
         has_meta = any(bool(ref.metadata) for ref in doc.entity_refs)
         assert has_meta, "IGES entities must include basic metadata dict"
+
+
+# ===========================================================================
+# Smoke 6 — has_renderable_geometry (CAD_IMPORT_IGES_03)
+# ===========================================================================
+
+def _has_renderable_geometry(doc) -> bool:
+    """Apply the same logic as import_file() in engineering_import.py."""
+    from backend.interoperability.geometry import CanonicalGeometry
+    geom = doc.geometry
+    return isinstance(geom, CanonicalGeometry) and (
+        len(geom.curves) > 0 or len(geom.surfaces) > 0
+    )
+
+
+_POINT_ONLY_IGES = make_iges(
+    entities=(
+        EntitySpec(116, "116,10.0,20.0,30.0,0;", label="POINT"),
+    )
+)
+
+_LINE_BEARING_IGES = make_iges(
+    entities=(
+        EntitySpec(110, "110,0.0,0.0,0.0,100.0,0.0,0.0;", label="LINE"),
+    )
+)
+
+
+class TestSmoke06HasRenderableGeometry:
+    """POINT_ONLY_IGES_HAS_RENDERABLE_GEOMETRY=NO, LINE_IGES=YES,
+    STL_MESH=NO (mesh geometry is not in CanonicalGeometry curves/surfaces)."""
+
+    def test_point_only_iges_no_renderable_geometry(self):
+        """Point entity (type 116) must NOT count as renderable geometry."""
+        doc = _ingest_bytes(_POINT_ONLY_IGES, "point_cloud.iges")
+        assert doc.normalization_status in (
+            NormalizationStatus.SUCCESS,
+            NormalizationStatus.PARTIAL,
+        ), f"unexpected status: {doc.normalization_status}"
+        assert not _has_renderable_geometry(doc), (
+            "Point-only IGES must have has_renderable_geometry=False"
+        )
+
+    def test_line_bearing_iges_has_renderable_geometry(self):
+        """Line entity (type 110) MUST count as renderable geometry."""
+        doc = _ingest_bytes(_LINE_BEARING_IGES, "line_model.iges")
+        assert _has_renderable_geometry(doc), (
+            "Line-bearing IGES must have has_renderable_geometry=True"
+        )
+
+    def test_stl_no_renderable_geometry_in_canonical(self):
+        """STL mesh geometry is not stored as CanonicalGeometry curves/surfaces."""
+        from tests.unit.interoperability.test_universal_import import _STL_ASCII_MINIMAL
+        doc = _ingest_bytes(_STL_ASCII_MINIMAL.encode(), "part.stl")
+        assert not _has_renderable_geometry(doc), (
+            "STL mesh geometry must not register as has_renderable_geometry"
+        )

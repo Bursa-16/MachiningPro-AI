@@ -322,6 +322,7 @@ export interface TranslationDictionary {
   drDrawingAnalysisNote: string
   drNonPdfNote: string
   drCadNote: string
+  drCadStructureNote: string
   drMeshNote: string
   drNcNote: string
   drImportError: string

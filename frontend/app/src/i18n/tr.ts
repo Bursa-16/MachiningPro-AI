@@ -324,6 +324,7 @@ export const trTranslations: TranslationDictionary = {
   drDrawingAnalysisNote: 'Bu dosya için çizim analizi hattı mevcut.',
   drNonPdfNote: 'Tam YZ destekli çizim analizi için PDF yükleyin.',
   drCadNote: 'CAD geometrisi yüklendi. Varlık meta verisi çıkarıldı.',
+  drCadStructureNote: 'IGES yapısı ayrıştırıldı. Varlık meta verisi çıkarıldı.',
   drMeshNote: 'Mesh geometrisi yüklendi. Üçgen/köşe verisi çıkarıldı.',
   drNcNote: 'NC programı yüklendi. G-kodu blokları ayrıştırıldı.',
   drImportError: 'Dosya içe aktarılamadı.',

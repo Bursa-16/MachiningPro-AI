@@ -34,6 +34,7 @@ export interface ImportResult {
     | 'UNKNOWN'
   capability_level: string
   entity_count: number
+  has_renderable_geometry: boolean
   metadata: Record<string, string | number | boolean | null>
   fidelity_events?: Array<{ class: string; description: string }>
   adapter_id?: string

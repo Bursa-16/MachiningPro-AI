@@ -324,6 +324,7 @@ export const enTranslations: TranslationDictionary = {
   drDrawingAnalysisNote: 'Drawing analysis pipeline is available for this file.',
   drNonPdfNote: 'Upload a PDF for full AI-assisted drawing analysis.',
   drCadNote: 'CAD geometry loaded. Entity metadata extracted.',
+  drCadStructureNote: 'IGES structure parsed. Entity metadata extracted.',
   drMeshNote: 'Mesh geometry loaded. Triangle/vertex data extracted.',
   drNcNote: 'NC program loaded. G-code blocks parsed.',
   drImportError: 'The file could not be imported.',
