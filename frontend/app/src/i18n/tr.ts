@@ -327,4 +327,21 @@ export const trTranslations: TranslationDictionary = {
   drMeshNote: 'Mesh geometrisi yüklendi. Üçgen/köşe verisi çıkarıldı.',
   drNcNote: 'NC programı yüklendi. G-kodu blokları ayrıştırıldı.',
   drImportError: 'Dosya içe aktarılamadı.',
+
+  // CAD Import Page
+  ciPageSubtitle: 'Evrensel mühendislik dosyası içe aktarma, format algılama ve meta veri inceleme.',
+  ciLoadAnother: 'Başka Dosya Yükle',
+  ciPreviewUnavailable: 'Önizleme mevcut değil',
+  ciPreviewUnavailableHint: 'Bu format için herhangi bir işleyici mevcut değil. İçe aktarma meta verisi yukarıda gösterilmektedir.',
+  ciDxfPreview: 'DXF Önizleme',
+  ciSelectPrompt: 'Format, meta veri ve yetenek düzeyini incelemek için bir mühendislik dosyası seçin.',
+  ciErrFileTooLarge: 'Dosya çok büyük. Maksimum boyut 64 MB.',
+  ciErrAuth: 'Kimlik doğrulama gerekli. Lütfen tekrar giriş yapın.',
+  ciErrInvalidFile: 'Geçersiz dosya. Format ayrıştırılamadı.',
+  ciErrImportFailed: 'İçe aktarma başarısız. Bağdaştırıcı bir ayrıştırma hatası bildirdi.',
+  ciErrRequestFailed: 'İstek başarısız. Sunucunun çalıştığını kontrol edin.',
+  ciErrRenderFailed: 'DXF önizleme mevcut değil — işlenebilir geometri (LINE/CIRCLE/ARC) bulunamadı.',
+  ciPdfNote: 'YZ destekli çizim analizi için Teknik Çizim Zekasını kullanın.',
+  ciAdapterUsed: 'Bağdaştırıcı',
+  ciFidelityEvents: 'Doğruluk Notları',
 }

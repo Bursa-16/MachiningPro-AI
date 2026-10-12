@@ -325,4 +325,21 @@ export interface TranslationDictionary {
   drMeshNote: string
   drNcNote: string
   drImportError: string
+
+  // CAD Import Page
+  ciPageSubtitle: string
+  ciLoadAnother: string
+  ciPreviewUnavailable: string
+  ciPreviewUnavailableHint: string
+  ciDxfPreview: string
+  ciSelectPrompt: string
+  ciErrFileTooLarge: string
+  ciErrAuth: string
+  ciErrInvalidFile: string
+  ciErrImportFailed: string
+  ciErrRequestFailed: string
+  ciErrRenderFailed: string
+  ciPdfNote: string
+  ciAdapterUsed: string
+  ciFidelityEvents: string
 }

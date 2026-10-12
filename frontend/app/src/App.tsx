@@ -4,6 +4,7 @@ import AppShell from './layouts/AppShell'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import TechnicalDrawingIntelligencePage from './pages/TechnicalDrawingIntelligencePage'
+import CadImportPage from './pages/CadImportPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   return (
@@ -60,7 +61,7 @@ function ProtectedRoutes() {
         <Route path="app/resources/libraries" element={capability('Libraries')} />
 
         {/* CAD & Drawing */}
-        <Route path="app/cad-drawing/cad-import" element={capability('CAD Import')} />
+        <Route path="app/cad-drawing/cad-import" element={<CadImportPage />} />
         <Route
           path="app/cad-drawing/technical-drawing-intelligence"
           element={<TechnicalDrawingIntelligencePage reviewer={user} />}

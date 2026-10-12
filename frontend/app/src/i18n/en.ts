@@ -327,4 +327,21 @@ export const enTranslations: TranslationDictionary = {
   drMeshNote: 'Mesh geometry loaded. Triangle/vertex data extracted.',
   drNcNote: 'NC program loaded. G-code blocks parsed.',
   drImportError: 'The file could not be imported.',
+
+  // CAD Import Page
+  ciPageSubtitle: 'Universal engineering file import, format detection, and metadata inspection.',
+  ciLoadAnother: 'Load Another File',
+  ciPreviewUnavailable: 'Preview unavailable',
+  ciPreviewUnavailableHint: 'No renderer is available for this format. Import metadata is shown above.',
+  ciDxfPreview: 'DXF Preview',
+  ciSelectPrompt: 'Select an engineering file to inspect its format, metadata, and capability level.',
+  ciErrFileTooLarge: 'File too large. Maximum size is 64 MB.',
+  ciErrAuth: 'Authentication required. Please sign in again.',
+  ciErrInvalidFile: 'Invalid file. The format could not be parsed.',
+  ciErrImportFailed: 'Import failed. The adapter reported a parsing error.',
+  ciErrRequestFailed: 'Request failed. Check that the server is running.',
+  ciErrRenderFailed: 'DXF preview unavailable — no renderable geometry (LINE/CIRCLE/ARC) found.',
+  ciPdfNote: 'For AI-powered drawing analysis, use Technical Drawing Intelligence.',
+  ciAdapterUsed: 'Adapter',
+  ciFidelityEvents: 'Fidelity Notes',
 }
