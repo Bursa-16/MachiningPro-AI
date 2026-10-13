@@ -343,4 +343,11 @@ export interface TranslationDictionary {
   ciPdfNote: string
   ciAdapterUsed: string
   ciFidelityEvents: string
+
+  // 3D Mesh Viewer (CAD_3D_VIEWER_01)
+  ciMeshPreview: string
+  ciViewerFit: string
+  ciViewerReset: string
+  ciViewerLoading: string
+  ciViewerError: string
 }

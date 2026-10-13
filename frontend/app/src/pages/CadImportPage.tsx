@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FolderOpen, LoaderCircle, RefreshCw, X } from 'lucide-react'
 import Panel from '../components/ui/Panel'
 import EngineeringFileInfo from '../components/drawing-review/EngineeringFileInfo'
+import MeshViewer from '../components/cad-viewer/MeshViewer'
 import { useLocale } from '../i18n'
 import { detectFormatByFile, NATIVE_ACCEPT } from '../lib/engineeringFormats'
 import type { FormatRoute } from '../lib/engineeringFormats'
@@ -43,6 +44,8 @@ export default function CadImportPage() {
   const [dxfPreviewUrl, setDxfPreviewUrl] = useState<string | null>(null)
   const [dxfPreviewError, setDxfPreviewError] = useState<string | null>(null)
   const [hasFile, setHasFile] = useState(false)
+  const [currentFile, setCurrentFile] = useState<File | null>(null)
+  const [importFormatId, setImportFormatId] = useState<string | null>(null)
 
   // Revoke object URLs on unmount to avoid memory leaks
   useEffect(() => {
@@ -69,11 +72,13 @@ export default function CadImportPage() {
 
       setFileName(file.name)
       setImportRoute(route)
+      setImportFormatId(detected?.formatId ?? null)
       setImportResult(null)
       setImportError(null)
       setDxfPreviewError(null)
       setImportLoading(true)
       setHasFile(true)
+      setCurrentFile(file)
 
       if (route === 'DRAWING_IMAGE') {
         setImagePreviewUrl(URL.createObjectURL(file))
@@ -130,13 +135,26 @@ export default function CadImportPage() {
     setDxfPreviewError(null)
     setImportLoading(false)
     setHasFile(false)
+    setCurrentFile(null)
+    setImportFormatId(null)
   }
 
+  // 3D viewer: STL only, SUCCESS status, renderable geometry confirmed (HARD RULE 06)
+  const showMeshViewer =
+    currentFile !== null &&
+    importResult !== null &&
+    importRoute === 'MESH_GEOMETRY' &&
+    importFormatId === 'STL' &&
+    importResult.import_status === 'SUCCESS' &&
+    importResult.has_renderable_geometry
+
+  // Static "Preview Unavailable" panel for CAD/NC and any route without a dedicated viewer
   const showPreviewUnavailable =
     importResult !== null &&
     importRoute !== null &&
     importRoute !== 'DRAWING_IMAGE' &&
     importRoute !== 'DRAWING_VECTOR' &&
+    importRoute !== 'MESH_GEOMETRY' &&
     importRoute !== 'UNKNOWN'
 
   const showDxfPreviewSection =
@@ -291,7 +309,17 @@ export default function CadImportPage() {
           </Panel>
         )}
 
-        {/* Preview unavailable panel for STEP/IGES/STL/OBJ/3MF/NC */}
+        {/* 3D Mesh Viewer panel — real geometry from the uploaded file */}
+        {showMeshViewer && currentFile && (
+          <Panel title={t('ciMeshPreview')}>
+            <MeshViewer
+              key={`${currentFile.name}-${currentFile.lastModified}`}
+              file={currentFile}
+            />
+          </Panel>
+        )}
+
+        {/* Preview unavailable panel for STEP/IGES/NC */}
         {showPreviewUnavailable && (
           <Panel title={t('ciPreviewUnavailable')}>
             <p className="text-sm text-tp-text-3">{t('ciPreviewUnavailableHint')}</p>

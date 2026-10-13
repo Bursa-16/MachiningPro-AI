@@ -345,4 +345,11 @@ export const enTranslations: TranslationDictionary = {
   ciPdfNote: 'For AI-powered drawing analysis, use Technical Drawing Intelligence.',
   ciAdapterUsed: 'Adapter',
   ciFidelityEvents: 'Fidelity Notes',
+
+  // 3D Mesh Viewer (CAD_3D_VIEWER_01)
+  ciMeshPreview: '3D Mesh Preview',
+  ciViewerFit: 'Fit to screen',
+  ciViewerReset: 'Reset view',
+  ciViewerLoading: 'Loading geometry…',
+  ciViewerError: 'Geometry could not be rendered.',
 }

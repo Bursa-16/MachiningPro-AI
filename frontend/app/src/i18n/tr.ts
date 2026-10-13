@@ -345,4 +345,11 @@ export const trTranslations: TranslationDictionary = {
   ciPdfNote: 'YZ destekli çizim analizi için Teknik Çizim Zekasını kullanın.',
   ciAdapterUsed: 'Bağdaştırıcı',
   ciFidelityEvents: 'Doğruluk Notları',
+
+  // 3D Mesh Viewer (CAD_3D_VIEWER_01)
+  ciMeshPreview: '3B Mesh Önizleme',
+  ciViewerFit: 'Ekrana sığdır',
+  ciViewerReset: 'Görünümü sıfırla',
+  ciViewerLoading: 'Geometri yükleniyor…',
+  ciViewerError: 'Geometri oluşturulamadı.',
 }

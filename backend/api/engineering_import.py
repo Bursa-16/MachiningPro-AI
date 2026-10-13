@@ -270,6 +270,10 @@ def import_file(
     has_renderable_geometry = (
         isinstance(geom, CanonicalGeometry)
         and (len(geom.curves) > 0 or len(geom.surfaces) > 0)
+    ) or (
+        # Mesh formats (STL/OBJ/3MF): renderable when triangle count is positive
+        document.format_descriptor.family == FormatFamily.MESH
+        and int(entity_meta.get("triangle_count") or 0) > 0
     )
 
     return {
