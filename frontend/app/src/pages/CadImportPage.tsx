@@ -139,23 +139,30 @@ export default function CadImportPage() {
     setImportFormatId(null)
   }
 
-  // 3D viewer: STL only, SUCCESS status, renderable geometry confirmed (HARD RULE 06)
+  // 3D viewer: STL (file-side parse) or STEP (backend tessellation)
+  const stepPreviewMesh = importResult?.preview_mesh ?? null
+  const isStepFormat = importFormatId?.startsWith('STEP') ?? false
   const showMeshViewer =
-    currentFile !== null &&
     importResult !== null &&
-    importRoute === 'MESH_GEOMETRY' &&
-    importFormatId === 'STL' &&
     importResult.import_status === 'SUCCESS' &&
-    importResult.has_renderable_geometry
+    importResult.has_renderable_geometry &&
+    (
+      // STL/OBJ/3MF: client-side parse from uploaded File
+      (currentFile !== null && importRoute === 'MESH_GEOMETRY' && importFormatId === 'STL') ||
+      // STEP: backend tessellation payload (CAD_GEOMETRY route, STEP-* format ID)
+      (stepPreviewMesh !== null && importRoute === 'CAD_GEOMETRY' && isStepFormat)
+    )
 
-  // Static "Preview Unavailable" panel for CAD/NC and any route without a dedicated viewer
+  // Static "Preview Unavailable" for CAD/NC routes without a dedicated viewer.
+  // STEP is excluded when its tessellation succeeded (viewer shown instead).
   const showPreviewUnavailable =
     importResult !== null &&
     importRoute !== null &&
     importRoute !== 'DRAWING_IMAGE' &&
     importRoute !== 'DRAWING_VECTOR' &&
     importRoute !== 'MESH_GEOMETRY' &&
-    importRoute !== 'UNKNOWN'
+    importRoute !== 'UNKNOWN' &&
+    !(importRoute === 'CAD_GEOMETRY' && isStepFormat && stepPreviewMesh !== null)
 
   const showDxfPreviewSection =
     importRoute === 'DRAWING_VECTOR' &&
@@ -309,13 +316,20 @@ export default function CadImportPage() {
           </Panel>
         )}
 
-        {/* 3D Mesh Viewer panel — real geometry from the uploaded file */}
-        {showMeshViewer && currentFile && (
+        {/* 3D Mesh Viewer panel — STL: client-side parse; STEP: backend tessellation */}
+        {showMeshViewer && (
           <Panel title={t('ciMeshPreview')}>
-            <MeshViewer
-              key={`${currentFile.name}-${currentFile.lastModified}`}
-              file={currentFile}
-            />
+            {stepPreviewMesh !== null ? (
+              <MeshViewer
+                key={`${fileName}-step-preview`}
+                mesh={stepPreviewMesh}
+              />
+            ) : currentFile && (
+              <MeshViewer
+                key={`${currentFile.name}-${currentFile.lastModified}`}
+                file={currentFile}
+              />
+            )}
           </Panel>
         )}
 

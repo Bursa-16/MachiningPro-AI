@@ -20,6 +20,7 @@ import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { LoaderCircle, Maximize2, RotateCcw } from 'lucide-react'
 import { useLocale } from '../../i18n'
+import type { PreviewMesh } from '../../services/engineeringImport'
 
 // ---------------------------------------------------------------------------
 // Scene constants
@@ -66,11 +67,11 @@ function meshMaterial(): THREE.MeshPhongMaterial {
 // Component
 // ---------------------------------------------------------------------------
 
-interface Props {
-  file: File
-}
+type Props =
+  | { file: File; mesh?: never }
+  | { mesh: PreviewMesh; file?: never }
 
-export default function MeshViewer({ file }: Props) {
+export default function MeshViewer(props: Props) {
   const { t } = useLocale()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -83,6 +84,10 @@ export default function MeshViewer({ file }: Props) {
 
   const [loading,    setLoading]    = useState(true)
   const [parseError, setParseError] = useState<string | null>(null)
+
+  // Extract props so effect deps are stable scalar/object references
+  const fileSource = props.file ?? null
+  const meshSource = props.mesh ?? null
 
   useEffect(() => {
     const container = containerRef.current
@@ -146,44 +151,73 @@ export default function MeshViewer({ file }: Props) {
     // ── Unmount flag ───────────────────────────────────────────────────────
     let alive = true
 
-    // ── Load geometry ──────────────────────────────────────────────────────
-    const objectUrl = URL.createObjectURL(file)
-    const ext = (file.name.split('.').pop() ?? '').toLowerCase()
+    const mat = meshMaterial()
+    toDispose.push(mat)
 
-    void (async () => {
-      try {
-        const mat = meshMaterial()
-        toDispose.push(mat)
+    if (fileSource) {
+      // ── File path: async STL / OBJ / 3MF load ─────────────────────────
+      const objectUrl = URL.createObjectURL(fileSource)
+      const ext = (fileSource.name.split('.').pop() ?? '').toLowerCase()
 
-        let root: THREE.Object3D
+      void (async () => {
+        try {
+          let root: THREE.Object3D
 
-        if (ext === 'stl') {
-          const geo = await new STLLoader().loadAsync(objectUrl)
-          geo.computeVertexNormals()
-          toDispose.push(geo)
-          root = new THREE.Mesh(geo, mat)
-        } else if (ext === 'obj') {
-          const group = (await new OBJLoader().loadAsync(objectUrl)) as THREE.Group
-          group.traverse(child => {
-            if (child instanceof THREE.Mesh) {
-              toDispose.push(child.geometry as THREE.BufferGeometry)
-              child.material = mat
-            }
-          })
-          root = group
-        } else {
-          // 3MF
-          const group = (await new ThreeMFLoader().loadAsync(objectUrl)) as THREE.Group
-          group.traverse(child => {
-            if (child instanceof THREE.Mesh) {
-              toDispose.push(child.geometry as THREE.BufferGeometry)
-              child.material = mat
-            }
-          })
-          root = group
+          if (ext === 'stl') {
+            const geo = await new STLLoader().loadAsync(objectUrl)
+            geo.computeVertexNormals()
+            toDispose.push(geo)
+            root = new THREE.Mesh(geo, mat)
+          } else if (ext === 'obj') {
+            const group = (await new OBJLoader().loadAsync(objectUrl)) as THREE.Group
+            group.traverse(child => {
+              if (child instanceof THREE.Mesh) {
+                toDispose.push(child.geometry as THREE.BufferGeometry)
+                child.material = mat
+              }
+            })
+            root = group
+          } else {
+            // 3MF
+            const group = (await new ThreeMFLoader().loadAsync(objectUrl)) as THREE.Group
+            group.traverse(child => {
+              if (child instanceof THREE.Mesh) {
+                toDispose.push(child.geometry as THREE.BufferGeometry)
+                child.material = mat
+              }
+            })
+            root = group
+          }
+
+          if (!alive) return
+
+          scene.add(root)
+
+          const box = new THREE.Box3().setFromObject(root)
+          fitBoxRef.current = box
+          fitToBox(box, camera, controls)
+
+          initPosRef.current.copy(camera.position)
+          initTgtRef.current.copy(controls.target)
+
+          setLoading(false)
+        } catch {
+          if (!alive) return
+          setParseError(t('ciViewerError'))
+          setLoading(false)
+        } finally {
+          URL.revokeObjectURL(objectUrl)
         }
-
-        if (!alive) return
+      })()
+    } else if (meshSource) {
+      // ── Mesh payload path: synchronous build from backend tessellation ──
+      try {
+        const geo = new THREE.BufferGeometry()
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(meshSource.positions, 3))
+        geo.setIndex(meshSource.indices)
+        geo.computeVertexNormals()
+        toDispose.push(geo)
+        const root = new THREE.Mesh(geo, mat)
 
         scene.add(root)
 
@@ -196,13 +230,10 @@ export default function MeshViewer({ file }: Props) {
 
         setLoading(false)
       } catch {
-        if (!alive) return
         setParseError(t('ciViewerError'))
         setLoading(false)
-      } finally {
-        URL.revokeObjectURL(objectUrl)
       }
-    })()
+    }
 
     // ── Cleanup ────────────────────────────────────────────────────────────
     return () => {
@@ -218,9 +249,8 @@ export default function MeshViewer({ file }: Props) {
       cameraRef.current   = null
       controlsRef.current = null
     }
-  // t is stable across renders; including it avoids the lint warning
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file])
+  }, [fileSource, meshSource])
 
   const handleFit = useCallback(() => {
     if (!cameraRef.current || !controlsRef.current || !fitBoxRef.current) return

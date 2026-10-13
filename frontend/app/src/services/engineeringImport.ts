@@ -17,6 +17,18 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+/** Browser-safe tessellated mesh from backend STEP processing */
+export interface PreviewMesh {
+  positions: number[]
+  indices: number[]
+  bounding_box: {
+    min: [number, number, number]
+    max: [number, number, number]
+  }
+  vertex_count: number
+  triangle_count: number
+}
+
 /** Structured response from POST /api/import */
 export interface ImportResult {
   file_name: string
@@ -35,6 +47,7 @@ export interface ImportResult {
   capability_level: string
   entity_count: number
   has_renderable_geometry: boolean
+  preview_mesh?: PreviewMesh | null
   metadata: Record<string, string | number | boolean | null>
   fidelity_events?: Array<{ class: string; description: string }>
   adapter_id?: string

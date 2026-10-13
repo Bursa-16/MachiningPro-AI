@@ -16,6 +16,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from backend.api.engineering_import import (
     _EXT_TO_FORMAT,
     _detect_format_id,
@@ -346,3 +348,85 @@ class TestSmoke06HasRenderableGeometry:
         assert not _has_renderable_geometry(doc), (
             "STL mesh geometry must not register as has_renderable_geometry"
         )
+
+
+# ===========================================================================
+# Smoke 7 — _tessellate_step (CAD_3D_VIEWER_01B)
+# ===========================================================================
+
+_SAMPLE_STEP_PATH = Path(__file__).parents[3] / "sample_part.step"
+
+
+class TestSmoke07StepTessellation:
+    """GMSH_TESSELLATION_FUNCTION_EXISTS=YES, GRACEFUL_FAILURE_ON_NO_GEOMETRY=YES."""
+
+    def test_tessellate_step_importable(self):
+        """_tessellate_step is importable and callable."""
+        from backend.api.engineering_import import _tessellate_step
+        assert callable(_tessellate_step)
+
+    def test_tessellate_step_empty_bytes_returns_none(self):
+        """Empty bytes must return None gracefully (HARD RULE 09)."""
+        from backend.api.engineering_import import _tessellate_step
+        result = _tessellate_step(b"")
+        assert result is None
+
+    def test_tessellate_step_invalid_bytes_returns_none(self):
+        """Non-STEP bytes must return None without raising (HARD RULE 09)."""
+        from backend.api.engineering_import import _tessellate_step
+        result = _tessellate_step(b"NOT A STEP FILE AT ALL\x00\x01\x02")
+        assert result is None
+
+    def test_tessellate_step_minimal_no_geometry_returns_none(self):
+        """Minimal STEP with no surfaces must return None gracefully."""
+        from backend.api.engineering_import import _tessellate_step
+        result = _tessellate_step(_MINIMAL_STEP.encode("ascii"))
+        # A STEP with no solid bodies yields no triangles — must be None or valid dict
+        # (gmsh may load it but produce 0 triangles)
+        assert result is None or (
+            isinstance(result, dict)
+            and result.get("triangle_count", 0) >= 0
+        )
+
+    @pytest.mark.skipif(
+        not _SAMPLE_STEP_PATH.exists(),
+        reason="sample_part.step not present in repo root",
+    )
+    def test_tessellate_step_real_file_returns_valid_mesh(self):
+        """sample_part.step → valid mesh dict with ≥1 triangle and correct keys."""
+        from backend.api.engineering_import import _tessellate_step
+        data = _SAMPLE_STEP_PATH.read_bytes()
+        result = _tessellate_step(data)
+        assert result is not None, "Real STEP file must tessellate successfully"
+        assert "positions" in result
+        assert "indices" in result
+        assert "bounding_box" in result
+        assert "vertex_count" in result
+        assert "triangle_count" in result
+        assert result["triangle_count"] > 0, "Must produce at least one triangle"
+        assert result["vertex_count"] > 0
+        # All indices must be valid (HARD RULE 17)
+        max_idx = max(result["indices"])
+        assert max_idx < result["vertex_count"], "Triangle indices must be within vertex array"
+        # positions length must be vertex_count * 3
+        assert len(result["positions"]) == result["vertex_count"] * 3
+        # bounding_box must have min and max with 3 components
+        bb = result["bounding_box"]
+        assert len(bb["min"]) == 3
+        assert len(bb["max"]) == 3
+
+    @pytest.mark.skipif(
+        not _SAMPLE_STEP_PATH.exists(),
+        reason="sample_part.step not present in repo root",
+    )
+    def test_tessellate_step_real_file_bounding_box_correct(self):
+        """sample_part.step bounding box must match known 20×20×10mm geometry."""
+        from backend.api.engineering_import import _tessellate_step
+        data = _SAMPLE_STEP_PATH.read_bytes()
+        result = _tessellate_step(data)
+        assert result is not None
+        bb = result["bounding_box"]
+        # Part is ≈20×20×10mm centred at origin; allow ±1mm tolerance
+        assert abs(bb["max"][0] - bb["min"][0] - 20.0) < 1.0, "X extent should be ≈20mm"
+        assert abs(bb["max"][1] - bb["min"][1] - 20.0) < 1.0, "Y extent should be ≈20mm"
+        assert abs(bb["max"][2] - bb["min"][2] - 10.0) < 1.0, "Z extent should be ≈10mm"

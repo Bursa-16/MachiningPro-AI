@@ -18,6 +18,7 @@ Level 0–1 metadata for ALL supported formats.
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -77,6 +78,82 @@ _FAMILY_LABELS: dict[str, str] = {
     "DOCUMENT":         "Engineering Document",
     "UNKNOWN":          "Unknown",
 }
+
+# ---------------------------------------------------------------------------
+# STEP tessellation (gmsh) — local only, no cloud, no paid API (HARD RULE 03)
+# ---------------------------------------------------------------------------
+
+def _tessellate_step(data: bytes) -> dict[str, Any] | None:
+    """Tessellate STEP bytes with gmsh.
+
+    Returns a browser-safe preview_mesh dict or None on failure.
+    TEMP_FILE_UNIQUE=YES, TEMP_FILE_CLEANUP=YES, GMSH_FINALIZE_GUARANTEED=YES.
+    Node tags are NOT assumed contiguous/zero-based (HARD RULE 17).
+    Only triangle elements (type 2) are promoted to indices.
+    """
+    try:
+        import gmsh  # noqa: PLC0415
+    except ImportError:
+        return None
+
+    tmp_path: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".step") as f:
+            f.write(data)
+            tmp_path = f.name
+
+        gmsh.initialize(["-v", "0"], interruptible=False)
+        try:
+            gmsh.open(tmp_path)
+            gmsh.model.mesh.generate(2)
+
+            node_tags, coords, _ = gmsh.model.mesh.getNodes()
+            if len(node_tags) == 0:
+                return None
+
+            tag_to_idx: dict[int, int] = {int(t): i for i, t in enumerate(node_tags)}
+
+            elem_types, elem_tags_list, elem_node_tags = gmsh.model.mesh.getElements(dim=2)
+            indices: list[int] = []
+            for _etype, etags, enodes in zip(  # noqa: B905
+                elem_types, elem_tags_list, elem_node_tags
+            ):
+                nodes_per = len(enodes) // max(len(etags), 1)
+                if nodes_per == 3:
+                    for i in range(len(etags)):
+                        t = enodes[i * 3 : (i + 1) * 3]
+                        indices.extend(
+                            [tag_to_idx[int(t[0])], tag_to_idx[int(t[1])], tag_to_idx[int(t[2])]]
+                        )
+
+            if not indices:
+                return None
+
+            xs = coords[0::3]
+            ys = coords[1::3]
+            zs = coords[2::3]
+
+            return {
+                "positions": [float(c) for c in coords],
+                "indices": indices,
+                "bounding_box": {
+                    "min": [float(min(xs)), float(min(ys)), float(min(zs))],
+                    "max": [float(max(xs)), float(max(ys)), float(max(zs))],
+                },
+                "vertex_count": len(node_tags),
+                "triangle_count": len(indices) // 3,
+            }
+        finally:
+            gmsh.finalize()
+    except Exception:  # noqa: BLE001
+        return None
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
 
 # ---------------------------------------------------------------------------
 # Auth helper (same pattern as drawing_analysis.py)
@@ -276,6 +353,18 @@ def import_file(
         and int(entity_meta.get("triangle_count") or 0) > 0
     )
 
+    # STEP preview: local gmsh tessellation (HARD RULE 03, 05, 09, 11, 17)
+    preview_mesh: dict[str, Any] | None = None
+    if (
+        document.format_descriptor.family == FormatFamily.NEUTRAL_EXCHANGE
+        and format_id.startswith("STEP")
+        and import_status == "SUCCESS"
+    ):
+        preview_mesh = _tessellate_step(data)
+        if preview_mesh is not None:
+            # Tessellation proves renderable geometry (HARD RULE 14)
+            has_renderable_geometry = True
+
     return {
         "file_name": filename,
         "format_id": document.format_descriptor.format_id,
@@ -288,6 +377,7 @@ def import_file(
         "capability_level": document.capability_level.value,
         "entity_count": display_entity_count,
         "has_renderable_geometry": has_renderable_geometry,
+        "preview_mesh": preview_mesh,
         "metadata": entity_meta,
         "fidelity_events": fidelity_events[:10],  # cap at 10 for API response
         "adapter_id": document.adapter_id,

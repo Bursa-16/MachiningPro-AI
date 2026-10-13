@@ -20,6 +20,7 @@ dependencies = [
     "Pillow>=10.4,<12",
     "pytesseract>=0.3.13,<0.4",
     "ortools>=9.10,<10",
+    "gmsh==4.15.2",
 ]
 
 [project.optional-dependencies]
