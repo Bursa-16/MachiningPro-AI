@@ -17,5 +17,15 @@ can never elevate itself to authoritative status through this layer.
 """
 
 from backend.empirical.exceptions import EmpiricalDataError
+from backend.empirical.models import VP100EmpiricalRecord, VP100SourceMeta
+from backend.empirical.registry import VP100EmpiricalRegistry, get_vp100_registry
+from backend.empirical.seed_vp100 import seed_vp100_registry
 
-__all__ = ["EmpiricalDataError"]
+__all__ = [
+    "EmpiricalDataError",
+    "VP100EmpiricalRecord",
+    "VP100SourceMeta",
+    "VP100EmpiricalRegistry",
+    "get_vp100_registry",
+    "seed_vp100_registry",
+]

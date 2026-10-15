@@ -52,7 +52,9 @@ class Unit(StrEnum):
     DIMENSIONLESS = "1"
     MM3 = "mm3"
     MM3_MIN = "mm3/min"
+    CM3 = "cm3"
     MIN = "min"
+    RQ_UM = "Rq_um"
 
 
 @dataclass(frozen=True, slots=True)
