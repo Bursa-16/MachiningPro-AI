@@ -19,7 +19,16 @@ can never elevate itself to authoritative status through this layer.
 from backend.empirical.exceptions import EmpiricalDataError
 from backend.empirical.models import VP100EmpiricalRecord, VP100SourceMeta
 from backend.empirical.registry import VP100EmpiricalRegistry, get_vp100_registry
+from backend.empirical.seed_toollife968 import seed_toollife968_registry
 from backend.empirical.seed_vp100 import seed_vp100_registry
+from backend.empirical.toollife968_models import (
+    ToolLife968Observation,
+    ToolLife968SourceMeta,
+)
+from backend.empirical.toollife968_registry import (
+    ToolLife968Registry,
+    get_toollife968_registry,
+)
 
 __all__ = [
     "EmpiricalDataError",
@@ -28,4 +37,9 @@ __all__ = [
     "VP100EmpiricalRegistry",
     "get_vp100_registry",
     "seed_vp100_registry",
+    "ToolLife968Observation",
+    "ToolLife968SourceMeta",
+    "ToolLife968Registry",
+    "get_toollife968_registry",
+    "seed_toollife968_registry",
 ]
