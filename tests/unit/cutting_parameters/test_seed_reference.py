@@ -151,6 +151,33 @@ class TestNumericHelpers:
         assert lo == Decimal("80")
         assert hi == Decimal("180")
 
+    def test_parse_range_bold_markdown(self):
+        """Real source file wraps values in **bold** markdown."""
+        lo, hi = _parse_range("**120–280**")
+        assert lo == Decimal("120")
+        assert hi == Decimal("280")
+
+    def test_parse_range_bold_with_plus(self):
+        lo, hi = _parse_range("**300–1200+**")
+        assert lo == Decimal("300")
+        assert hi == Decimal("1200")
+
+    def test_parse_range_bold_with_asterisk(self):
+        lo, hi = _parse_range("**120–350***")
+        assert lo == Decimal("120")
+        assert hi == Decimal("350")
+
+    def test_parse_range_em_dash(self):
+        """Em-dash (U+2014) is explicitly supported alongside en-dash."""
+        lo, hi = _parse_range("80—180")
+        assert lo == Decimal("80")
+        assert hi == Decimal("180")
+
+    def test_parse_range_malformed_raises(self):
+        """Cell with no recognised range separator must raise ValueError."""
+        with pytest.raises(ValueError):
+            _parse_range("notarange")
+
 
 # ---------------------------------------------------------------------------
 # Record count verification

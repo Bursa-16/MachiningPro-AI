@@ -89,7 +89,7 @@ def _parse_range(cell: str) -> tuple[Decimal, Decimal]:
     Accepts en-dash (U+2013), em-dash (U+2014), and ASCII hyphen as range
     separator.  Trailing ``*`` or ``+`` markers are stripped before parsing.
     """
-    s = cell.strip().rstrip("*+ \t")
+    s = cell.strip().strip("*").rstrip("+ \t")
     for dash in ("–", "—"):  # en-dash, em-dash
         if dash in s:
             lo, hi = s.split(dash, 1)
