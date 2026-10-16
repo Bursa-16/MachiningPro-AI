@@ -415,4 +415,46 @@ export interface TranslationDictionary {
   // Cutting Parameters — validation
   cpVcOutOfRange: string
   cpDiameterInvalid: string
+
+  // Tool Life Explorer (TOOL_LIFE_UI_INTEGRATION_01)
+  tlPageTitle: string
+  tlPageSubtitle: string
+  tlEvidenceStatus: string
+  tlObservations: string
+  tlTools: string
+  tlSensorFeatures: string
+  tlEolObservations: string
+  tlDatasetAvailable: string
+  tlEmpiricalExploration: string
+  tlProductionNotValidated: string
+  tlSelectTool: string
+  tlToolLabel: string
+  tlToolType: string
+  tlTotalCycles: string
+  tlAdocMm: string
+  tlRdocMm: string
+  tlHolderLengthMm: string
+  tlHardnessMean: string
+  tlEolPresent: string
+  tlEolYes: string
+  tlEolNo: string
+  tlLifecycleChart: string
+  tlSensorChart: string
+  tlSelectSensorFeature: string
+  tlCycleToFailureLabel: string
+  tlCycleToFailureSemantics: string
+  tlLeakageWarning: string
+  tlLeakageWarningDetail: string
+  tlLimitations: string
+  tlSourceProvenance: string
+  tlSourceDoi: string
+  tlSourceSheet: string
+  tlDatasetNotConfigured: string
+  tlDatasetNotConfiguredDetail: string
+  tlLoadingTools: string
+  tlLoadingDetail: string
+  tlObsIndex: string
+  tlNormalized: string
+  tlEolMarker: string
+  tlFeatureIndex: string
 }
