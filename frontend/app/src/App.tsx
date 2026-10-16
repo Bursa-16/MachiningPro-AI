@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import TechnicalDrawingIntelligencePage from './pages/TechnicalDrawingIntelligencePage'
 import CadImportPage from './pages/CadImportPage'
+import CuttingParametersPage from './pages/CuttingParametersPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   return (
@@ -41,7 +42,7 @@ function ProtectedRoutes() {
 
         {/* Engineering */}
         <Route path="app/engineering/machining-analysis" element={capability('Machining Analysis')} />
-        <Route path="app/engineering/cutting-parameters" element={capability('Cutting Parameters')} />
+        <Route path="app/engineering/cutting-parameters" element={<CuttingParametersPage />} />
         <Route path="app/engineering/tool-life" element={capability('Tool Life')} />
         <Route path="app/engineering/surface-roughness" element={capability('Surface Roughness')} />
 

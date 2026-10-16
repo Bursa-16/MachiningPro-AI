@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from .auth import LoginRequest, authenticate, get_configured_credentials
+from .cutting_parameters import router as cutting_parameters_router
 from .drawing_analysis import router as drawing_analysis_router
 from .engineering_import import router as engineering_import_router
 
@@ -24,6 +25,7 @@ class ChangePasswordRequest(BaseModel):
 
 # Create FastAPI application
 app = FastAPI(title="MachiningPro AI", version="0.1.0-alpha.10")
+app.include_router(cutting_parameters_router)
 app.include_router(drawing_analysis_router)
 app.include_router(engineering_import_router)
 

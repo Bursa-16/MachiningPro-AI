@@ -350,4 +350,61 @@ export interface TranslationDictionary {
   ciViewerReset: string
   ciViewerLoading: string
   ciViewerError: string
+
+  // Cutting Parameters Page (CUTTING_PARAMETERS_UI_INTEGRATION_01)
+  cpPageTitle: string
+  cpPageSubtitle: string
+  cpSelectOperation: string
+  cpSelectIsoGroup: string
+  cpSelectToolMaterial: string
+  cpAnyToolMaterial: string
+  cpQueryButton: string
+  cpMatchLevel: string
+  cpMatchIsoGroup: string
+  cpMatchNoMatch: string
+  cpNoMatchHint: string
+  cpAuthorityLabel: string
+  cpEvidenceReferenceOnly: string
+  cpSource: string
+  cpLimitation: string
+  cpVcRange: string
+  cpFeedRange: string
+  cpFzRange: string
+  cpApRange: string
+  cpMissingParam: string
+  cpCalcTitle: string
+  cpDiameterMm: string
+  cpSelectedVc: string
+  cpRpmResult: string
+  cpRpmFormula: string
+  cpToothCount: string
+  cpFeedRateResult: string
+  cpFeedFormula: string
+  cpMachineLimitNote: string
+  cpReferenceGuidanceNote: string
+  cpScopeLabel: string
+  cpOperationTurning: string
+  cpOperationMilling: string
+  cpOperationDrilling: string
+  cpOperationReaming: string
+  cpIsoP: string
+  cpIsoM: string
+  cpIsoK: string
+  cpIsoN: string
+  cpIsoS: string
+  cpIsoH: string
+  cpToolCarbide: string
+  cpToolHss: string
+  cpToolCermet: string
+  cpToolCeramic: string
+  cpToolCbn: string
+  cpToolPcd: string
+  cpCalcEnterDiameter: string
+  cpCalcEnterVc: string
+  cpUnitMmin: string
+  cpUnitMmRev: string
+  cpUnitMmTooth: string
+  cpUnitMm: string
+  cpUnitRpm: string
+  cpUnitMmMin: string
 }
