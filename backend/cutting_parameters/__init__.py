@@ -24,9 +24,9 @@ Stage 3G establishes the DATA LAYER:
   scope-filtered collection queries.
 * :mod:`~backend.cutting_parameters.validation` — authority gate
   functions (``require_authoritative``, ``is_usable_for_authority``).
-
-No production seed data is included.  All numeric values must be
-supplied with explicit, verifiable provenance.
+* :func:`~backend.cutting_parameters.seed_reference.seed_reference_registry` —
+  populates a registry from the external research report (REFERENCE_ONLY
+  records only; env var ``MACHININGPRO_CUTTING_PARAM_REF_PATH`` required).
 """
 
 from backend.cutting_parameters.models import (
@@ -39,6 +39,7 @@ from backend.cutting_parameters.models import (
     QuantityRange,
 )
 from backend.cutting_parameters.registry import CuttingParameterRegistry
+from backend.cutting_parameters.seed_reference import seed_reference_registry
 from backend.cutting_parameters.validation import (
     ACCEPTABLE_AUTHORITATIVE_SOURCE_TYPES,
     REJECTED_SOURCE_TYPES,
@@ -59,4 +60,5 @@ __all__ = [
     "QuantityRange",
     "is_usable_for_authority",
     "require_authoritative",
+    "seed_reference_registry",
 ]
