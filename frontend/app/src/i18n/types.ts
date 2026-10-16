@@ -407,4 +407,12 @@ export interface TranslationDictionary {
   cpUnitMm: string
   cpUnitRpm: string
   cpUnitMmMin: string
+
+  // Sidebar
+  sidebarPinned: string
+  sidebarUnpinned: string
+
+  // Cutting Parameters — validation
+  cpVcOutOfRange: string
+  cpDiameterInvalid: string
 }

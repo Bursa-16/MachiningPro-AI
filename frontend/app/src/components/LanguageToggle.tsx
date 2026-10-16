@@ -13,8 +13,8 @@ export const LanguageToggle: React.FC<{ className?: string }> = ({ className = '
         title="Türkçeye geç"
         className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
           locale === 'tr'
-            ? 'bg-mp-orange text-white'
-            : 'bg-mp-surface-hover text-mp-text-2 hover:bg-mp-surface-1'
+            ? 'bg-tp-accent text-white'
+            : 'bg-tp-surface-2 text-tp-text-2 hover:bg-tp-surface-3 hover:text-tp-text'
         }`}
       >
         TR
@@ -26,8 +26,8 @@ export const LanguageToggle: React.FC<{ className?: string }> = ({ className = '
         title="Switch to English"
         className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
           locale === 'en'
-            ? 'bg-mp-orange text-white'
-            : 'bg-mp-surface-hover text-mp-text-2 hover:bg-mp-surface-1'
+            ? 'bg-tp-accent text-white'
+            : 'bg-tp-surface-2 text-tp-text-2 hover:bg-tp-surface-3 hover:text-tp-text'
         }`}
       >
         EN

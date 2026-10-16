@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import * as Collapsible from '@radix-ui/react-collapsible'
 import { ChevronDown, ChevronRight, ChevronLeft, Pin, PinOff } from 'lucide-react'
 import { NAV_GROUPS, HOME_ITEM } from '../lib/navigation'
+import { useLocale } from '../i18n'
 import type { LucideIcon } from 'lucide-react'
 
 // ── Persistence ──────────────────────────────────────────────────────────────
@@ -11,13 +12,15 @@ interface SidebarPrefs { collapsed: boolean; pinned: boolean; openGroups: string
 const SIDEBAR_KEY = 'machiningpro_sidebar_state'
 
 function loadPrefs(): SidebarPrefs {
-  try {
-    // Canonical key
-    const raw = localStorage.getItem(SIDEBAR_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch { /* ignore */ }
-  // First visit on a phone-width screen: start collapsed so content keeps its width.
   const narrow = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches
+  try {
+    const raw = localStorage.getItem(SIDEBAR_KEY)
+    if (raw) {
+      const saved = JSON.parse(raw)
+      // Always force-collapse on narrow viewports regardless of stored state.
+      return { ...saved, collapsed: narrow ? true : saved.collapsed }
+    }
+  } catch { /* ignore */ }
   return { collapsed: !!narrow, pinned: true, openGroups: ['engineering'] }
 }
 
@@ -48,6 +51,7 @@ function CollapseTooltip({ label, children }: { label: string; children: React.R
 export default function Sidebar({ role }: { role: string | null }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useLocale()
   const isAdmin = role === 'admin'
 
   const [prefs, setPrefs] = useState<SidebarPrefs>(loadPrefs)
@@ -64,6 +68,23 @@ export default function Sidebar({ role }: { role: string | null }) {
       savePrefs(next)
       return next
     })
+  }, [])
+
+  // Auto-collapse when the viewport becomes narrow (e.g. browser resize or device rotation).
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 767px)')
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        setPrefs(prev => {
+          if (prev.collapsed) return prev
+          const next = { ...prev, collapsed: true }
+          savePrefs(next)
+          return next
+        })
+      }
+    }
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
   }, [])
 
   // Auto-open group containing the current route
@@ -195,18 +216,18 @@ export default function Sidebar({ role }: { role: string | null }) {
         {effectivelyExpanded && (
           <button
             onClick={() => updatePrefs({ pinned: !isPinned })}
-            title={isPinned ? 'Sabitlemeyi kaldır' : 'Sabitle'}
+            title={isPinned ? t('sidebarUnpinned') : t('sidebarPinned')}
             className="flex-1 flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px]
                        text-tp-text-3 hover:text-tp-text-2 hover:bg-tp-surface-2 transition-colors"
           >
             {isPinned ? <Pin size={12} /> : <PinOff size={12} />}
-            <span>{isPinned ? 'Sabitlendi' : 'Sabit değil'}</span>
+            <span>{isPinned ? t('sidebarPinned') : t('sidebarUnpinned')}</span>
           </button>
         )}
         {/* Collapse/expand toggle */}
         <button
           onClick={() => updatePrefs({ collapsed: !isCollapsed, pinned: true })}
-          title={isCollapsed ? 'Genişlet' : 'Daralt'}
+          title={isCollapsed ? 'Expand' : 'Collapse'}
           className="flex items-center justify-center w-7 h-7 rounded
                      text-tp-text-3 hover:text-tp-text-2 hover:bg-tp-surface-2 transition-colors"
         >

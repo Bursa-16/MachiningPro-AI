@@ -166,6 +166,15 @@ export default function CuttingParametersPage() {
   // Vc range for calc hint
   const vcRecord = result?.parameters.find(p => p.parameter_type === 'CUTTING_SPEED')
 
+  // D1: Vc out-of-range detection
+  const vcNum = parseFloat(selectedVc)
+  const vcOutOfRange = selectedVc !== '' && vcRecord != null && !isNaN(vcNum) &&
+    (vcNum < vcRecord.min_value || vcNum > vcRecord.max_value)
+
+  // D2: Diameter validation
+  const dNum = parseFloat(diameter)
+  const diameterInvalid = diameter !== '' && (isNaN(dNum) || dNum <= 0)
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-5xl mx-auto px-4 py-6">
@@ -288,6 +297,9 @@ export default function CuttingParametersPage() {
                     placeholder={vcRecord ? `${vcRecord.min_value}–${vcRecord.max_value}` : '150'}
                     className="bg-[var(--tp-surface-2)] border border-[var(--tp-border)] rounded px-3 py-2 text-sm text-[var(--tp-text)] focus:outline-none focus:border-[var(--tp-accent)]"
                   />
+                  {vcOutOfRange && (
+                    <p className="text-xs text-[var(--tp-warn)]">⚠ {t('cpVcOutOfRange')}</p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2 mb-3">
@@ -299,6 +311,9 @@ export default function CuttingParametersPage() {
                     placeholder="20"
                     className="bg-[var(--tp-surface-2)] border border-[var(--tp-border)] rounded px-3 py-2 text-sm text-[var(--tp-text)] focus:outline-none focus:border-[var(--tp-accent)]"
                   />
+                  {diameterInvalid && (
+                    <p className="text-xs text-[var(--tp-error)]">{t('cpDiameterInvalid')}</p>
+                  )}
                 </div>
 
                 {operation !== 'milling' && (
@@ -329,7 +344,7 @@ export default function CuttingParametersPage() {
 
                 <button
                   onClick={handleCalculate}
-                  disabled={calcLoading || !diameter || !selectedVc}
+                  disabled={calcLoading || !diameter || !selectedVc || diameterInvalid}
                   className="w-full py-2 rounded bg-[var(--tp-surface-3)] hover:bg-[var(--tp-surface-2)] disabled:opacity-40 text-[var(--tp-text)] text-sm font-medium transition-colors"
                 >
                   {calcLoading ? '…' : t('cpRpmResult')}

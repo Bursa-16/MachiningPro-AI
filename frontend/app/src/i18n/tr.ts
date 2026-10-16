@@ -409,4 +409,12 @@ export const trTranslations: TranslationDictionary = {
   cpUnitMm: 'mm',
   cpUnitRpm: 'dev/dak',
   cpUnitMmMin: 'mm/dak',
+
+  // Sidebar
+  sidebarPinned: 'Sabitlendi',
+  sidebarUnpinned: 'Sabit değil',
+
+  // Cutting Parameters — validation
+  cpVcOutOfRange: 'Referans aralığı dışında — kullanmadan önce doğrulayın',
+  cpDiameterInvalid: 'Çap sıfırdan büyük olmalıdır',
 }

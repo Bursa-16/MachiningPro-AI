@@ -409,4 +409,12 @@ export const enTranslations: TranslationDictionary = {
   cpUnitMm: 'mm',
   cpUnitRpm: 'RPM',
   cpUnitMmMin: 'mm/min',
+
+  // Sidebar
+  sidebarPinned: 'Pinned',
+  sidebarUnpinned: 'Unpinned',
+
+  // Cutting Parameters — validation
+  cpVcOutOfRange: 'Outside reference range — validate before use',
+  cpDiameterInvalid: 'Diameter must be greater than zero',
 }
