@@ -16,6 +16,7 @@ from .auth import LoginRequest, authenticate, get_configured_credentials
 from .cutting_parameters import router as cutting_parameters_router
 from .drawing_analysis import router as drawing_analysis_router
 from .engineering_import import router as engineering_import_router
+from .machines import router as machines_router
 from .tool_life import router as tool_life_router
 
 
@@ -29,6 +30,7 @@ app = FastAPI(title="MachiningPro AI", version="0.1.0-alpha.10")
 app.include_router(cutting_parameters_router)
 app.include_router(drawing_analysis_router)
 app.include_router(engineering_import_router)
+app.include_router(machines_router)
 app.include_router(tool_life_router)
 
 

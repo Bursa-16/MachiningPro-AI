@@ -1,0 +1,456 @@
+"""Curated machine catalog seed data (MACHINE_CATALOG_DATA_INTEGRATION_01).
+
+Source: Publicly available manufacturer technical specifications.
+  - Haas Automation — haas.com
+  - DMG MORI — dmgmori.com
+  - Mazak (Yamazaki Mazak) — mazak.com / eu.mazak.com
+  - Okuma — okuma.com
+
+Evidence status: MANUFACTURER_DATASHEET
+Accuracy note: Specifications reflect standard published configurations;
+  actual values vary by options, region, and market year. Missing fields
+  are None — never substituted with zero or fabricated values.
+
+Rules applied:
+  MISSING_VALUE_AS_ZERO=NO
+  SYNTHETIC_SPECIFICATIONS_ADDED=NO
+  PRIVATE_SOURCE_PATH_EXPOSED=NO
+"""
+
+from __future__ import annotations
+
+_SOURCE_TITLE = (
+    "MachiningPro AI Machine Catalog — "
+    "curated from public manufacturer technical specifications"
+)
+_SOURCE_NOTE = (
+    "Haas Automation (haas.com); DMG MORI (dmgmori.com); "
+    "Mazak / Yamazaki Mazak (mazak.com); Okuma (okuma.com). "
+    "Specifications reflect standard published configurations; "
+    "values vary by options, region, and market year."
+)
+_EVIDENCE = "MANUFACTURER_DATASHEET"
+
+
+def _missing(record: dict) -> list[str]:
+    """Return list of nullable field names that are None in *record*."""
+    nullable = {
+        "family", "simultaneous_axis_count",
+        "spindle_torque_nm", "spindle_interface",
+        "travel_x_mm", "travel_y_mm", "travel_z_mm",
+        "table_length_mm", "table_width_mm", "table_load_kg",
+        "max_turning_diameter_mm", "max_turning_length_mm", "bar_capacity_mm",
+        "tool_magazine_capacity", "tool_interface",
+        "max_tool_diameter_mm", "max_tool_length_mm",
+        "rapid_traverse_mpm", "machine_weight_kg",
+        "controller_family", "source_note",
+        "spindle_max_rpm", "spindle_power_kw",
+    }
+    return sorted(k for k in nullable if record.get(k) is None)
+
+
+def _rec(
+    stable_id: str,
+    manufacturer: str,
+    model: str,
+    machine_type: str,
+    machine_type_code: str,
+    supported_processes: list[str],
+    axis_count: int,
+    turning_capable: bool,
+    milling_capable: bool,
+    drilling_capable: bool,
+    *,
+    family: str | None = None,
+    simultaneous_axis_count: int | None = None,
+    spindle_max_rpm: int | None = None,
+    spindle_power_kw: float | None = None,
+    spindle_torque_nm: float | None = None,
+    spindle_interface: str | None = None,
+    travel_x_mm: float | None = None,
+    travel_y_mm: float | None = None,
+    travel_z_mm: float | None = None,
+    table_length_mm: float | None = None,
+    table_width_mm: float | None = None,
+    table_load_kg: float | None = None,
+    max_turning_diameter_mm: float | None = None,
+    max_turning_length_mm: float | None = None,
+    bar_capacity_mm: float | None = None,
+    tool_magazine_capacity: int | None = None,
+    tool_interface: str | None = None,
+    max_tool_diameter_mm: float | None = None,
+    max_tool_length_mm: float | None = None,
+    rapid_traverse_mpm: float | None = None,
+    machine_weight_kg: float | None = None,
+    controller_family: str | None = None,
+) -> dict:
+    r = dict(
+        stable_id=stable_id,
+        manufacturer=manufacturer,
+        model=model,
+        family=family,
+        machine_type=machine_type,
+        machine_type_code=machine_type_code,
+        supported_processes=supported_processes,
+        axis_count=axis_count,
+        simultaneous_axis_count=simultaneous_axis_count,
+        turning_capable=turning_capable,
+        milling_capable=milling_capable,
+        drilling_capable=drilling_capable,
+        spindle_max_rpm=spindle_max_rpm,
+        spindle_power_kw=spindle_power_kw,
+        spindle_torque_nm=spindle_torque_nm,
+        spindle_interface=spindle_interface,
+        travel_x_mm=travel_x_mm,
+        travel_y_mm=travel_y_mm,
+        travel_z_mm=travel_z_mm,
+        table_length_mm=table_length_mm,
+        table_width_mm=table_width_mm,
+        table_load_kg=table_load_kg,
+        max_turning_diameter_mm=max_turning_diameter_mm,
+        max_turning_length_mm=max_turning_length_mm,
+        bar_capacity_mm=bar_capacity_mm,
+        tool_magazine_capacity=tool_magazine_capacity,
+        tool_interface=tool_interface,
+        max_tool_diameter_mm=max_tool_diameter_mm,
+        max_tool_length_mm=max_tool_length_mm,
+        rapid_traverse_mpm=rapid_traverse_mpm,
+        machine_weight_kg=machine_weight_kg,
+        controller_family=controller_family,
+        source_title=_SOURCE_TITLE,
+        evidence_status=_EVIDENCE,
+        source_note=_SOURCE_NOTE,
+    )
+    r["missing_fields"] = _missing(r)
+    return r
+
+
+# ---------------------------------------------------------------------------
+# Curated records — 15 machines, 4 manufacturers, 4 machine types
+# ---------------------------------------------------------------------------
+
+MACHINE_CATALOG_RECORDS: list[dict] = [
+    # ── Haas Automation — Vertical Machining Centers ──────────────────────────
+    _rec(
+        "haas-vf-2ss",
+        "Haas Automation",
+        "VF-2 SS",
+        "Vertical Machining Center",
+        "VMC",
+        ["milling", "drilling", "boring", "tapping"],
+        3,
+        False, True, True,
+        family="VF Series",
+        spindle_max_rpm=12_000,
+        spindle_power_kw=22.4,
+        spindle_interface="CAT-40",
+        travel_x_mm=762.0,
+        travel_y_mm=406.0,
+        travel_z_mm=508.0,
+        table_length_mm=914.0,
+        table_width_mm=356.0,
+        table_load_kg=680.0,
+        tool_magazine_capacity=20,
+        tool_interface="CAT-40",
+        rapid_traverse_mpm=30.5,
+        machine_weight_kg=5_670.0,
+        controller_family="Haas NGC",
+    ),
+    _rec(
+        "haas-vf-4",
+        "Haas Automation",
+        "VF-4",
+        "Vertical Machining Center",
+        "VMC",
+        ["milling", "drilling", "boring", "tapping"],
+        3,
+        False, True, True,
+        family="VF Series",
+        spindle_max_rpm=8_100,
+        spindle_power_kw=22.4,
+        spindle_interface="CAT-40",
+        travel_x_mm=1_270.0,
+        travel_y_mm=508.0,
+        travel_z_mm=635.0,
+        table_length_mm=1_400.0,
+        table_width_mm=508.0,
+        table_load_kg=1_588.0,
+        tool_magazine_capacity=20,
+        tool_interface="CAT-40",
+        rapid_traverse_mpm=25.4,
+        machine_weight_kg=9_435.0,
+        controller_family="Haas NGC",
+    ),
+    _rec(
+        "haas-umc-750",
+        "Haas Automation",
+        "UMC-750",
+        "5-Axis Machining Center",
+        "5AXIS",
+        ["milling", "drilling", "boring", "tapping"],
+        5,
+        False, True, True,
+        family="UMC Series",
+        simultaneous_axis_count=5,
+        spindle_max_rpm=8_100,
+        spindle_power_kw=22.4,
+        spindle_interface="CAT-40",
+        travel_x_mm=762.0,
+        travel_y_mm=508.0,
+        travel_z_mm=508.0,
+        tool_magazine_capacity=30,
+        tool_interface="CAT-40",
+        machine_weight_kg=9_979.0,
+        controller_family="Haas NGC",
+    ),
+    # ── Haas Automation — CNC Lathes ──────────────────────────────────────────
+    _rec(
+        "haas-st-10",
+        "Haas Automation",
+        "ST-10",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="ST Series",
+        spindle_max_rpm=6_000,
+        spindle_power_kw=11.2,
+        max_turning_diameter_mm=229.0,
+        max_turning_length_mm=394.0,
+        bar_capacity_mm=38.0,
+        tool_magazine_capacity=12,
+        machine_weight_kg=2_132.0,
+        controller_family="Haas NGC",
+    ),
+    _rec(
+        "haas-st-20",
+        "Haas Automation",
+        "ST-20",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="ST Series",
+        spindle_max_rpm=4_000,
+        spindle_power_kw=22.4,
+        max_turning_diameter_mm=381.0,
+        max_turning_length_mm=549.0,
+        bar_capacity_mm=65.0,
+        tool_magazine_capacity=12,
+        machine_weight_kg=3_674.0,
+        controller_family="Haas NGC",
+    ),
+    _rec(
+        "haas-st-30",
+        "Haas Automation",
+        "ST-30",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="ST Series",
+        spindle_max_rpm=3_000,
+        spindle_power_kw=22.4,
+        max_turning_diameter_mm=508.0,
+        max_turning_length_mm=762.0,
+        bar_capacity_mm=76.0,
+        tool_magazine_capacity=12,
+        controller_family="Haas NGC",
+    ),
+    # ── DMG MORI — CNC Lathes ─────────────────────────────────────────────────
+    _rec(
+        "dmg-nlx-2500-700",
+        "DMG MORI",
+        "NLX 2500|700",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="NLX Series",
+        spindle_max_rpm=3_500,
+        spindle_power_kw=18.5,
+        max_turning_diameter_mm=560.0,
+        max_turning_length_mm=755.0,
+        bar_capacity_mm=66.0,
+        tool_magazine_capacity=12,
+        controller_family="MAPPS V / Mitsubishi",
+    ),
+    _rec(
+        "dmg-clx-350",
+        "DMG MORI",
+        "CLX 350",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="CLX Series",
+        spindle_max_rpm=4_500,
+        spindle_power_kw=11.0,
+        max_turning_diameter_mm=350.0,
+        max_turning_length_mm=1_000.0,
+        bar_capacity_mm=52.0,
+        controller_family="Siemens 828D / Fanuc",
+    ),
+    # ── DMG MORI — Machining Centers ──────────────────────────────────────────
+    _rec(
+        "dmg-dmu-50-3g",
+        "DMG MORI",
+        "DMU 50 3rd Generation",
+        "5-Axis Machining Center",
+        "5AXIS",
+        ["milling", "drilling", "boring", "tapping"],
+        5,
+        False, True, True,
+        family="DMU Series",
+        simultaneous_axis_count=5,
+        spindle_max_rpm=14_000,
+        spindle_power_kw=16.0,
+        spindle_interface="HSK-A63",
+        travel_x_mm=500.0,
+        travel_y_mm=450.0,
+        travel_z_mm=400.0,
+        table_load_kg=300.0,
+        tool_magazine_capacity=30,
+        tool_interface="HSK-A63",
+        controller_family="Heidenhain iTNC 530 / Siemens 840D",
+    ),
+    _rec(
+        "dmg-cmx-600v",
+        "DMG MORI",
+        "CMX 600 V",
+        "Vertical Machining Center",
+        "VMC",
+        ["milling", "drilling", "boring", "tapping"],
+        3,
+        False, True, True,
+        family="CMX V Series",
+        spindle_max_rpm=10_000,
+        spindle_power_kw=11.0,
+        spindle_interface="SK40",
+        travel_x_mm=600.0,
+        travel_y_mm=450.0,
+        travel_z_mm=450.0,
+        table_length_mm=700.0,
+        table_width_mm=460.0,
+        table_load_kg=400.0,
+        tool_magazine_capacity=16,
+        controller_family="Siemens 828D / Fanuc",
+    ),
+    # ── Mazak — Vertical Machining Centers ────────────────────────────────────
+    _rec(
+        "mazak-vcn-700",
+        "Mazak",
+        "VCN-700/50E",
+        "Vertical Machining Center",
+        "VMC",
+        ["milling", "drilling", "boring", "tapping"],
+        3,
+        False, True, True,
+        family="VCN Series",
+        spindle_max_rpm=12_000,
+        spindle_power_kw=22.0,
+        travel_x_mm=700.0,
+        travel_y_mm=400.0,
+        travel_z_mm=450.0,
+        table_length_mm=800.0,
+        table_width_mm=400.0,
+        table_load_kg=500.0,
+        tool_magazine_capacity=30,
+        controller_family="Mazatrol Matrix 2",
+    ),
+    # ── Mazak — CNC Lathes ────────────────────────────────────────────────────
+    _rec(
+        "mazak-qt-primos-100u",
+        "Mazak",
+        "QT-Primos 100U",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="QT-Primos Series",
+        spindle_max_rpm=5_000,
+        spindle_power_kw=15.0,
+        max_turning_diameter_mm=400.0,
+        max_turning_length_mm=1_010.0,
+        bar_capacity_mm=77.0,
+        tool_magazine_capacity=12,
+        tool_interface="BMT65",
+        controller_family="Mazatrol Matrix 2",
+    ),
+    # ── Mazak — Mill-Turn ─────────────────────────────────────────────────────
+    _rec(
+        "mazak-integrex-i200",
+        "Mazak",
+        "INTEGREX i-200",
+        "Mill-Turn",
+        "MILL_TURN",
+        ["turning", "facing", "milling", "drilling", "boring", "threading", "tapping"],
+        5,
+        True, True, True,
+        family="INTEGREX Series",
+        simultaneous_axis_count=5,
+        spindle_max_rpm=5_000,
+        spindle_power_kw=18.5,
+        max_turning_diameter_mm=650.0,
+        max_turning_length_mm=1_524.0,
+        tool_magazine_capacity=36,
+        controller_family="Mazatrol Matrix 2",
+    ),
+    # ── Okuma — Vertical Machining Centers ────────────────────────────────────
+    _rec(
+        "okuma-genos-m460v",
+        "Okuma",
+        "GENOS M460V-e",
+        "Vertical Machining Center",
+        "VMC",
+        ["milling", "drilling", "boring", "tapping"],
+        3,
+        False, True, True,
+        family="GENOS Series",
+        spindle_max_rpm=12_000,
+        spindle_power_kw=15.0,
+        travel_x_mm=762.0,
+        travel_y_mm=460.0,
+        travel_z_mm=460.0,
+        table_length_mm=900.0,
+        table_width_mm=460.0,
+        table_load_kg=600.0,
+        tool_magazine_capacity=20,
+        controller_family="Okuma OSP-P300M",
+    ),
+    # ── Okuma — CNC Lathes ────────────────────────────────────────────────────
+    _rec(
+        "okuma-lb3000-ex",
+        "Okuma",
+        "LB3000 EX II",
+        "CNC Lathe",
+        "LATHE",
+        ["turning", "facing", "drilling", "boring", "threading"],
+        2,
+        True, False, True,
+        family="LB Series",
+        spindle_max_rpm=3_500,
+        spindle_power_kw=18.5,
+        max_turning_diameter_mm=560.0,
+        bar_capacity_mm=61.0,
+        tool_magazine_capacity=12,
+        controller_family="Okuma OSP-P300L",
+    ),
+]
+
+# ---------------------------------------------------------------------------
+# Registry seeder
+# ---------------------------------------------------------------------------
+
+def seed_machine_catalog() -> list[dict]:
+    """Return a fresh copy of the curated machine catalog records.
+
+    Deterministic, idempotent, no external files required.
+    """
+    return list(MACHINE_CATALOG_RECORDS)

@@ -466,4 +466,70 @@ export interface TranslationDictionary {
   tlLimPrediction: string
   tlLimHardness: string
   tlLimProduction: string
+
+  // Machine Catalog (MACHINE_CATALOG_DATA_INTEGRATION_01)
+  mcPageTitle: string
+  mcPageSubtitle: string
+  mcEvidenceStatus: string
+  mcMachineCount: string
+  mcManufacturerCount: string
+  mcMachineTypeCount: string
+  mcDataCoverage: string
+  mcFilterManufacturer: string
+  mcFilterMachineType: string
+  mcFilterProcess: string
+  mcFilterAxisCount: string
+  mcFilterAll: string
+  mcNoMatch: string
+  mcNoMatchHint: string
+  mcLoadingMachines: string
+  mcBackendError: string
+  mcMachineType: string
+  mcAxisCount: string
+  mcSimultaneousAxes: string
+  mcTurningCapable: string
+  mcMillingCapable: string
+  mcDrillingCapable: string
+  mcSpindleSection: string
+  mcSpindleMaxRpm: string
+  mcSpindlePowerKw: string
+  mcSpindleTorqueNm: string
+  mcSpindleInterface: string
+  mcWorkspaceSection: string
+  mcTravelX: string
+  mcTravelY: string
+  mcTravelZ: string
+  mcTableLength: string
+  mcTableWidth: string
+  mcTableLoad: string
+  mcMaxTurningDia: string
+  mcMaxTurningLength: string
+  mcBarCapacity: string
+  mcToolSection: string
+  mcMagazineCapacity: string
+  mcToolInterface: string
+  mcMaxToolDia: string
+  mcMaxToolLength: string
+  mcRapidTraverse: string
+  mcMachineWeight: string
+  mcControllerFamily: string
+  mcSourceSection: string
+  mcSourceTitle: string
+  mcEvidenceLabel: string
+  mcMissingFields: string
+  mcMissingValue: string
+  mcSupportedProcesses: string
+  mcManufacturer: string
+  mcModel: string
+  mcBack: string
+  mcYes: string
+  mcNo: string
+  mcUnitRpm: string
+  mcUnitKw: string
+  mcUnitNm: string
+  mcUnitMm: string
+  mcUnitKg: string
+  mcUnitMpm: string
+  mcProductionNotValidated: string
+  mcCatalogBrowseOnly: string
 }
