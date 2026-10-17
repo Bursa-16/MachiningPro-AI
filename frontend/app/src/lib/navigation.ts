@@ -41,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: 'machines', path: '/app/resources/machines', label: 'Machines', icon: Settings2 },
       { id: 'materials', path: '/app/resources/materials', label: 'Materials', icon: Archive },
       { id: 'cutting-tools', path: '/app/resources/cutting-tools', label: 'Cutting Tools', icon: Wrench },
+      { id: 'tool-holders', path: '/app/resources/tool-holders', label: 'Tool Holders', icon: Settings2 },
       { id: 'libraries', path: '/app/resources/libraries', label: 'Libraries', icon: ClipboardList },
     ],
   },

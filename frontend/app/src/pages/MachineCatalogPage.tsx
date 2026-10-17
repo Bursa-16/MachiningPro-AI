@@ -218,7 +218,7 @@ function MachineDetail({
 function MachineCard({
   record,
   onClick,
-  missingVal,
+  missingVal: _missingVal,
 }: {
   record: MachineCatalogRecord
   onClick: () => void

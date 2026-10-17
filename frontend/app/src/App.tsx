@@ -9,6 +9,7 @@ import CuttingParametersPage from './pages/CuttingParametersPage'
 import ToolLifePage from './pages/ToolLifePage'
 import MachineCatalogPage from './pages/MachineCatalogPage'
 import CuttingToolCatalogPage from './pages/CuttingToolCatalogPage'
+import ToolHolderCatalogPage from './pages/ToolHolderCatalogPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   return (
@@ -62,6 +63,7 @@ function ProtectedRoutes() {
         <Route path="app/resources/machines" element={<MachineCatalogPage />} />
         <Route path="app/resources/materials" element={capability('Materials')} />
         <Route path="app/resources/cutting-tools" element={<CuttingToolCatalogPage />} />
+        <Route path="app/resources/tool-holders" element={<ToolHolderCatalogPage />} />
         <Route path="app/resources/libraries" element={capability('Libraries')} />
 
         {/* CAD & Drawing */}
