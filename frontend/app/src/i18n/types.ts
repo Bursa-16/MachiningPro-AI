@@ -532,4 +532,74 @@ export interface TranslationDictionary {
   mcUnitMpm: string
   mcProductionNotValidated: string
   mcCatalogBrowseOnly: string
+
+  // Cutting Tool Catalog (CUTTING_TOOL_CATALOG_DATA_INTEGRATION_01)
+  ctPageTitle: string
+  ctPageSubtitle: string
+  ctEvidenceStatus: string
+  ctToolCount: string
+  ctManufacturerCount: string
+  ctCategoryCount: string
+  ctToolMaterialCount: string
+  ctFilterManufacturer: string
+  ctFilterCategory: string
+  ctFilterOperation: string
+  ctFilterToolMaterial: string
+  ctFilterIsoGroup: string
+  ctFilterAll: string
+  ctNoMatch: string
+  ctNoMatchHint: string
+  ctLoadingTools: string
+  ctBackendError: string
+  ctCatalogBrowseOnly: string
+  ctProductionNotValidated: string
+  ctIdentitySection: string
+  ctManufacturer: string
+  ctProductFamily: string
+  ctProductName: string
+  ctCatalogCode: string
+  ctToolCategory: string
+  ctToolSubcategory: string
+  ctApplicationSection: string
+  ctSupportedOperations: string
+  ctIsoMaterialGroups: string
+  ctMaterialSection: string
+  ctToolMaterial: string
+  ctCoating: string
+  ctCoatingType: string
+  ctInsertSection: string
+  ctInsertShape: string
+  ctInsertIcMm: string
+  ctInsertThicknessMm: string
+  ctNoseRadiusMm: string
+  ctClearanceAngleDeg: string
+  ctGeometrySection: string
+  ctCuttingDiameterMm: string
+  ctShankDiameterMm: string
+  ctOverallLengthMm: string
+  ctCuttingLengthMm: string
+  ctFluteLengthMm: string
+  ctNumberOfFlutes: string
+  ctHelixAngleDeg: string
+  ctCornerRadiusMm: string
+  ctPointAngleDeg: string
+  ctInterfaceSection: string
+  ctShankInterface: string
+  ctThroughCoolant: string
+  ctMaxRpm: string
+  ctCompatibleHolder: string
+  ctGuidanceSection: string
+  ctGuidanceNotProvided: string
+  ctSourceSection: string
+  ctSourceTitle: string
+  ctEvidenceLabel: string
+  ctMissingFields: string
+  ctMissingValue: string
+  ctBack: string
+  ctYes: string
+  ctNo: string
+  ctUnitMm: string
+  ctUnitDeg: string
+  ctUnitRpm: string
+  ctUnitMmin: string
 }
