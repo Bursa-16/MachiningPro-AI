@@ -20,6 +20,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: 'machining-analysis', path: '/app/engineering/machining-analysis', label: 'Machining Analysis', icon: Microscope },
       { id: 'cutting-parameters', path: '/app/engineering/cutting-parameters', label: 'Cutting Parameters', icon: Settings2 },
       { id: 'tool-life', path: '/app/engineering/tool-life', label: 'Tool Life', icon: TrendingUp },
+      { id: 'compatibility', path: '/app/engineering/compatibility', label: 'Compatibility Check', icon: ShieldCheck },
       { id: 'surface-roughness', path: '/app/engineering/surface-roughness', label: 'Surface Roughness', icon: Ruler },
     ],
   },

@@ -676,4 +676,62 @@ export interface TranslationDictionary {
   thUnitBar: string
   thUnitN: string
   thUnitNm: string
+
+  // Compatibility Check (MACHINE_TOOL_HOLDER_COMPATIBILITY_ENGINE_01)
+  ccPageTitle: string
+  ccPageSubtitle: string
+  ccStep1Machine: string
+  ccStep2Holder: string
+  ccStep3Tool: string
+  ccStep4Operation: string
+  ccStep5IsoGroup: string
+  ccStep6Vc: string
+  ccEvaluateButton: string
+  ccNewEvaluation: string
+  ccSelectMachine: string
+  ccSelectHolder: string
+  ccSelectTool: string
+  ccSelectOperation: string
+  ccSelectIsoGroup: string
+  ccVcLabel: string
+  ccDiameterLabel: string
+  ccResultCompatible: string
+  ccResultIncompatible: string
+  ccResultInsufficient: string
+  ccResultCompatibleDesc: string
+  ccResultIncompatibleDesc: string
+  ccResultInsufficientDesc: string
+  ccRuleTrace: string
+  ccRuleId: string
+  ccRuleStatus: string
+  ccRuleReasonCode: string
+  ccRuleDetail: string
+  ccStatusPass: string
+  ccStatusFail: string
+  ccStatusUnknown: string
+  ccStatusNotApplicable: string
+  ccCalculatedRpm: string
+  ccDisclaimer: string
+  ccLoadingEvaluation: string
+  ccEvaluationError: string
+  ccLoadingSchema: string
+  ccBackendError: string
+  ccProductionNotValidated: string
+  ccReferenceGuidance: string
+  ccReferenceNotAvailable: string
+  ccOperationMilling: string
+  ccOperationDrilling: string
+  ccOperationTurning: string
+  ccOperationReaming: string
+  ccOperationBoring: string
+  ccOperationTapping: string
+  ccMissingFields: string
+  ccHardFailures: string
+  ccUnknownRules: string
+  ccUnitRpm: string
+  ccUnitMmin: string
+  ccUnitMm: string
+  ccEvidenceStatus: string
+  ccSelectAll: string
+  ccCompatibilityNote: string
 }
