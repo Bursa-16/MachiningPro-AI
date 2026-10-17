@@ -459,4 +459,13 @@ export const trTranslations: TranslationDictionary = {
   tlNormalized: 'Normalleştirilmiş (0=Ömür Sonu, 1=Yeni)',
   tlEolMarker: 'Ömür Sonu',
   tlFeatureIndex: 'Özellik dizini',
+
+  // Tool Life — limitation bullets (TOOL_LIFE_UI_INTEGRATION_01_DEFECT_CLOSURE_01)
+  tlLimVb: 'VB (arka yüz aşınması, mm) bu veri setinde MEVCUT DEĞİLDİR — arka yüz aşınması eşik değerleri türetilemez.',
+  tlLimTaylor: 'Kesme hızı Vc sütunu yoktur — Bu veriden Taylor C/n katsayıları FİT EDİLEMEZ.',
+  tlLimCtf: 'CycleToFailure, takım başına bir geri sayımdır (0 = Ömür Sonu). Kümülatif yaş DEĞİLDİR.',
+  tlLimLeakage: 'Sızıntı riski: cycle_number, her takım içinde CycleToFailure ile güçlü ters korelasyon gösterir. cycle_number\'ı bağımsız sensör tabanlı tahmin değişkeni olarak kullanmak hedef değişkeni taklit eder; bağımsız üretim dağıtımı için geçerli değildir.',
+  tlLimPrediction: 'Yalnızca sensör tabanlı, takım dışı bırakma tahmin performansı önceki denetimde zayıf bulunmuştur — bağımsız dağıtım tahmini ek doğrulama ve veri gerektirmektedir.',
+  tlLimHardness: 'HardnessMean birimleri kaynakta belirtilmemiştir (değerler ~35–41, HRC ile tutarlı). HB OLARAK KABUL ETMEYİN.',
+  tlLimProduction: 'Üretim dağıtımı hazırlığı: DOĞRULANMAMIŞTIR. Bu veri seti yalnızca araştırma ve ampirik keşifi destekler.',
 }

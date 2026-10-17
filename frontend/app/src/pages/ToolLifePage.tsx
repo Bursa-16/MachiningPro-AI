@@ -183,6 +183,17 @@ function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
 export default function ToolLifePage() {
   const { t } = useLocale()
 
+  // Translated limitation bullets — derived from i18n, not from raw API strings.
+  const translatedLimitations = [
+    t('tlLimVb'),
+    t('tlLimTaylor'),
+    t('tlLimCtf'),
+    t('tlLimLeakage'),
+    t('tlLimPrediction'),
+    t('tlLimHardness'),
+    t('tlLimProduction'),
+  ]
+
   const [summary, setSummary] = useState<ToolLifeSummary | null>(null)
   const [tools, setTools] = useState<ToolSummary[]>([])
   const [selectedToolId, setSelectedToolId] = useState<number | null>(null)
@@ -305,13 +316,13 @@ export default function ToolLifePage() {
               <span className="font-medium text-sm">{t('tlDatasetNotConfigured')}</span>
             </div>
             <p className="text-xs text-tp-text-3">{t('tlDatasetNotConfiguredDetail')}</p>
-            {summary.limitations.length > 0 && (
+            {translatedLimitations.length > 0 && (
               <div className="pt-2 border-t border-tp-border space-y-1">
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-text-3">
                   {t('tlLimitations')}
                 </div>
                 <ul className="space-y-1">
-                  {summary.limitations.map((lim, i) => (
+                  {translatedLimitations.map((lim, i) => (
                     <li key={i} className="text-xs text-tp-text-3 flex items-start gap-1.5">
                       <span className="text-tp-accent-light shrink-0 mt-0.5">·</span>
                       {lim}
@@ -520,7 +531,7 @@ export default function ToolLifePage() {
         )}
 
         {/* Limitations collapsible */}
-        {summary && summary.limitations.length > 0 && (
+        {summary && translatedLimitations.length > 0 && (
           <div className="bg-tp-surface border border-tp-border rounded-lg overflow-hidden">
             <button
               onClick={() => setLimitationsOpen((o) => !o)}
@@ -536,7 +547,7 @@ export default function ToolLifePage() {
             </button>
             {limitationsOpen && (
               <div className="px-4 pb-4 pt-1 border-t border-tp-border space-y-1.5">
-                {summary.limitations.map((lim, i) => (
+                {translatedLimitations.map((lim, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs text-tp-text-3">
                     <span className="text-tp-accent-light shrink-0 mt-0.5">·</span>
                     {lim}

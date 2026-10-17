@@ -457,4 +457,13 @@ export interface TranslationDictionary {
   tlNormalized: string
   tlEolMarker: string
   tlFeatureIndex: string
+
+  // Tool Life — limitation bullets (TOOL_LIFE_UI_INTEGRATION_01_DEFECT_CLOSURE_01)
+  tlLimVb: string
+  tlLimTaylor: string
+  tlLimCtf: string
+  tlLimLeakage: string
+  tlLimPrediction: string
+  tlLimHardness: string
+  tlLimProduction: string
 }

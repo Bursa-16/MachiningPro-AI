@@ -459,4 +459,13 @@ export const enTranslations: TranslationDictionary = {
   tlNormalized: 'Normalized (0=EOL, 1=new)',
   tlEolMarker: 'EOL',
   tlFeatureIndex: 'Feature index',
+
+  // Tool Life — limitation bullets (TOOL_LIFE_UI_INTEGRATION_01_DEFECT_CLOSURE_01)
+  tlLimVb: 'VB (flank wear, mm) is NOT present in this dataset — flank wear thresholds cannot be derived.',
+  tlLimTaylor: 'No cutting speed Vc column — Taylor C/n coefficients CANNOT be fitted from this data.',
+  tlLimCtf: 'CycleToFailure is a per-tool countdown (0 = EOL). It is NOT cumulative age.',
+  tlLimLeakage: 'Leakage risk: cycle_number is strongly inversely correlated with CycleToFailure within each tool. Using cycle_number as a standalone sensor-based predictor replicates the target variable; not valid for independent production deployment.',
+  tlLimPrediction: 'Sensor-only leave-one-tool-out prediction performance was weak in prior audit — independent deployment prediction requires additional validation and data.',
+  tlLimHardness: 'HardnessMean units are unstated in the source (values ~35–41, consistent with HRC). Do NOT assume HB.',
+  tlLimProduction: 'Production deployment readiness: NOT VALIDATED. This dataset supports research and empirical exploration only.',
 }
