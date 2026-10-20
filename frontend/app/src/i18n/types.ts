@@ -870,4 +870,32 @@ export interface TranslationDictionary {
   ppPathLengthRequired: string
   ppFeedRateUnavailable: string
   ppRapidDataUnavailable: string
+  ppNcPathEvidence: string
+  ppNcProgram: string
+  ppAnalyzeNc: string
+  ppNcAnalysisStatus: string
+  ppNcFeedMotionDistance: string
+  ppNcRapidMotionDistance: string
+  ppNcSupportedMotions: string
+  ppNcUnsupportedFeatures: string
+  ppNcParserProfile: string
+  ppNcAssociateWith: string
+  ppNcUseAsCuttingPath: string
+  ppNcUseAsRapidDistance: string
+  ppNcCommandedFeed: string
+  ppNcReferenceFeed: string
+  ppNcStatusComplete: string
+  ppNcStatusPartial: string
+  ppNcStatusUnsupportedSemantics: string
+  ppNcStatusInvalidProgram: string
+  ppNcStatusInsufficientData: string
+  ppNcToolChangeDetected: string
+  ppNcExplicitAssignment: string
+  ppNcInitOrigin: string
+  ppNcFeedMotionNote: string
+  ppNcAnalyzing: string
+  ppNcAnalysisError: string
+  ppNcPasteHere: string
+  ppNcToolChanges: string
+  ppNcUnknownStartMoves: string
 }

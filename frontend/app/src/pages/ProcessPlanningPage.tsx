@@ -15,6 +15,10 @@ import {
   type CycleTimeStatus,
   type TimeComponentStatus,
 } from '../services/process_planning'
+import {
+  analyzeNcPath,
+  type NcAnalyzeResponse,
+} from '../services/nc_path'
 
 type TFunc = (key: keyof TranslationDictionary) => string
 
@@ -145,8 +149,14 @@ interface StepForm {
   predecessor_ids: string[]
   // Cycle-time explicit inputs
   cutting_path_length_mm: string
+  cutting_path_source: string
   rapid_distance_mm: string
   dwell_sec: string
+  // NC path evidence
+  nc_text: string
+  nc_init_origin: boolean
+  nc_analysis: NcAnalyzeResponse | null
+  nc_analysis_error: string | null
 }
 
 function newStep(seq: number): StepForm {
@@ -159,9 +169,22 @@ function newStep(seq: number): StepForm {
     cutting_tool_id: '',
     predecessor_ids: [],
     cutting_path_length_mm: '',
+    cutting_path_source: '',
     rapid_distance_mm: '',
     dwell_sec: '',
+    nc_text: '',
+    nc_init_origin: false,
+    nc_analysis: null,
+    nc_analysis_error: null,
   }
+}
+
+const NC_STATUS_CLS: Record<string, string> = {
+  COMPLETE: 'text-emerald-300',
+  PARTIAL: 'text-amber-300',
+  UNSUPPORTED_SEMANTICS: 'text-red-400',
+  INVALID_PROGRAM: 'text-red-400',
+  INSUFFICIENT_DATA: 'text-tp-text-3',
 }
 
 function StepRow({
@@ -181,6 +204,25 @@ function StepRow({
   onRemove: () => void
   t: TFunc
 }) {
+  const [ncAnalyzing, setNcAnalyzing] = useState(false)
+  const handleAnalyzeNc = async () => {
+    if (!step.nc_text.trim()) return
+    setNcAnalyzing(true)
+    onChange({ ...step, nc_analysis: null, nc_analysis_error: null })
+    try {
+      const req = step.nc_init_origin
+        ? { nc_text: step.nc_text, initial_x: 0, initial_y: 0, initial_z: 0 }
+        : { nc_text: step.nc_text }
+      const result = await analyzeNcPath(req)
+      onChange({ ...step, nc_analysis: result, nc_analysis_error: null })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('ppNcAnalysisError')
+      onChange({ ...step, nc_analysis: null, nc_analysis_error: msg })
+    } finally {
+      setNcAnalyzing(false)
+    }
+  }
+
   const predecessorOptions = allSteps
     .filter(s => s.id !== step.id && s.step_id.trim() !== '')
     .map(s => ({ value: s.step_id, label: s.step_id }))
@@ -317,6 +359,120 @@ function StepRow({
           </div>
         </div>
       </div>
+
+      {/* NC Path Evidence */}
+      <div className="border-t border-tp-border/40 pt-2">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-2">
+          {t('ppNcPathEvidence')}
+        </div>
+        <textarea
+          rows={4}
+          value={step.nc_text}
+          onChange={e => onChange({ ...step, nc_text: e.target.value, nc_analysis: null, nc_analysis_error: null })}
+          placeholder={t('ppNcPasteHere')}
+          className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-xs font-mono text-tp-text focus:outline-none focus:border-tp-accent-light resize-y"
+          spellCheck={false}
+        />
+        <div className="flex items-center gap-3 mt-2 flex-wrap">
+          <label className="flex items-center gap-1.5 text-xs text-tp-text-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={step.nc_init_origin}
+              onChange={e => onChange({ ...step, nc_init_origin: e.target.checked })}
+              className="accent-tp-accent-light"
+            />
+            {t('ppNcInitOrigin')}
+          </label>
+          <button
+            type="button"
+            disabled={!step.nc_text.trim() || ncAnalyzing}
+            onClick={handleAnalyzeNc}
+            className="text-xs px-3 py-1 bg-tp-accent-light/20 border border-tp-accent-light/50 text-tp-accent-light rounded hover:bg-tp-accent-light/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {ncAnalyzing ? t('ppNcAnalyzing') : t('ppAnalyzeNc')}
+          </button>
+        </div>
+
+        {step.nc_analysis_error && (
+          <div className="mt-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+            {t('ppNcAnalysisError')}: {step.nc_analysis_error}
+          </div>
+        )}
+
+        {step.nc_analysis && (() => {
+          const mr = step.nc_analysis.motion_result
+          const fe = step.nc_analysis.feed_evidence
+          const re = step.nc_analysis.rapid_evidence
+          const statusLabel: Record<string, string> = {
+            COMPLETE: t('ppNcStatusComplete'),
+            PARTIAL: t('ppNcStatusPartial'),
+            UNSUPPORTED_SEMANTICS: t('ppNcStatusUnsupportedSemantics'),
+            INVALID_PROGRAM: t('ppNcStatusInvalidProgram'),
+            INSUFFICIENT_DATA: t('ppNcStatusInsufficientData'),
+          }
+          return (
+            <div className="mt-3 border border-tp-border/60 rounded bg-tp-surface/50 p-3 space-y-3 text-xs">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-tp-text-3">{t('ppNcAnalysisStatus')}:</span>
+                <span className={`font-semibold ${NC_STATUS_CLS[mr.analysis_status] ?? 'text-tp-text'}`}>
+                  {statusLabel[mr.analysis_status] ?? mr.analysis_status}
+                </span>
+                <span className="text-tp-text-3 font-mono text-[10px]">{mr.parser_profile}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-tp-text-3">{t('ppNcFeedMotionDistance')}: </span>
+                  <span className="text-tp-text font-mono">{fe.distance_mm.toFixed(3)}</span>
+                </div>
+                <div>
+                  <span className="text-tp-text-3">{t('ppNcRapidMotionDistance')}: </span>
+                  <span className="text-tp-text font-mono">{re.distance_mm.toFixed(3)}</span>
+                </div>
+              </div>
+              <div className="flex gap-4 text-tp-text-3 flex-wrap">
+                <span>{t('ppNcSupportedMotions')}: <span className="text-tp-text">{mr.supported_motion_count}</span></span>
+                {mr.tool_change_count > 0 && (
+                  <span>{t('ppNcToolChangeDetected')}: <span className="text-tp-text">{mr.tool_change_count} {t('ppNcToolChanges')}</span></span>
+                )}
+                {mr.unknown_start_count > 0 && (
+                  <span className="text-amber-400">{mr.unknown_start_count} {t('ppNcUnknownStartMoves')}</span>
+                )}
+              </div>
+              {mr.nc_commanded_feed_mm_min !== null && (
+                <div className="text-tp-text-3">
+                  {t('ppNcCommandedFeed')}: <span className="text-tp-text font-mono">{mr.nc_commanded_feed_mm_min.toFixed(1)}</span>
+                  <span className="ml-2 text-[10px] italic text-tp-text-3">≠ {t('ppNcReferenceFeed')}</span>
+                </div>
+              )}
+              {mr.unsupported_features.length > 0 && (
+                <div>
+                  <span className="text-amber-400">{t('ppNcUnsupportedFeatures')}: </span>
+                  <span className="text-amber-300 font-mono">{mr.unsupported_features.join(', ')}</span>
+                </div>
+              )}
+              <div className="text-[10px] text-tp-text-3 italic">{t('ppNcFeedMotionNote')}</div>
+              <div className="flex gap-2 flex-wrap pt-1 border-t border-tp-border/40">
+                <span className="text-[10px] text-tp-text-3 self-center">{t('ppNcExplicitAssignment')}:</span>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...step, cutting_path_length_mm: String(fe.distance_mm), cutting_path_source: 'NC_DERIVED' })}
+                  className="text-[11px] px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded hover:bg-emerald-500/25 transition-colors"
+                >
+                  {t('ppNcUseAsCuttingPath')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...step, rapid_distance_mm: String(re.distance_mm) })}
+                  className="text-[11px] px-2 py-0.5 bg-sky-500/15 border border-sky-500/30 text-sky-300 rounded hover:bg-sky-500/25 transition-colors"
+                >
+                  {t('ppNcUseAsRapidDistance')}
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+
     </div>
   )
 }
@@ -999,7 +1155,9 @@ export default function ProcessPlanningPage() {
       cutting_tool_id: s.cutting_tool_id || null,
       predecessor_step_ids: s.predecessor_ids,
       cutting_path_length_mm: s.cutting_path_length_mm !== '' ? parseFloat(s.cutting_path_length_mm) : null,
-      cutting_path_source: s.cutting_path_length_mm !== '' ? 'USER_INPUT' : null,
+      cutting_path_source: s.cutting_path_source !== ''
+        ? s.cutting_path_source
+        : (s.cutting_path_length_mm !== '' ? 'USER_INPUT' : null),
       rapid_distance_mm: s.rapid_distance_mm !== '' ? parseFloat(s.rapid_distance_mm) : null,
       dwell_sec: s.dwell_sec !== '' ? parseFloat(s.dwell_sec) : null,
     }))
