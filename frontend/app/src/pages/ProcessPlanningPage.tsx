@@ -11,6 +11,9 @@ import {
   type EngineeringMetric,
   type StepEngineeringMetrics,
   type MetricStatus,
+  type StepCycleTime,
+  type CycleTimeStatus,
+  type TimeComponentStatus,
 } from '../services/process_planning'
 
 type TFunc = (key: keyof TranslationDictionary) => string
@@ -140,6 +143,10 @@ interface StepForm {
   machine_id: string
   cutting_tool_id: string
   predecessor_ids: string[]
+  // Cycle-time explicit inputs
+  cutting_path_length_mm: string
+  rapid_distance_mm: string
+  dwell_sec: string
 }
 
 function newStep(seq: number): StepForm {
@@ -151,6 +158,9 @@ function newStep(seq: number): StepForm {
     machine_id: '',
     cutting_tool_id: '',
     predecessor_ids: [],
+    cutting_path_length_mm: '',
+    rapid_distance_mm: '',
+    dwell_sec: '',
   }
 }
 
@@ -260,6 +270,180 @@ function StepRow({
             options={predecessorOptions}
             placeholder={t('ppNoPredecessors')}
           />
+        </div>
+      )}
+
+      {/* Cycle-time explicit inputs */}
+      <div className="border-t border-tp-border/40 pt-2">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-2">
+          {t('ppTimeAnalysis')}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div>
+            <FieldLabel text={t('ppCuttingPathLength')} />
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={step.cutting_path_length_mm}
+              onChange={e => onChange({ ...step, cutting_path_length_mm: e.target.value })}
+              placeholder={t('ppPathLengthRequired')}
+              className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text focus:outline-none focus:border-tp-accent-light"
+            />
+          </div>
+          <div>
+            <FieldLabel text={t('ppRapidDistance')} />
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={step.rapid_distance_mm}
+              onChange={e => onChange({ ...step, rapid_distance_mm: e.target.value })}
+              placeholder="—"
+              className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text focus:outline-none focus:border-tp-accent-light"
+            />
+          </div>
+          <div>
+            <FieldLabel text={t('ppDwellTime')} />
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={step.dwell_sec}
+              onChange={e => onChange({ ...step, dwell_sec: e.target.value })}
+              placeholder="—"
+              className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text focus:outline-none focus:border-tp-accent-light"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Cycle-time section ────────────────────────────────────────────────────────
+
+const CT_STATUS_CLS: Record<CycleTimeStatus, string> = {
+  COMPLETE: 'text-emerald-300',
+  PARTIAL: 'text-amber-300',
+  INSUFFICIENT_DATA: 'text-tp-text-3',
+  NOT_APPLICABLE: 'text-tp-text-3',
+}
+
+const TC_STATUS_CLS: Record<TimeComponentStatus, string> = {
+  AVAILABLE: 'text-emerald-300',
+  NOT_AVAILABLE: 'text-tp-text-3',
+  INSUFFICIENT_DATA: 'text-amber-300',
+  NOT_APPLICABLE: 'text-tp-text-3',
+}
+
+function fmtSec(v: number | null): string {
+  if (v === null) return '—'
+  return `${v.toFixed(1)} s`
+}
+
+function fmtSecRange(min: number | null, max: number | null): string {
+  if (min === null || max === null) return '—'
+  if (Math.abs(max - min) < 0.001) return `${min.toFixed(1)} s`
+  return `${min.toFixed(1)}–${max.toFixed(1)} s`
+}
+
+function CycleTimeSection({ ct, t }: { ct: StepCycleTime; t: TFunc }) {
+  const [open, setOpen] = useState(false)
+
+  const statusLabel: Record<CycleTimeStatus, string> = {
+    COMPLETE: t('ppCycleTimeComplete'),
+    PARTIAL: t('ppCycleTimePartial'),
+    INSUFFICIENT_DATA: t('ppCycleTimeInsuffData'),
+    NOT_APPLICABLE: t('ppMetricNotAvailable'),
+  }
+
+  const scopeLabel: Record<string, string> = {
+    CUTTING_ONLY: t('ppCuttingOnly'),
+    CUTTING_PLUS_EXPLICIT_NONCUTTING: t('ppExplicitInputsOnly'),
+    COMPLETE_EXPLICIT_CYCLE: t('ppExplicitInputsOnly'),
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 mb-2 group"
+      >
+        <SectionLabel text={t('ppTimeAnalysis')} />
+        <span className={`text-[11px] ${CT_STATUS_CLS[ct.status]}`}>
+          {statusLabel[ct.status]}
+        </span>
+        <span className="text-[10px] text-tp-text-3 group-hover:text-tp-text transition-colors">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {open && (
+        <div className="space-y-3 text-xs">
+          {/* Scope */}
+          <div className="flex gap-6 text-tp-text-3 flex-wrap">
+            <span>{t('ppCycleTime')} · {scopeLabel[ct.scope] ?? ct.scope}</span>
+          </div>
+
+          {/* Cutting time */}
+          {ct.cutting_time && (
+            <div>
+              <span className="text-tp-text-2 font-medium">{t('ppCalculatedCuttingTime')}</span>
+              <span className={`ml-2 ${TC_STATUS_CLS[ct.cutting_time.status]}`}>
+                {ct.cutting_time.status === 'AVAILABLE'
+                  ? fmtSecRange(ct.cutting_time.time_sec_min, ct.cutting_time.time_sec_max)
+                  : t('ppCycleTimeInsuffData')}
+              </span>
+              {ct.cutting_time.distance_mm !== null && (
+                <span className="ml-2 text-tp-text-3">L={ct.cutting_time.distance_mm} mm</span>
+              )}
+            </div>
+          )}
+
+          {/* Rapid time */}
+          {ct.rapid_time && (
+            <div>
+              <span className="text-tp-text-2 font-medium">{t('ppRapidTime')}</span>
+              <span className={`ml-2 ${TC_STATUS_CLS[ct.rapid_time.status]}`}>
+                {ct.rapid_time.status === 'AVAILABLE'
+                  ? fmtSec(ct.rapid_time.time_sec_min)
+                  : t('ppRapidDataUnavailable')}
+              </span>
+            </div>
+          )}
+
+          {/* Dwell time */}
+          {ct.dwell_time && (
+            <div>
+              <span className="text-tp-text-2 font-medium">{t('ppDwellTime')}</span>
+              <span className="ml-2 text-emerald-300">
+                {fmtSec(ct.dwell_time.time_sec_min)}
+              </span>
+            </div>
+          )}
+
+          {/* Known subtotal */}
+          {ct.known_subtotal_sec_min !== null && (
+            <div className="border-t border-tp-border/40 pt-2">
+              <span className="text-tp-text-2 font-semibold">{t('ppKnownSubtotal')}</span>
+              <span className="ml-2 text-emerald-300">
+                {fmtSecRange(ct.known_subtotal_sec_min, ct.known_subtotal_sec_max)}
+              </span>
+              <span className="ml-2 text-tp-text-3 text-[10px]">≠ {t('ppTotalCycleTime')}</span>
+            </div>
+          )}
+
+          {/* Missing inputs */}
+          {ct.missing_inputs.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-amber-400">{t('ppMetricMissingInput')}:</span>
+              {ct.missing_inputs.map((m, i) => (
+                <div key={i} className="text-[11px] text-amber-300 font-mono ml-2">{m}</div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -627,6 +811,11 @@ function PlanStepCard({ step, t }: { step: PlanStep; t: TFunc }) {
             <EngineeringMetricsSection metrics={step.engineering_metrics} t={t} />
           )}
 
+          {/* Time Analysis */}
+          {step.cycle_time && (
+            <CycleTimeSection ct={step.cycle_time} t={t} />
+          )}
+
           {/* Planning notes */}
           {step.planning_notes && (
             <div className="text-xs text-tp-text-3 italic">{step.planning_notes}</div>
@@ -809,6 +998,10 @@ export default function ProcessPlanningPage() {
       machine_id: s.machine_id || null,
       cutting_tool_id: s.cutting_tool_id || null,
       predecessor_step_ids: s.predecessor_ids,
+      cutting_path_length_mm: s.cutting_path_length_mm !== '' ? parseFloat(s.cutting_path_length_mm) : null,
+      cutting_path_source: s.cutting_path_length_mm !== '' ? 'USER_INPUT' : null,
+      rapid_distance_mm: s.rapid_distance_mm !== '' ? parseFloat(s.rapid_distance_mm) : null,
+      dwell_sec: s.dwell_sec !== '' ? parseFloat(s.dwell_sec) : null,
     }))
 
     try {

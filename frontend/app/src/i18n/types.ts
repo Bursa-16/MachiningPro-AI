@@ -851,4 +851,23 @@ export interface TranslationDictionary {
   ppMetricInputsUsed: string
   ppMetricNote: string
   ppMetricsCount: string
+  // Cycle-time foundation (PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01)
+  ppTimeAnalysis: string
+  ppCycleTime: string
+  ppCalculatedCuttingTime: string
+  ppKnownSubtotal: string
+  ppTotalCycleTime: string
+  ppCycleTimeComplete: string
+  ppCycleTimePartial: string
+  ppCycleTimeInsuffData: string
+  ppCuttingPathLength: string
+  ppRapidDistance: string
+  ppRapidTime: string
+  ppDwellTime: string
+  ppToolChangeTime: string
+  ppExplicitInputsOnly: string
+  ppCuttingOnly: string
+  ppPathLengthRequired: string
+  ppFeedRateUnavailable: string
+  ppRapidDataUnavailable: string
 }

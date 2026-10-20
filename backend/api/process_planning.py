@@ -163,6 +163,10 @@ def plan_process(req: ProcessPlanRequest) -> ProcessPlanResponse:
                 cutting_speed_m_min=s.cutting_speed_m_min,
                 tool_diameter_mm=s.tool_diameter_mm,
                 predecessor_step_ids=s.predecessor_step_ids,
+                cutting_path_length_mm=s.cutting_path_length_mm,
+                cutting_path_source=s.cutting_path_source,
+                rapid_distance_mm=s.rapid_distance_mm,
+                dwell_sec=s.dwell_sec,
             )
             for s in req.operations
         ],

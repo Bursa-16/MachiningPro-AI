@@ -147,6 +147,16 @@ def get_tool_number_of_flutes(cutting_tool_id: str) -> int | None:
     return rec.number_of_flutes if rec else None
 
 
+def get_machine_rapid_traverse_mpm(machine_id: str) -> float | None:
+    """Return rapid_traverse_mpm for the given machine_id, or None if absent.
+
+    Only 2/15 catalog machines have source-backed rapid traverse data.
+    Returns None for all other machines — never fabricates a value.
+    """
+    rec = _MACHINES.get(machine_id)
+    return rec.rapid_traverse_mpm if rec else None
+
+
 # ---------------------------------------------------------------------------
 # Individual rule evaluators
 # ---------------------------------------------------------------------------

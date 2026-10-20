@@ -831,7 +831,9 @@ class TestCuttingParameterEvidence:
 # ---------------------------------------------------------------------------
 
 class TestNoFakeData:
-    def test_no_cycle_time_in_response(self):
+    def test_no_fake_cycle_time_values_in_response(self):
+        """PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01: cycle_time field present but no guessed
+        values — without path input, time must be INSUFFICIENT_DATA (not a fabricated number)."""
         r = client.post(
             "/api/process-planning/plan",
             json={
@@ -844,9 +846,17 @@ class TestNoFakeData:
             headers=_headers(),
         )
         data = r.json()
-        response_str = str(data)
-        for term in ("cycle_time", "machining_time", "setup_time", "total_time"):
-            assert term not in response_str
+        # setup_time and total_time must NOT appear (SETUP_TIME_MODEL_IMPLEMENTED=NO)
+        for term in ("setup_time", "total_time"):
+            assert term not in str(data)
+        # cycle_time IS expected now (foundation implemented); values must not be fabricated
+        for step in data.get("steps", []):
+            ct = step.get("cycle_time")
+            if ct:
+                # Without path input, cutting time must be INSUFFICIENT_DATA — no fake seconds
+                if ct["cutting_time"] and ct["cutting_time"]["status"] == "AVAILABLE":
+                    # This would only happen if a path was supplied — not in this test
+                    assert False, "Expected INSUFFICIENT_DATA without path input"
 
     def test_no_cost_calculation_fields_in_response(self):
         r = client.post(
@@ -887,7 +897,8 @@ class TestNoFakeData:
         for term in ("tool_life", "predicted_life", "tool_life_minutes"):
             assert term not in response_str
 
-    def test_limitations_mention_cycle_time_no(self):
+    def test_limitations_mention_cycle_time_foundation(self):
+        """CYCLE_TIME_FOUNDATION_IMPLEMENTED=YES — limitations must reflect the foundation."""
         r = client.post(
             "/api/process-planning/plan",
             json={
@@ -901,7 +912,7 @@ class TestNoFakeData:
         )
         data = r.json()
         limitations_str = " ".join(data["limitations"])
-        assert "CYCLE_TIME_MODEL_IMPLEMENTED=NO" in limitations_str
+        assert "CYCLE_TIME_FOUNDATION_IMPLEMENTED=YES" in limitations_str
 
     def test_limitations_mention_cost_no(self):
         r = client.post(

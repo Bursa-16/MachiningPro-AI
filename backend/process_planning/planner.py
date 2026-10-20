@@ -8,7 +8,8 @@ Composes:
 What this engine DOES NOT DO:
   - Does NOT duplicate compatibility rules (COMPATIBILITY_LOGIC_DUPLICATED=NO)
   - Does NOT duplicate selection logic (SELECTION_LOGIC_DUPLICATED=NO)
-  - Does NOT predict cycle time (CYCLE_TIME_MODEL_IMPLEMENTED=NO)
+  - Does NOT predict total cycle time
+    (CYCLE_TIME_FOUNDATION_IMPLEMENTED=YES — explicit cutting_path_length_mm required)
   - Does NOT calculate cost (PROCESS_COST_MODEL_IMPLEMENTED=NO)
   - Does NOT predict tool life (TOOLLIFE_USED_FOR_PROCESS_PLAN_PREDICTION=NO)
   - Does NOT force a configuration winner when configurations are tied
@@ -27,6 +28,7 @@ import logging
 from collections import deque
 
 from backend.compatibility.engine import (
+    get_machine_rapid_traverse_mpm,
     get_machine_spindle_max_rpm,
     get_tool_number_of_flutes,
 )
@@ -34,7 +36,8 @@ from backend.compatibility.models import VALID_ISO_GROUPS, VALID_OPERATIONS
 from backend.cutting_parameters.models import ApplicabilityScope
 from backend.cutting_parameters.registry import CuttingParameterRegistry
 from backend.domain.enums import IsoMaterialGroup, OperationType
-from backend.process_planning.metrics import compute_step_metrics
+from backend.process_planning.cycle_time import compute_step_cycle_time
+from backend.process_planning.metrics import EngineeringMetric, compute_step_metrics
 from backend.process_planning.plan_models import (
     PLAN_BLOCKED,
     PLAN_COMPLETE,
@@ -273,6 +276,18 @@ def _apply_sequence_rules(
     return warnings
 
 
+def _feed_rate_metric_from_step_metrics(
+    eng_metrics: object,
+) -> EngineeringMetric | None:
+    """Return the FEED_RATE_RANGE EngineeringMetric from StepEngineeringMetrics, or None."""
+    if eng_metrics is None:
+        return None
+    for m in getattr(eng_metrics, "metrics", []):
+        if getattr(m, "metric_id", None) == "FEED_RATE_RANGE":
+            return m
+    return None
+
+
 def _alternative_sequence_supported(steps: list[OperationStepRequest]) -> bool:
     """True when 2+ steps have no declared dependency (alternative orderings exist)."""
     if len(steps) < 2:
@@ -504,6 +519,31 @@ def generate_plan(
             cutting_tool_id=_metric_tool_id,
         )
 
+        # ---------------------------------------------------------------
+        # Cycle-time foundation
+        # PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01
+        # CYCLE_TIME_AVAILABILITY_CHANGES_PLAN_STATUS=NO
+        # FEED_FORMULA_DUPLICATED=NO
+        # PATH_LENGTH_GUESSED=NO
+        # ---------------------------------------------------------------
+        _ct_machine_id: str | None = (
+            sel_resp.ranked_candidates[0].machine_id
+            if sel_resp.ranked_candidates
+            else step_req.machine_id
+        )
+        step_cycle_time = compute_step_cycle_time(
+            cutting_path_length_mm=step_req.cutting_path_length_mm,
+            cutting_path_source=step_req.cutting_path_source,
+            feed_rate_metric=_feed_rate_metric_from_step_metrics(step_eng_metrics),
+            rapid_distance_mm=step_req.rapid_distance_mm,
+            machine_rapid_traverse_mpm=(
+                get_machine_rapid_traverse_mpm(_ct_machine_id)
+                if _ct_machine_id
+                else None
+            ),
+            dwell_sec=step_req.dwell_sec,
+        )
+
         # Build missing_data list
         missing_data: list[str] = []
         if planning_status == STEP_STATUS_BLOCKED:
@@ -557,6 +597,7 @@ def generate_plan(
                 missing_data=missing_data,
                 planning_notes=None,
                 engineering_metrics=step_eng_metrics,
+                cycle_time=step_cycle_time,
             )
         )
 
@@ -625,8 +666,8 @@ def generate_plan(
     # -------------------------------------------------------------------
     limitations: list[str] = [
         (
-            "CYCLE_TIME_MODEL_IMPLEMENTED=NO — cycle time estimation requires path "
-            "geometry not available in this engine."
+            "CYCLE_TIME_FOUNDATION_IMPLEMENTED=YES (CUTTING_PLUS_EXPLICIT_NONCUTTING scope) — "
+            "explicit cutting_path_length_mm required; path is never inferred from geometry."
         ),
         (
             "PROCESS_COST_MODEL_IMPLEMENTED=NO — cost models require validated cost "
@@ -675,6 +716,23 @@ def generate_plan(
         if s.engineering_metrics is not None
     )
 
+    # -------------------------------------------------------------------
+    # 9. Aggregate cycle-time counts across all steps
+    # PARTIAL_PLAN_TIME_PRESENTED_AS_TOTAL=NO
+    # -------------------------------------------------------------------
+    ct_complete = sum(
+        1 for s in plan_steps
+        if s.cycle_time is not None and s.cycle_time.status == "COMPLETE"
+    )
+    ct_partial = sum(
+        1 for s in plan_steps
+        if s.cycle_time is not None and s.cycle_time.status == "PARTIAL"
+    )
+    ct_insufficient = sum(
+        1 for s in plan_steps
+        if s.cycle_time is not None and s.cycle_time.status == "INSUFFICIENT_DATA"
+    )
+
     return ProcessPlanResponse(
         part_name=req.part_name,
         material_iso_group=iso_group,
@@ -691,4 +749,7 @@ def generate_plan(
         metrics_available_count=total_metrics_available,
         metrics_not_available_count=total_metrics_not_available,
         metrics_insufficient_data_count=total_metrics_insufficient,
+        cycle_time_complete_count=ct_complete,
+        cycle_time_partial_count=ct_partial,
+        cycle_time_insufficient_count=ct_insufficient,
     )

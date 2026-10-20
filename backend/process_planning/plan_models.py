@@ -1,6 +1,7 @@
 """API-facing Pydantic models for the deterministic process planning engine.
 
 PROCESS_PLANNING_ENGINE_01
+PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01
 
 FALSE_AI_CLAIM=NO
 FALSE_OPTIMIZATION_CLAIM=NO
@@ -8,16 +9,21 @@ FALSE_CYCLE_TIME_CLAIM=NO
 FALSE_COST_CLAIM=NO
 SELECTION_LOGIC_DUPLICATED=NO
 COMPATIBILITY_LOGIC_DUPLICATED=NO
-CYCLE_TIME_MODEL_IMPLEMENTED=NO
+CYCLE_TIME_FOUNDATION_IMPLEMENTED=YES
 PROCESS_COST_MODEL_IMPLEMENTED=NO
 TOOLLIFE_USED_FOR_PROCESS_PLAN_PREDICTION=NO
 FORCED_CONFIGURATION_WINNER=NO
+PATH_LENGTH_GUESSED=NO
+FEED_FORMULA_DUPLICATED=NO
 """
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import math
 
+from pydantic import BaseModel, Field, field_validator
+
+from backend.process_planning.cycle_time import StepCycleTime
 from backend.process_planning.metrics import StepEngineeringMetrics
 
 # ---------------------------------------------------------------------------
@@ -66,6 +72,49 @@ class OperationStepRequest(BaseModel):
     cutting_speed_m_min: float | None = None
     tool_diameter_mm: float | None = None
     predecessor_step_ids: list[str] = Field(default_factory=list)
+
+    # Cycle-time foundation explicit job inputs (PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01)
+    # PATH_LENGTH_GUESSED=NO — never inferred from operation name or geometry.
+    cutting_path_length_mm: float | None = None
+    cutting_path_source: str | None = None   # USER_INPUT / CAM_DERIVED / NC_DERIVED / …
+    rapid_distance_mm: float | None = None
+    dwell_sec: float | None = None
+
+    @field_validator("cutting_path_length_mm", mode="before")
+    @classmethod
+    def _validate_path_length(cls, v: object) -> object:
+        if v is None:
+            return v
+        v = float(v)  # type: ignore[arg-type]
+        if not math.isfinite(v):
+            raise ValueError("cutting_path_length_mm must be finite")
+        if v <= 0:
+            raise ValueError("cutting_path_length_mm must be > 0")
+        return v
+
+    @field_validator("rapid_distance_mm", mode="before")
+    @classmethod
+    def _validate_rapid_distance(cls, v: object) -> object:
+        if v is None:
+            return v
+        v = float(v)  # type: ignore[arg-type]
+        if not math.isfinite(v):
+            raise ValueError("rapid_distance_mm must be finite")
+        if v <= 0:
+            raise ValueError("rapid_distance_mm must be > 0")
+        return v
+
+    @field_validator("dwell_sec", mode="before")
+    @classmethod
+    def _validate_dwell(cls, v: object) -> object:
+        if v is None:
+            return v
+        v = float(v)  # type: ignore[arg-type]
+        if not math.isfinite(v):
+            raise ValueError("dwell_sec must be finite")
+        if v < 0:
+            raise ValueError("dwell_sec must be >= 0")
+        return v
 
 
 class ProcessPlanRequest(BaseModel):
@@ -151,6 +200,10 @@ class PlanStep(BaseModel):
     # Engineering metrics (PROCESS_PLAN_ENGINEERING_METRICS_01)
     engineering_metrics: StepEngineeringMetrics | None = None
 
+    # Cycle-time foundation (PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01)
+    # CYCLE_TIME_AVAILABILITY_CHANGES_PLAN_STATUS=NO
+    cycle_time: StepCycleTime | None = None
+
 
 class ProcessPlanSummary(BaseModel):
     step_count: int
@@ -191,3 +244,9 @@ class ProcessPlanResponse(BaseModel):
     metrics_available_count: int = 0
     metrics_not_available_count: int = 0
     metrics_insufficient_data_count: int = 0
+
+    # Cycle-time summary (PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01)
+    # PARTIAL_PLAN_TIME_PRESENTED_AS_TOTAL=NO
+    cycle_time_complete_count: int = 0
+    cycle_time_partial_count: int = 0
+    cycle_time_insufficient_count: int = 0

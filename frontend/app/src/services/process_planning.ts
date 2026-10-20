@@ -10,6 +10,11 @@ export interface OperationStepRequest {
   cutting_speed_m_min?: number | null
   tool_diameter_mm?: number | null
   predecessor_step_ids?: string[]
+  // Cycle-time foundation explicit job inputs
+  cutting_path_length_mm?: number | null
+  cutting_path_source?: string | null
+  rapid_distance_mm?: number | null
+  dwell_sec?: number | null
 }
 
 export interface ProcessPlanRequest {
@@ -45,6 +50,41 @@ export interface CandidateConfigSummary {
 }
 
 export type MetricStatus = 'AVAILABLE' | 'NOT_AVAILABLE' | 'INSUFFICIENT_DATA' | 'NOT_APPLICABLE'
+
+// ── Cycle-time types (PROCESS_PLAN_CYCLE_TIME_FOUNDATION_01) ──────────────────
+
+export type CycleTimeStatus = 'COMPLETE' | 'PARTIAL' | 'INSUFFICIENT_DATA' | 'NOT_APPLICABLE'
+export type CycleTimeScope = 'CUTTING_ONLY' | 'CUTTING_PLUS_EXPLICIT_NONCUTTING' | 'COMPLETE_EXPLICIT_CYCLE'
+export type TimeComponentStatus = 'AVAILABLE' | 'NOT_AVAILABLE' | 'INSUFFICIENT_DATA' | 'NOT_APPLICABLE'
+
+export interface TimeComponent {
+  component_id: string
+  component_type: string
+  status: TimeComponentStatus
+  time_sec_min: number | null
+  time_sec_max: number | null
+  distance_mm: number | null
+  rate_mm_min: number | null
+  formula_reference: string | null
+  input_provenance: string | null
+  missing_inputs: string[]
+  limitations: string[]
+}
+
+export interface StepCycleTime {
+  status: CycleTimeStatus
+  scope: CycleTimeScope
+  cutting_time: TimeComponent | null
+  rapid_time: TimeComponent | null
+  dwell_time: TimeComponent | null
+  tool_change_time: null
+  known_subtotal_sec_min: number | null
+  known_subtotal_sec_max: number | null
+  total_cycle_time: null
+  components: TimeComponent[]
+  missing_inputs: string[]
+  limitations: string[]
+}
 
 export interface EngineeringMetric {
   metric_id: string
@@ -93,6 +133,7 @@ export interface PlanStep {
   missing_data: string[]
   planning_notes: string | null
   engineering_metrics: StepEngineeringMetrics | null
+  cycle_time: StepCycleTime | null
 }
 
 export interface ProcessPlanSummary {
@@ -126,6 +167,9 @@ export interface ProcessPlanResponse {
   metrics_available_count: number
   metrics_not_available_count: number
   metrics_insufficient_data_count: number
+  cycle_time_complete_count: number
+  cycle_time_partial_count: number
+  cycle_time_insufficient_count: number
 }
 
 export interface ProcessPlanningSchema {
