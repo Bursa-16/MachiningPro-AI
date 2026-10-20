@@ -1,15 +1,14 @@
 """Unit tests for Cutting Tool Catalog API."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.api.app import app
 
 client = TestClient(app)
 
-EXPECTED_TOOL_COUNT = 16
+EXPECTED_TOOL_COUNT = 18
 EXPECTED_MANUFACTURER_COUNT = 4
-EXPECTED_CATEGORY_COUNT = 3  # Turning Insert, End Mill, Solid Carbide Drill
+EXPECTED_CATEGORY_COUNT = 5  # Turning Insert, End Mill, Solid Carbide Drill, Reamer, Boring Bar
 
 
 # ── Seed catalog data tests ──────────────────────────────────────────────────
@@ -57,7 +56,10 @@ class TestSeedCatalogData:
     def test_expected_categories(self):
         from backend.cutting_tools.seed_catalog import get_categories
         cats = get_categories()
-        for expected in ["End Mill", "Solid Carbide Drill", "Turning Insert"]:
+        for expected in [
+            "Boring Bar", "End Mill", "Solid Carbide Drill",
+            "Solid Carbide Reamer", "Turning Insert",
+        ]:
             assert expected in cats
 
     def test_all_have_supported_operations(self):
@@ -225,6 +227,20 @@ class TestCuttingToolsList:
         for t in data:
             assert "milling" in t["supported_operations"]
 
+    def test_filter_operation_reaming(self):
+        r = client.get("/api/cutting-tools?operation=reaming")
+        data = r.json()
+        assert len(data) >= 1
+        for t in data:
+            assert "reaming" in t["supported_operations"]
+
+    def test_filter_operation_boring(self):
+        r = client.get("/api/cutting-tools?operation=boring")
+        data = r.json()
+        assert len(data) >= 1
+        for t in data:
+            assert "boring" in t["supported_operations"]
+
     def test_filter_tool_material_carbide(self):
         r = client.get("/api/cutting-tools?tool_material=carbide")
         data = r.json()
@@ -327,6 +343,35 @@ class TestCuttingToolDetail:
         data = r.json()
         assert data["cutting_diameter_mm"] == 8.0
         assert data["through_coolant"] is True
+
+    def test_detail_sandvik_reamer_835(self):
+        r = client.get("/api/cutting-tools/sandvik-835b-0801-a1-mf-1024")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["manufacturer"] == "Sandvik Coromant"
+        assert data["tool_category"] == "Solid Carbide Reamer"
+        assert data["tool_category_code"] == "REAMER"
+        assert "reaming" in data["supported_operations"]
+        assert data["cutting_diameter_mm"] == 8.01
+        assert data["shank_diameter_mm"] == 8.0
+        assert data["number_of_flutes"] == 6
+        assert data["max_rpm"] == 1907
+        assert data["through_coolant"] is True
+        assert data["overall_length_mm"] == 100.0
+        assert "P" in data["iso_material_groups"]
+
+    def test_detail_sandvik_boring_bar_a25t(self):
+        r = client.get("/api/cutting-tools/sandvik-a25t-sducr-11")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["manufacturer"] == "Sandvik Coromant"
+        assert data["tool_category"] == "Boring Bar"
+        assert data["tool_category_code"] == "BORING_BAR"
+        assert "boring" in data["supported_operations"]
+        assert data["shank_diameter_mm"] == 25.0
+        assert data["through_coolant"] is True
+        assert "P" in data["iso_material_groups"]
+        assert data["max_rpm"] is None
 
     def test_detail_missing_fields_list_present(self):
         r = client.get("/api/cutting-tools/sandvik-cnmg-120408-pm-4325")

@@ -4,11 +4,10 @@ Tests for GET /api/machines/* endpoints (MACHINE_CATALOG_DATA_INTEGRATION_01).
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.api.app import app
-from backend.machines.seed_catalog import MACHINE_CATALOG_RECORDS, seed_machine_catalog
+from backend.machines.seed_catalog import seed_machine_catalog
 
 client = TestClient(app)
 
@@ -45,7 +44,9 @@ class TestSeedCatalogData:
 
     def test_mandatory_identity_fields_present(self):
         for rec in seed_machine_catalog():
-            for field in ("stable_id", "manufacturer", "model", "machine_type", "machine_type_code"):
+            for field in (
+                "stable_id", "manufacturer", "model", "machine_type", "machine_type_code"
+            ):
                 assert rec.get(field), f"Record missing {field}: {rec}"
 
     def test_supported_processes_non_empty(self):
@@ -326,3 +327,8 @@ class TestMachineDetail:
         data = r.json()
         assert data["turning_capable"] is True
         assert data["milling_capable"] is True
+
+    def test_detail_integrex_milling_spindle_interface(self):
+        r = client.get("/api/machines/mazak-integrex-i200")
+        data = r.json()
+        assert data["spindle_interface"] == "HSK-A63"

@@ -397,6 +397,7 @@ MACHINE_CATALOG_RECORDS: list[dict] = [
         simultaneous_axis_count=5,
         spindle_max_rpm=5_000,
         spindle_power_kw=18.5,
+        spindle_interface="HSK-A63",
         max_turning_diameter_mm=650.0,
         max_turning_length_mm=1_524.0,
         tool_magazine_capacity=36,

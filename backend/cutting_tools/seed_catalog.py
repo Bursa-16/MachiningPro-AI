@@ -236,6 +236,66 @@ _RECORDS: list[CuttingToolCatalogRecord] = [
         shank_interface="Straight (DIN 6535 HA)",
     ),
 
+    # ── Sandvik Coromant — Reamers ───────────────────────────────────────────
+
+    _make(
+        stable_id="sandvik-835b-0801-a1-mf-1024",
+        manufacturer="Sandvik Coromant",
+        product_family="CoroReamer 835",
+        product_name="835.B-0801-A1-MF 1024",
+        catalog_code="835.B-0801-A1-MF 1024",
+        tool_category="Solid Carbide Reamer",
+        tool_category_code="REAMER",
+        tool_subcategory="Solid Carbide Reamer Cylindrical Shank",
+        supported_operations=["reaming"],
+        iso_material_groups=["P", "M", "K"],
+        tool_material="carbide",
+        coating="1024 PVD TiAlN",
+        coating_type="PVD",
+        cutting_diameter_mm=8.01,
+        shank_diameter_mm=8.0,
+        overall_length_mm=100.0,
+        flute_length_mm=64.0,
+        cutting_length_mm=16.0,
+        number_of_flutes=6,
+        through_coolant=True,
+        max_rpm=1907,
+        shank_interface="Straight (DIN 6535 HA)",
+        source_note=(
+            "coromant.sandvik.com/en-gb/product-details?c=835.B-0801-A1-MF1024. "
+            "Maximum rotational speed 1907 rpm per official product page. "
+            "Grade 1024 PVD TiAlN; cylindrical shank DIN6535-HA 8 mm; "
+            "cutting diameter 8.01 mm; overall length 100 mm."
+        ),
+    ),
+
+    # ── Sandvik Coromant — Boring Bars ────────────────────────────────────────
+
+    _make(
+        stable_id="sandvik-a25t-sducr-11",
+        manufacturer="Sandvik Coromant",
+        product_family="CoroTurn 107",
+        product_name="A25T-SDUCR 11",
+        catalog_code="A25T-SDUCR 11",
+        tool_category="Boring Bar",
+        tool_category_code="BORING_BAR",
+        tool_subcategory="Indexable Boring Bar Steel",
+        supported_operations=["boring"],
+        iso_material_groups=["P", "M", "K"],
+        tool_material="carbide",
+        shank_diameter_mm=25.0,
+        overall_length_mm=300.0,
+        through_coolant=True,
+        shank_interface="Round Shank (25 mm)",
+        compatible_holder_interface="Boring Bar Shank (25 mm)",
+        source_note=(
+            "coromant.sandvik.com/en-us/product-details?c=A25T-SDUCR+11. "
+            "25 mm round-shank steel boring bar; minimum bore 32 mm; "
+            "internal coolant; CoroTurn 107 insert system (SDUCR, D55 insert). "
+            "ISO P/M/K steel and cast iron primary application."
+        ),
+    ),
+
     # ── Kennametal — Turning Inserts ──────────────────────────────────────────
 
     _make(
