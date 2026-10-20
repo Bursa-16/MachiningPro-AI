@@ -776,4 +776,65 @@ export interface TranslationDictionary {
   csCriteriaTrace: string
   csRejectedSample: string
   csNotRankableSample: string
+
+  // Process Planning (pp*)
+  ppTitle: string
+  ppSubtitle: string
+  ppPartName: string
+  ppPartNamePlaceholder: string
+  ppMaterialGroup: string
+  ppOperations: string
+  ppAddOperation: string
+  ppRemoveOperation: string
+  ppStepId: string
+  ppSequenceNumber: string
+  ppOperation: string
+  ppMachineConstraint: string
+  ppToolConstraint: string
+  ppPredecessors: string
+  ppGeneratePlan: string
+  ppLoadingSchema: string
+  ppLoadingPlan: string
+  ppSchemaError: string
+  ppPlanError: string
+  ppFillRequired: string
+  ppStatusComplete: string
+  ppStatusPartial: string
+  ppStatusBlocked: string
+  ppStatusInsufficientData: string
+  ppStatusCompleteDesc: string
+  ppStatusPartialDesc: string
+  ppStatusBlockedDesc: string
+  ppStatusInsufficientDataDesc: string
+  ppStepPlanned: string
+  ppStepBlocked: string
+  ppStepInsufficientData: string
+  ppStepNotSupported: string
+  ppCandidateConfigs: string
+  ppEngineeringTie: string
+  ppCompatibilityTrace: string
+  ppSelectionTrace: string
+  ppCuttingParams: string
+  ppCuttingParamAvailable: string
+  ppCuttingParamUnavailable: string
+  ppMissingData: string
+  ppSequenceWarnings: string
+  ppRejectedSample: string
+  ppNotRankableSample: string
+  ppSummary: string
+  ppLimitations: string
+  ppProvenance: string
+  ppDependencyViolations: string
+  ppAlternativeSequence: string
+  ppSelectOperation: string
+  ppAllMachines: string
+  ppAllTools: string
+  ppNoPredecessors: string
+  ppEvaluated: string
+  ppCompatible: string
+  ppIncompatible: string
+  ppInsufficient: string
+  ppDisplayDefault: string
+  ppFlowVisualization: string
+  ppEngineeringTieDesc: string
 }

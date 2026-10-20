@@ -19,6 +19,7 @@ from .cutting_tools import router as cutting_tools_router
 from .drawing_analysis import router as drawing_analysis_router
 from .engineering_import import router as engineering_import_router
 from .machines import router as machines_router
+from .process_planning import router as process_planning_router
 from .selection import router as selection_router
 from .tool_holders import router as tool_holders_router
 from .tool_life import router as tool_life_router
@@ -37,6 +38,7 @@ app.include_router(cutting_tools_router)
 app.include_router(drawing_analysis_router)
 app.include_router(engineering_import_router)
 app.include_router(machines_router)
+app.include_router(process_planning_router)
 app.include_router(selection_router)
 app.include_router(tool_holders_router)
 app.include_router(tool_life_router)

@@ -12,6 +12,7 @@ import CuttingToolCatalogPage from './pages/CuttingToolCatalogPage'
 import CompatibilityPage from './pages/CompatibilityPage'
 import SelectionPage from './pages/SelectionPage'
 import ToolHolderCatalogPage from './pages/ToolHolderCatalogPage'
+import ProcessPlanningPage from './pages/ProcessPlanningPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   return (
@@ -78,7 +79,7 @@ function ProtectedRoutes() {
         />
 
         {/* Planning & Quality */}
-        <Route path="app/planning-quality/process-planning" element={capability('Process Planning')} />
+        <Route path="app/planning-quality/process-planning" element={<ProcessPlanningPage />} />
         <Route path="app/planning-quality/dfm" element={capability('DFM')} />
         <Route path="app/planning-quality/machine-capability" element={capability('Machine Capability')} />
         <Route path="app/planning-quality/validation" element={capability('Validation')} />

@@ -1,0 +1,807 @@
+import { useState, useEffect, useCallback } from 'react'
+import { useLocale } from '../i18n'
+import type { TranslationDictionary } from '../i18n/types'
+import {
+  fetchProcessPlanningSchema,
+  generateProcessPlan,
+  type ProcessPlanningSchema,
+  type ProcessPlanResponse,
+  type PlanStep,
+  type OperationStepRequest,
+} from '../services/process_planning'
+
+type TFunc = (key: keyof TranslationDictionary) => string
+
+// ── Colour maps ────────────────────────────────────────────────────────────────
+
+const STEP_STATUS_COLORS: Record<string, string> = {
+  PLANNED: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+  BLOCKED: 'bg-red-500/15 text-red-300 border border-red-500/30',
+  INSUFFICIENT_DATA: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+  NOT_SUPPORTED: 'bg-tp-surface-2 text-tp-text-3 border border-tp-border',
+}
+
+const PLAN_STATUS_COLORS: Record<string, string> = {
+  PLAN_COMPLETE: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+  PLAN_PARTIAL: 'border-sky-500/40 bg-sky-500/10 text-sky-300',
+  PLAN_BLOCKED: 'border-red-500/40 bg-red-500/10 text-red-300',
+  PLAN_INSUFFICIENT_DATA: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function Badge({ label, cls }: { label: string; cls: string }) {
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${cls}`}>
+      {label}
+    </span>
+  )
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return (
+    <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-2">
+      {text}
+    </div>
+  )
+}
+
+function FieldLabel({ text }: { text: string }) {
+  return (
+    <label className="block text-xs font-medium text-tp-text-2 mb-1">{text}</label>
+  )
+}
+
+function SelectField({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: Array<{ value: string; label: string }>
+  placeholder: string
+  disabled?: boolean
+}) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      disabled={disabled}
+      className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text focus:outline-none focus:border-tp-accent-light disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  )
+}
+
+function MultiSelectField({
+  selected,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+}: {
+  selected: string[]
+  onChange: (v: string[]) => void
+  options: Array<{ value: string; label: string }>
+  placeholder: string
+  disabled?: boolean
+}) {
+  const toggle = (val: string) => {
+    if (selected.includes(val)) {
+      onChange(selected.filter(v => v !== val))
+    } else {
+      onChange([...selected, val])
+    }
+  }
+  return (
+    <div className="border border-tp-border rounded bg-tp-surface p-2 flex flex-wrap gap-1.5 min-h-[40px]">
+      {options.length === 0 && (
+        <span className="text-xs text-tp-text-3 self-center">{placeholder}</span>
+      )}
+      {options.map(o => {
+        const on = selected.includes(o.value)
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => !disabled && toggle(o.value)}
+            disabled={disabled}
+            className={`px-2 py-0.5 rounded text-[11px] font-mono border transition-colors disabled:cursor-not-allowed
+              ${on
+                ? 'bg-tp-accent-light/20 border-tp-accent-light text-tp-accent-light'
+                : 'bg-tp-surface-2 border-tp-border text-tp-text-3 hover:border-tp-text-3'
+              }`}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Step editor row ───────────────────────────────────────────────────────────
+
+interface StepForm {
+  id: string
+  step_id: string
+  sequence_number: string
+  operation: string
+  machine_id: string
+  cutting_tool_id: string
+  predecessor_ids: string[]
+}
+
+function newStep(seq: number): StepForm {
+  return {
+    id: crypto.randomUUID(),
+    step_id: `OP${seq * 10}`,
+    sequence_number: String(seq * 10),
+    operation: '',
+    machine_id: '',
+    cutting_tool_id: '',
+    predecessor_ids: [],
+  }
+}
+
+function StepRow({
+  step,
+  index,
+  allSteps,
+  schema,
+  onChange,
+  onRemove,
+  t,
+}: {
+  step: StepForm
+  index: number
+  allSteps: StepForm[]
+  schema: ProcessPlanningSchema | null
+  onChange: (updated: StepForm) => void
+  onRemove: () => void
+  t: TFunc
+}) {
+  const predecessorOptions = allSteps
+    .filter(s => s.id !== step.id && s.step_id.trim() !== '')
+    .map(s => ({ value: s.step_id, label: s.step_id }))
+
+  const machineOptions = schema?.machines.map(m => ({ value: m.id, label: m.display })) ?? []
+  const toolOptions = schema?.cutting_tools.map(m => ({ value: m.id, label: m.display })) ?? []
+  const opOptions = schema?.valid_operations.map(o => ({ value: o, label: o })) ?? []
+
+  return (
+    <div className="border border-tp-border rounded-lg p-3 space-y-3 bg-tp-surface-2/30">
+      {/* Row header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-tp-accent-light">Step {index + 1}</span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-[11px] text-red-400 hover:text-red-300 transition-colors"
+        >
+          {t('ppRemoveOperation')}
+        </button>
+      </div>
+
+      {/* Step ID + Sequence */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <FieldLabel text={t('ppStepId')} />
+          <input
+            type="text"
+            value={step.step_id}
+            onChange={e => onChange({ ...step, step_id: e.target.value })}
+            className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text font-mono focus:outline-none focus:border-tp-accent-light"
+            placeholder="OP10"
+          />
+        </div>
+        <div>
+          <FieldLabel text={t('ppSequenceNumber')} />
+          <input
+            type="number"
+            value={step.sequence_number}
+            min={1}
+            onChange={e => onChange({ ...step, sequence_number: e.target.value })}
+            className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text focus:outline-none focus:border-tp-accent-light"
+          />
+        </div>
+      </div>
+
+      {/* Operation */}
+      <div>
+        <FieldLabel text={t('ppOperation')} />
+        <SelectField
+          value={step.operation}
+          onChange={v => onChange({ ...step, operation: v })}
+          options={opOptions}
+          placeholder={t('ppSelectOperation')}
+        />
+      </div>
+
+      {/* Machine / Tool */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <FieldLabel text={t('ppMachineConstraint')} />
+          <SelectField
+            value={step.machine_id}
+            onChange={v => onChange({ ...step, machine_id: v })}
+            options={machineOptions}
+            placeholder={t('ppAllMachines')}
+          />
+        </div>
+        <div>
+          <FieldLabel text={t('ppToolConstraint')} />
+          <SelectField
+            value={step.cutting_tool_id}
+            onChange={v => onChange({ ...step, cutting_tool_id: v })}
+            options={toolOptions}
+            placeholder={t('ppAllTools')}
+          />
+        </div>
+      </div>
+
+      {/* Predecessors */}
+      {predecessorOptions.length > 0 && (
+        <div>
+          <FieldLabel text={t('ppPredecessors')} />
+          <MultiSelectField
+            selected={step.predecessor_ids}
+            onChange={v => onChange({ ...step, predecessor_ids: v })}
+            options={predecessorOptions}
+            placeholder={t('ppNoPredecessors')}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── PlanStep result card ───────────────────────────────────────────────────────
+
+function PlanStepCard({ step, t }: { step: PlanStep; t: TFunc }) {
+  const [expanded, setExpanded] = useState(false)
+  const [showCompat, setShowCompat] = useState(false)
+  const [showSelection, setShowSelection] = useState(false)
+  const [showCutParams, setShowCutParams] = useState(false)
+
+  const statusCls = STEP_STATUS_COLORS[step.planning_status] ?? 'bg-tp-surface-2 text-tp-text-3 border border-tp-border'
+
+  const statusLabel = {
+    PLANNED: t('ppStepPlanned'),
+    BLOCKED: t('ppStepBlocked'),
+    INSUFFICIENT_DATA: t('ppStepInsufficientData'),
+    NOT_SUPPORTED: t('ppStepNotSupported'),
+  }[step.planning_status] ?? step.planning_status
+
+  return (
+    <div className="border border-tp-border rounded-lg overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => step.planning_status !== 'NOT_SUPPORTED' && setExpanded(v => !v)}
+        className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-tp-surface-2/40 transition-colors"
+      >
+        <span className="text-sm font-mono text-tp-text-2 w-24 shrink-0">#{step.sequence_number}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-tp-text">{step.step_id}</span>
+            <span className="text-xs font-mono text-tp-text-3">{step.operation}</span>
+            <Badge label={statusLabel} cls={statusCls} />
+            {step.engineering_tie && step.planning_status === 'PLANNED' && (
+              <Badge label={t('ppEngineeringTie')} cls="bg-sky-500/15 text-sky-300 border border-sky-500/30" />
+            )}
+          </div>
+          {step.sequence_warnings.length > 0 && (
+            <div className="text-[11px] text-amber-400 mt-0.5">
+              ⚠ {step.sequence_warnings.map(w => w.rule_id).join(', ')}
+            </div>
+          )}
+        </div>
+        {step.planning_status !== 'NOT_SUPPORTED' && (
+          <span className="text-tp-text-3 text-xs shrink-0">{expanded ? '▲' : '▼'}</span>
+        )}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-tp-border/60 px-4 py-4 space-y-4">
+
+          {/* Counts */}
+          <div className="flex gap-4 text-xs text-tp-text-3 flex-wrap">
+            <span>{t('ppEvaluated')}: <span className="text-tp-text">{step.candidates_evaluated}</span></span>
+            <span>{t('ppCompatible')}: <span className="text-emerald-300">{step.compatible_count}</span></span>
+            <span>{t('ppIncompatible')}: <span className="text-red-400">{step.incompatible_count}</span></span>
+            <span>{t('ppInsufficient')}: <span className="text-amber-300">{step.not_rankable_count}</span></span>
+          </div>
+
+          {/* Engineering tie description */}
+          {step.engineering_tie && (
+            <div className="text-xs text-sky-300 bg-sky-500/10 border border-sky-500/20 rounded px-3 py-2">
+              {t('ppEngineeringTieDesc')}
+            </div>
+          )}
+
+          {/* Sequence warnings */}
+          {step.sequence_warnings.length > 0 && (
+            <div>
+              <SectionLabel text={t('ppSequenceWarnings')} />
+              {step.sequence_warnings.map((w, i) => (
+                <div key={i} className="text-xs bg-amber-500/10 border border-amber-500/20 rounded px-3 py-2 mb-1">
+                  <span className="font-mono text-amber-300 mr-2">{w.rule_id}</span>
+                  <span className="text-tp-text-2">{w.explanation}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Candidate configurations */}
+          {step.candidate_configurations.length > 0 && (
+            <div>
+              <SectionLabel text={t('ppCandidateConfigs')} />
+              <div className="space-y-1">
+                {step.candidate_configurations.map((c, i) => (
+                  <div key={i} className="text-xs bg-tp-surface border border-tp-border rounded px-3 py-2 flex items-center gap-2 flex-wrap">
+                    <span className="text-tp-text-3 w-5 shrink-0">{c.rank != null ? `#${c.rank}` : '—'}</span>
+                    <span className="font-mono text-tp-text-2">{c.machine_id}</span>
+                    <span className="text-tp-text-3">/</span>
+                    <span className="font-mono text-tp-text-2">{c.holder_id}</span>
+                    <span className="text-tp-text-3">/</span>
+                    <span className="font-mono text-tp-text-2">{c.cutting_tool_id}</span>
+                    {c.engineering_tie && (
+                      <Badge label={t('ppEngineeringTie')} cls="bg-sky-500/15 text-sky-300 border border-sky-500/30" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cutting parameter references */}
+          <div>
+            <SectionLabel text={t('ppCuttingParams')} />
+            {step.cutting_parameter_reference_available ? (
+              <div className="text-xs text-emerald-300 mb-1">✓ {t('ppCuttingParamAvailable')}</div>
+            ) : (
+              <div className="text-xs text-tp-text-3 mb-1">{t('ppCuttingParamUnavailable')}</div>
+            )}
+            {step.cutting_parameter_references.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowCutParams(v => !v)}
+                className="text-[11px] text-tp-accent-light hover:text-tp-text transition-colors"
+              >
+                {showCutParams ? '▲' : '▼'} {step.cutting_parameter_references.length} record(s)
+              </button>
+            )}
+            {showCutParams && (
+              <div className="mt-2 overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-tp-border text-tp-text-3 text-left">
+                      <th className="pb-1 pr-3 font-medium">Type</th>
+                      <th className="pb-1 pr-3 font-medium">Range</th>
+                      <th className="pb-1 pr-3 font-medium">Unit</th>
+                      <th className="pb-1 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {step.cutting_parameter_references.map((p, i) => (
+                      <tr key={i} className="border-b border-tp-border/40 last:border-0">
+                        <td className="py-1.5 pr-3 font-mono text-tp-text-2">{p.parameter_type}</td>
+                        <td className="py-1.5 pr-3 text-tp-text">{p.min_value}–{p.max_value}</td>
+                        <td className="py-1.5 pr-3 text-tp-text-3">{p.unit}</td>
+                        <td className="py-1.5 text-tp-text-3">{p.evidence_status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Compatibility trace toggle */}
+          {step.compatibility_trace.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowCompat(v => !v)}
+                className="text-[11px] text-tp-accent-light hover:text-tp-text transition-colors mb-1"
+              >
+                {showCompat ? '▲' : '▼'} {t('ppCompatibilityTrace')} ({step.compatibility_trace.length})
+              </button>
+              {showCompat && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-tp-border text-tp-text-3 text-left">
+                        <th className="pb-1 pr-3 font-medium">rule_id</th>
+                        <th className="pb-1 pr-3 font-medium">status</th>
+                        <th className="pb-1 pr-3 font-medium">reason_code</th>
+                        <th className="pb-1 font-medium">detail</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(step.compatibility_trace as Array<{rule_id:string;status:string;reason_code:string;detail?:string}>).map((r, i) => {
+                        const cls = {
+                          PASS: 'text-emerald-300',
+                          FAIL: 'text-red-400',
+                          UNKNOWN: 'text-amber-300',
+                          NOT_APPLICABLE: 'text-tp-text-3',
+                        }[r.status] ?? 'text-tp-text-3'
+                        return (
+                          <tr key={i} className="border-b border-tp-border/40 last:border-0">
+                            <td className="py-1.5 pr-3 font-mono text-tp-text-2 whitespace-nowrap">{r.rule_id}</td>
+                            <td className={`py-1.5 pr-3 font-semibold text-[10px] uppercase ${cls}`}>{r.status}</td>
+                            <td className="py-1.5 pr-3 font-mono text-tp-text-3">{r.reason_code}</td>
+                            <td className="py-1.5 text-tp-text-3">{r.detail ?? '—'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Selection criteria trace toggle */}
+          {step.selection_criteria_trace.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowSelection(v => !v)}
+                className="text-[11px] text-tp-accent-light hover:text-tp-text transition-colors mb-1"
+              >
+                {showSelection ? '▲' : '▼'} {t('ppSelectionTrace')} ({step.selection_criteria_trace.length})
+              </button>
+              {showSelection && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-tp-border text-tp-text-3 text-left">
+                        <th className="pb-1 pr-3 font-medium">criterion_id</th>
+                        <th className="pb-1 pr-3 font-medium">applicable</th>
+                        <th className="pb-1 pr-3 font-medium">value</th>
+                        <th className="pb-1 font-medium">note</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(step.selection_criteria_trace as Array<{criterion_id:string;applicable:boolean;value?:string|null;note:string}>).map((c, i) => (
+                        <tr key={i} className="border-b border-tp-border/40 last:border-0">
+                          <td className="py-1.5 pr-3 font-mono text-tp-text-2 whitespace-nowrap">{c.criterion_id}</td>
+                          <td className={`py-1.5 pr-3 text-[10px] font-semibold uppercase ${c.applicable ? 'text-emerald-300' : 'text-tp-text-3'}`}>
+                            {c.applicable ? 'YES' : 'N/A'}
+                          </td>
+                          <td className="py-1.5 pr-3 text-tp-text">{c.applicable ? (c.value ?? '—') : '—'}</td>
+                          <td className="py-1.5 text-tp-text-3">{c.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Missing data */}
+          {step.missing_data.length > 0 && (
+            <div>
+              <SectionLabel text={t('ppMissingData')} />
+              <ul className="space-y-0.5">
+                {step.missing_data.map((m, i) => (
+                  <li key={i} className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1">{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Planning notes */}
+          {step.planning_notes && (
+            <div className="text-xs text-tp-text-3 italic">{step.planning_notes}</div>
+          )}
+
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Plan result panel ─────────────────────────────────────────────────────────
+
+function PlanResult({ result, t }: { result: ProcessPlanResponse; t: TFunc }) {
+  const [showLimitations, setShowLimitations] = useState(false)
+
+  const planStatusLabel: Record<string, string> = {
+    PLAN_COMPLETE: t('ppStatusComplete'),
+    PLAN_PARTIAL: t('ppStatusPartial'),
+    PLAN_BLOCKED: t('ppStatusBlocked'),
+    PLAN_INSUFFICIENT_DATA: t('ppStatusInsufficientData'),
+  }
+
+  const planStatusDesc: Record<string, string> = {
+    PLAN_COMPLETE: t('ppStatusCompleteDesc'),
+    PLAN_PARTIAL: t('ppStatusPartialDesc'),
+    PLAN_BLOCKED: t('ppStatusBlockedDesc'),
+    PLAN_INSUFFICIENT_DATA: t('ppStatusInsufficientDataDesc'),
+  }
+
+  const cls = PLAN_STATUS_COLORS[result.plan_status] ?? 'border-tp-border bg-tp-surface-2 text-tp-text'
+
+  return (
+    <div className="space-y-4">
+
+      {/* Plan status banner */}
+      <div className={`rounded-lg border p-4 ${cls}`}>
+        <div className="text-sm font-bold tracking-wide">{planStatusLabel[result.plan_status] ?? result.plan_status}</div>
+        <div className="text-xs mt-1 opacity-80">{planStatusDesc[result.plan_status] ?? ''}</div>
+        <div className="text-xs mt-2 opacity-60">{result.part_name} · ISO {result.material_iso_group}</div>
+      </div>
+
+      {/* Dependency violations */}
+      {!result.dependency_graph_valid && result.dependency_violations.length > 0 && (
+        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3">
+          <SectionLabel text={t('ppDependencyViolations')} />
+          <ul className="space-y-0.5">
+            {result.dependency_violations.map((v, i) => (
+              <li key={i} className="text-xs text-red-300">{v}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Alternative sequence note */}
+      {result.alternative_valid_sequence_supported && (
+        <div className="text-xs text-sky-300 bg-sky-500/10 border border-sky-500/20 rounded px-3 py-2">
+          {t('ppAlternativeSequence')}: {t('ppFlowVisualization')}
+        </div>
+      )}
+
+      {/* Summary */}
+      <div className="bg-tp-surface border border-tp-border rounded-lg p-4">
+        <SectionLabel text={t('ppSummary')} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: t('ppStepPlanned'), val: result.summary.planned_count, cls: 'text-emerald-300' },
+            { label: t('ppStepBlocked'), val: result.summary.blocked_count, cls: 'text-red-400' },
+            { label: t('ppStepInsufficientData'), val: result.summary.insufficient_data_count, cls: 'text-amber-300' },
+            { label: t('ppStepNotSupported'), val: result.summary.not_supported_count, cls: 'text-tp-text-3' },
+          ].map(({ label, val, cls: c }) => (
+            <div key={label} className="text-center">
+              <div className={`text-2xl font-bold ${c}`}>{val}</div>
+              <div className="text-[10px] text-tp-text-3 uppercase tracking-wide mt-0.5">{label}</div>
+            </div>
+          ))}
+        </div>
+        {result.summary.engineering_tie_count > 0 && (
+          <div className="mt-3 text-xs text-sky-300 border-t border-tp-border pt-3">
+            {result.summary.engineering_tie_count} step(s) have engineering ties.{' '}
+            {t('ppEngineeringTieDesc')}
+          </div>
+        )}
+      </div>
+
+      {/* Steps */}
+      <div className="space-y-2">
+        {result.steps.map(step => (
+          <PlanStepCard key={step.step_id} step={step} t={t} />
+        ))}
+      </div>
+
+      {/* Limitations */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowLimitations(v => !v)}
+          className="text-[11px] text-tp-text-3 hover:text-tp-text-2 transition-colors"
+        >
+          {showLimitations ? '▲' : '▼'} {t('ppLimitations')} ({result.limitations.length})
+        </button>
+        {showLimitations && (
+          <ul className="mt-2 space-y-1">
+            {result.limitations.map((lim, i) => (
+              <li key={i} className="text-[11px] text-tp-text-3 font-mono">{lim}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Disclaimer */}
+      <div className="text-[11px] text-tp-text-3 bg-tp-surface-2/50 border border-tp-border/50 rounded p-3 italic">
+        {result.disclaimer}
+      </div>
+
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
+export default function ProcessPlanningPage() {
+  const { t } = useLocale()
+  const [schema, setSchema] = useState<ProcessPlanningSchema | null>(null)
+  const [schemaError, setSchemaError] = useState(false)
+
+  const [partName, setPartName] = useState('')
+  const [isoGroup, setIsoGroup] = useState('')
+  const [steps, setSteps] = useState<StepForm[]>([newStep(1)])
+
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<ProcessPlanResponse | null>(null)
+  const [stale, setStale] = useState(false)
+
+  // Load schema
+  useEffect(() => {
+    fetchProcessPlanningSchema()
+      .then(s => setSchema(s))
+      .catch(() => setSchemaError(true))
+  }, [])
+
+  // Mark result stale when inputs change
+  const markStale = useCallback(() => {
+    if (result) setStale(true)
+  }, [result])
+
+  const handleAddStep = () => {
+    const maxSeq = steps.reduce((max, s) => Math.max(max, Number(s.sequence_number) || 0), 0)
+    setSteps(prev => [...prev, newStep(Math.floor(maxSeq / 10) + 1 + prev.length)])
+    markStale()
+  }
+
+  const handleChangeStep = (idx: number, updated: StepForm) => {
+    setSteps(prev => prev.map((s, i) => (i === idx ? updated : s)))
+    markStale()
+  }
+
+  const handleRemoveStep = (idx: number) => {
+    setSteps(prev => prev.filter((_, i) => i !== idx))
+    markStale()
+  }
+
+  const canSubmit = partName.trim() !== '' &&
+    isoGroup !== '' &&
+    steps.length > 0 &&
+    steps.every(s => s.operation !== '' && s.step_id.trim() !== '' && s.sequence_number !== '')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canSubmit) return
+    setLoading(true)
+    setError(null)
+    setStale(false)
+
+    const ops: OperationStepRequest[] = steps.map(s => ({
+      step_id: s.step_id.trim(),
+      sequence_number: Number(s.sequence_number),
+      operation: s.operation,
+      machine_id: s.machine_id || null,
+      cutting_tool_id: s.cutting_tool_id || null,
+      predecessor_step_ids: s.predecessor_ids,
+    }))
+
+    try {
+      const res = await generateProcessPlan({ part_name: partName.trim(), material_iso_group: isoGroup, operations: ops })
+      setResult(res)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('ppPlanError')
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isoOptions = schema?.valid_iso_groups.map(g => ({ value: g, label: g })) ?? []
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      {/* Title */}
+      <div>
+        <h1 className="text-2xl font-bold text-tp-text">{t('ppTitle')}</h1>
+        <p className="text-sm text-tp-text-3 mt-1 max-w-2xl">{t('ppSubtitle')}</p>
+      </div>
+
+      {/* Schema error */}
+      {schemaError && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-300">
+          {t('ppSchemaError')}
+        </div>
+      )}
+
+      {/* Loading schema */}
+      {!schema && !schemaError && (
+        <div className="text-sm text-tp-text-3">{t('ppLoadingSchema')}</div>
+      )}
+
+      {schema && (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Part name + ISO group */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <FieldLabel text={t('ppPartName')} />
+              <input
+                type="text"
+                value={partName}
+                onChange={e => { setPartName(e.target.value); markStale() }}
+                placeholder={t('ppPartNamePlaceholder')}
+                className="w-full bg-tp-surface border border-tp-border rounded px-3 py-2 text-sm text-tp-text focus:outline-none focus:border-tp-accent-light"
+              />
+            </div>
+            <div>
+              <FieldLabel text={t('ppMaterialGroup')} />
+              <SelectField
+                value={isoGroup}
+                onChange={v => { setIsoGroup(v); markStale() }}
+                options={isoOptions}
+                placeholder="Select ISO group…"
+              />
+            </div>
+          </div>
+
+          {/* Operations */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <SectionLabel text={t('ppOperations')} />
+              <button
+                type="button"
+                onClick={handleAddStep}
+                className="text-xs text-tp-accent-light border border-tp-accent-light/40 hover:bg-tp-accent-light/10 rounded px-2 py-0.5 transition-colors"
+              >
+                + {t('ppAddOperation')}
+              </button>
+            </div>
+            <div className="space-y-3">
+              {steps.map((step, idx) => (
+                <StepRow
+                  key={step.id}
+                  step={step}
+                  index={idx}
+                  allSteps={steps}
+                  schema={schema}
+                  onChange={updated => handleChangeStep(idx, updated)}
+                  onRemove={() => handleRemoveStep(idx)}
+                  t={t}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex items-center gap-4">
+            <button
+              type="submit"
+              disabled={!canSubmit || loading}
+              className="bg-tp-accent-light text-white font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-tp-accent-light/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? t('ppLoadingPlan') : t('ppGeneratePlan')}
+            </button>
+            {!canSubmit && !loading && (
+              <span className="text-xs text-tp-text-3">{t('ppFillRequired')}</span>
+            )}
+            {stale && !loading && (
+              <span className="text-xs text-amber-400">Inputs changed — regenerate plan.</span>
+            )}
+          </div>
+        </form>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-300">
+          {t('ppPlanError')}: {error}
+        </div>
+      )}
+
+      {/* Result */}
+      {result && !loading && (
+        <div className={stale ? 'opacity-50 pointer-events-none select-none' : ''}>
+          <PlanResult result={result} t={t} />
+        </div>
+      )}
+    </div>
+  )
+}
