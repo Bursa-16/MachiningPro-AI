@@ -734,4 +734,46 @@ export interface TranslationDictionary {
   ccEvidenceStatus: string
   ccSelectAll: string
   ccCompatibilityNote: string
+
+  // Configuration Selection (cs*)
+  csTitle: string
+  csSubtitle: string
+  csStepRequired: string
+  csStepOperation: string
+  csStepIsoGroup: string
+  csStepFilters: string
+  csStepMachine: string
+  csStepTool: string
+  csStepCutParams: string
+  csSelectOperation: string
+  csSelectIsoGroup: string
+  csAllMachines: string
+  csAllTools: string
+  csCuttingSpeed: string
+  csToolDiameter: string
+  csCutParamsNote: string
+  csEvaluateBtn: string
+  csLoadingEvaluation: string
+  csLoadingSchema: string
+  csBackendError: string
+  csEvaluationError: string
+  csSelectFields: string
+  csStateAvailable: string
+  csStateNoCompatible: string
+  csStateNoEvidence: string
+  csStateInsufficientData: string
+  csStateAvailableDesc: string
+  csStateNoCompatibleDesc: string
+  csStateNoEvidenceDesc: string
+  csStateInsufficientDataDesc: string
+  csCandidatesEvaluated: string
+  csCompatibleCount: string
+  csIncompatibleCount: string
+  csNotRankableCount: string
+  csRankedCandidates: string
+  csEngineeringTie: string
+  csCompatibilityTrace: string
+  csCriteriaTrace: string
+  csRejectedSample: string
+  csNotRankableSample: string
 }

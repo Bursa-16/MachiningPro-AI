@@ -10,6 +10,7 @@ import ToolLifePage from './pages/ToolLifePage'
 import MachineCatalogPage from './pages/MachineCatalogPage'
 import CuttingToolCatalogPage from './pages/CuttingToolCatalogPage'
 import CompatibilityPage from './pages/CompatibilityPage'
+import SelectionPage from './pages/SelectionPage'
 import ToolHolderCatalogPage from './pages/ToolHolderCatalogPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
@@ -50,6 +51,7 @@ function ProtectedRoutes() {
         <Route path="app/engineering/cutting-parameters" element={<CuttingParametersPage />} />
         <Route path="app/engineering/tool-life" element={<ToolLifePage />} />
         <Route path="app/engineering/compatibility" element={<CompatibilityPage />} />
+        <Route path="app/engineering/configuration-selection" element={<SelectionPage />} />
         <Route path="app/engineering/surface-roughness" element={capability('Surface Roughness')} />
 
         {/* Processes */}
