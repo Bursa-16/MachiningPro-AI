@@ -26,10 +26,15 @@ from __future__ import annotations
 import logging
 from collections import deque
 
+from backend.compatibility.engine import (
+    get_machine_spindle_max_rpm,
+    get_tool_number_of_flutes,
+)
 from backend.compatibility.models import VALID_ISO_GROUPS, VALID_OPERATIONS
 from backend.cutting_parameters.models import ApplicabilityScope
 from backend.cutting_parameters.registry import CuttingParameterRegistry
 from backend.domain.enums import IsoMaterialGroup, OperationType
+from backend.process_planning.metrics import compute_step_metrics
 from backend.process_planning.plan_models import (
     PLAN_BLOCKED,
     PLAN_COMPLETE,
@@ -457,6 +462,48 @@ def generate_plan(
         cp_refs = _query_cutting_params(registry, op, iso_group)
         cp_available = len(cp_refs) > 0
 
+        # ---------------------------------------------------------------
+        # Engineering metrics
+        # PROCESS_PLAN_ENGINEERING_METRICS_01
+        # Gather inputs from canonical sources — no formula duplication.
+        # ---------------------------------------------------------------
+        # calculated_rpm / rpm_margin_frac: from top ranked candidate
+        # (for BLOCKED/INSUFFICIENT_DATA steps: try any available candidate)
+        _metric_rpm: float | None = None
+        _metric_margin: float | None = None
+        _metric_machine_max_rpm: int | None = None
+        _metric_tool_id: str | None = step_req.cutting_tool_id
+        _metric_flutes: int | None = None
+
+        _any_candidate = (
+            sel_resp.ranked_candidates[:1]
+            or sel_resp.rejected_sample[:1]
+            or sel_resp.not_rankable_sample[:1]
+        )
+        if _any_candidate:
+            _metric_rpm = _any_candidate[0].calculated_rpm
+
+        if sel_resp.ranked_candidates:
+            _top = sel_resp.ranked_candidates[0]
+            _metric_margin = _top.rpm_margin_pct  # fraction (e.g. 0.417 = 41.7%)
+            # Machine spindle max RPM from catalog via compatibility engine
+            _metric_machine_max_rpm = get_machine_spindle_max_rpm(_top.machine_id)
+            # Tool flute count from catalog (FLUTE_COUNT_INFERRED=NO)
+            _effective_tool_id = step_req.cutting_tool_id or _top.cutting_tool_id
+            _metric_tool_id = _effective_tool_id
+            _metric_flutes = get_tool_number_of_flutes(_effective_tool_id)
+
+        step_eng_metrics = compute_step_metrics(
+            operation=op,
+            calculated_rpm=_metric_rpm,
+            rpm_margin_frac=_metric_margin,
+            machine_spindle_max_rpm=_metric_machine_max_rpm,
+            cutting_param_refs=cp_refs,
+            tool_diameter_mm=step_req.tool_diameter_mm,
+            number_of_flutes=_metric_flutes,
+            cutting_tool_id=_metric_tool_id,
+        )
+
         # Build missing_data list
         missing_data: list[str] = []
         if planning_status == STEP_STATUS_BLOCKED:
@@ -509,6 +556,7 @@ def generate_plan(
                 not_rankable_sample=[c.model_dump() for c in sel_resp.not_rankable_sample],
                 missing_data=missing_data,
                 planning_notes=None,
+                engineering_metrics=step_eng_metrics,
             )
         )
 
@@ -608,6 +656,25 @@ def generate_plan(
     # -------------------------------------------------------------------
     alt_seq = _alternative_sequence_supported(steps_in)
 
+    # -------------------------------------------------------------------
+    # 8. Aggregate engineering metrics counts across all steps
+    # -------------------------------------------------------------------
+    total_metrics_available = sum(
+        s.engineering_metrics.metrics_available_count
+        for s in plan_steps
+        if s.engineering_metrics is not None
+    )
+    total_metrics_not_available = sum(
+        s.engineering_metrics.metrics_not_available_count
+        for s in plan_steps
+        if s.engineering_metrics is not None
+    )
+    total_metrics_insufficient = sum(
+        s.engineering_metrics.metrics_insufficient_data_count
+        for s in plan_steps
+        if s.engineering_metrics is not None
+    )
+
     return ProcessPlanResponse(
         part_name=req.part_name,
         material_iso_group=iso_group,
@@ -621,4 +688,7 @@ def generate_plan(
         summary=summary,
         limitations=limitations,
         provenance=_PROVENANCE,
+        metrics_available_count=total_metrics_available,
+        metrics_not_available_count=total_metrics_not_available,
+        metrics_insufficient_data_count=total_metrics_insufficient,
     )

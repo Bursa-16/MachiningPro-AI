@@ -135,6 +135,18 @@ def get_schema_tools() -> list[SchemaEntry]:
     return entries
 
 
+def get_machine_spindle_max_rpm(machine_id: str) -> int | None:
+    """Return spindle_max_rpm for the given machine_id, or None if unknown."""
+    rec = _MACHINES.get(machine_id)
+    return rec.spindle_max_rpm if rec else None
+
+
+def get_tool_number_of_flutes(cutting_tool_id: str) -> int | None:
+    """Return number_of_flutes for the given cutting_tool_id, or None if unknown."""
+    rec = _TOOLS.get(cutting_tool_id)
+    return rec.number_of_flutes if rec else None
+
+
 # ---------------------------------------------------------------------------
 # Individual rule evaluators
 # ---------------------------------------------------------------------------

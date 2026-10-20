@@ -44,6 +44,29 @@ export interface CandidateConfigSummary {
   compatibility_status: string
 }
 
+export type MetricStatus = 'AVAILABLE' | 'NOT_AVAILABLE' | 'INSUFFICIENT_DATA' | 'NOT_APPLICABLE'
+
+export interface EngineeringMetric {
+  metric_id: string
+  metric_name: string
+  status: MetricStatus
+  value: number | null
+  min_value: number | null
+  max_value: number | null
+  unit: string | null
+  formula_reference: string | null
+  inputs_used: string[]
+  missing_inputs: string[]
+  explanation: string | null
+}
+
+export interface StepEngineeringMetrics {
+  metrics: EngineeringMetric[]
+  metrics_available_count: number
+  metrics_not_available_count: number
+  metrics_insufficient_data_count: number
+}
+
 export interface PlanStep {
   step_id: string
   sequence_number: number
@@ -69,6 +92,7 @@ export interface PlanStep {
   not_rankable_sample: Record<string, unknown>[]
   missing_data: string[]
   planning_notes: string | null
+  engineering_metrics: StepEngineeringMetrics | null
 }
 
 export interface ProcessPlanSummary {
@@ -99,6 +123,9 @@ export interface ProcessPlanResponse {
   limitations: string[]
   provenance: string
   disclaimer: string
+  metrics_available_count: number
+  metrics_not_available_count: number
+  metrics_insufficient_data_count: number
 }
 
 export interface ProcessPlanningSchema {

@@ -837,4 +837,18 @@ export interface TranslationDictionary {
   ppDisplayDefault: string
   ppFlowVisualization: string
   ppEngineeringTieDesc: string
+  ppEngineeringMetrics: string
+  ppSpindleSpeed: string
+  ppRpmUtilization: string
+  ppRpmMargin: string
+  ppFeedRateRange: string
+  ppAxialEngagement: string
+  ppMetricAvailable: string
+  ppMetricNotAvailable: string
+  ppMetricInsufficientData: string
+  ppMetricMissingInput: string
+  ppReferenceFormula: string
+  ppMetricInputsUsed: string
+  ppMetricNote: string
+  ppMetricsCount: string
 }

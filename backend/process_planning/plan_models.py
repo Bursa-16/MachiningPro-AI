@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from backend.process_planning.metrics import StepEngineeringMetrics
+
 # ---------------------------------------------------------------------------
 # Step-level planning status
 # ---------------------------------------------------------------------------
@@ -146,6 +148,9 @@ class PlanStep(BaseModel):
     missing_data: list[str]
     planning_notes: str | None
 
+    # Engineering metrics (PROCESS_PLAN_ENGINEERING_METRICS_01)
+    engineering_metrics: StepEngineeringMetrics | None = None
+
 
 class ProcessPlanSummary(BaseModel):
     step_count: int
@@ -180,3 +185,9 @@ class ProcessPlanResponse(BaseModel):
     limitations: list[str]
     provenance: str
     disclaimer: str = _DISCLAIMER
+
+    # Engineering metrics summary (PROCESS_PLAN_ENGINEERING_METRICS_01)
+    # ENGINEERING_METRICS_SCORE_IMPLEMENTED=NO
+    metrics_available_count: int = 0
+    metrics_not_available_count: int = 0
+    metrics_insufficient_data_count: int = 0

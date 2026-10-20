@@ -8,6 +8,9 @@ import {
   type ProcessPlanResponse,
   type PlanStep,
   type OperationStepRequest,
+  type EngineeringMetric,
+  type StepEngineeringMetrics,
+  type MetricStatus,
 } from '../services/process_planning'
 
 type TFunc = (key: keyof TranslationDictionary) => string
@@ -263,6 +266,125 @@ function StepRow({
   )
 }
 
+// ── Engineering Metrics section ───────────────────────────────────────────────
+
+const METRIC_STATUS_CLS: Record<MetricStatus, string> = {
+  AVAILABLE: 'text-emerald-300',
+  NOT_AVAILABLE: 'text-tp-text-3',
+  INSUFFICIENT_DATA: 'text-amber-300',
+  NOT_APPLICABLE: 'text-tp-text-3',
+}
+
+function MetricStatusBadge({ status, t }: { status: MetricStatus; t: TFunc }) {
+  const label: Record<MetricStatus, string> = {
+    AVAILABLE: t('ppMetricAvailable'),
+    NOT_AVAILABLE: t('ppMetricNotAvailable'),
+    INSUFFICIENT_DATA: t('ppMetricInsufficientData'),
+    NOT_APPLICABLE: t('ppMetricNotAvailable'),
+  }
+  return (
+    <span className={`text-[10px] font-medium uppercase tracking-wide ${METRIC_STATUS_CLS[status]}`}>
+      {label[status]}
+    </span>
+  )
+}
+
+function MetricRow({ metric, t }: { metric: EngineeringMetric; t: TFunc }) {
+  const [open, setOpen] = useState(false)
+
+  const valueDisplay = (() => {
+    if (metric.status !== 'AVAILABLE') return null
+    if (metric.value !== null) {
+      return `${metric.value} ${metric.unit ?? ''}`
+    }
+    if (metric.min_value !== null && metric.max_value !== null) {
+      return `${metric.min_value} – ${metric.max_value} ${metric.unit ?? ''}`
+    }
+    return null
+  })()
+
+  return (
+    <div className="border border-tp-border/40 rounded bg-tp-surface/30">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-tp-surface-2/40 transition-colors rounded"
+      >
+        <span className="text-xs text-tp-text font-medium">{metric.metric_name}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {valueDisplay && (
+            <span className="text-xs text-tp-text-2 font-mono">{valueDisplay}</span>
+          )}
+          <MetricStatusBadge status={metric.status} t={t} />
+          <span className="text-[10px] text-tp-text-3 ml-1">{open ? '▲' : '▼'}</span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-3 pb-3 space-y-1.5 text-[11px]">
+          {metric.explanation && (
+            <p className="text-tp-text-3 leading-relaxed">{metric.explanation}</p>
+          )}
+          {metric.formula_reference && (
+            <div>
+              <span className="text-tp-text-3">{t('ppReferenceFormula')}: </span>
+              <code className="text-tp-accent-light font-mono">{metric.formula_reference}</code>
+            </div>
+          )}
+          {metric.inputs_used.length > 0 && (
+            <div>
+              <span className="text-tp-text-3">{t('ppMetricInputsUsed')}: </span>
+              <span className="text-tp-text-2">{metric.inputs_used.join(' · ')}</span>
+            </div>
+          )}
+          {metric.missing_inputs.length > 0 && (
+            <div>
+              <span className="text-amber-400">{t('ppMetricMissingInput')}: </span>
+              <span className="text-amber-300">{metric.missing_inputs.join(', ')}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EngineeringMetricsSection({
+  metrics,
+  t,
+}: {
+  metrics: StepEngineeringMetrics
+  t: TFunc
+}) {
+  const [open, setOpen] = useState(false)
+  const availCount = metrics.metrics_available_count
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 mb-2 group"
+      >
+        <SectionLabel text={t('ppEngineeringMetrics')} />
+        <span className="text-[11px] text-tp-text-3">
+          {availCount}/{metrics.metrics.length} {t('ppMetricAvailable').toLowerCase()}
+        </span>
+        <span className="text-[10px] text-tp-text-3 group-hover:text-tp-text transition-colors">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-1.5">
+          {metrics.metrics.map(m => (
+            <MetricRow key={m.metric_id} metric={m} t={t} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── PlanStep result card ───────────────────────────────────────────────────────
 
 function PlanStepCard({ step, t }: { step: PlanStep; t: TFunc }) {
@@ -498,6 +620,11 @@ function PlanStepCard({ step, t }: { step: PlanStep; t: TFunc }) {
                 ))}
               </ul>
             </div>
+          )}
+
+          {/* Engineering Metrics */}
+          {step.engineering_metrics && step.planning_status === 'PLANNED' && (
+            <EngineeringMetricsSection metrics={step.engineering_metrics} t={t} />
           )}
 
           {/* Planning notes */}
