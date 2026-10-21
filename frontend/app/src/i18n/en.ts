@@ -916,4 +916,12 @@ export const enTranslations: TranslationDictionary = {
   ppNcSegmentPreamble: 'Preamble',
   ppNcSegmentNoTool: '—',
   ppNcToolIdRawNote: 'T-word is NC pocket number — not a catalog tool ID',
+  ppNcCannedCycles: 'Canned Cycles',
+  ppNcCannedCode: 'Cycle',
+  ppNcCannedHoles: 'Holes',
+  ppNcCannedFeedNote: 'G81-G85 programmed feed stroke — not confirmed cutting distance',
+  ppNcCannedDwellRaw: 'Dwell (raw P)',
+  ppNcCannedG83Note: 'G83 peck-retract rapid omitted — controller-specific',
+  ppNcCannedG84Note: 'G84 path distance only — cycle time requires spindle model',
+  ppNcCannedG91Note: 'G91 inside canned cycles deferred — use G90',
 }

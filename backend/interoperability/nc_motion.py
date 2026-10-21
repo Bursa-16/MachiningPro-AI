@@ -2,14 +2,23 @@
 
 PROCESS_PLAN_CYCLE_TIME_CAD_CAM_INTEGRATION_01 — Phase 2
 NC_ARC_AND_OPERATION_SEGMENTATION_01 — Phase 2
+NC_CANNED_CYCLE_FOUNDATION_01 — Phase 2
 
 Parser profile  : GENERIC_ISO_GCODE_SUBSET
 Supported       : G20/G21, G90/G91, G0/G00, G1/G01, G17/G18/G19,
-                  G2/G3 (IJK relative-center only), X/Y/Z/I/J/K, F
+                  G2/G3 (IJK relative-center only), X/Y/Z/I/J/K, F,
+                  G80, G81, G82, G83, G84, G85, G98, G99, P, Q
 Arc support     : Exact analytic arcs. R-format DEFERRED.
                   ARC_FALLBACK_TO_CHORD=NO
 Segmentation    : NC Motion Segments bounded by T+M6 tool-change events.
-Detected (no expand): G81-G89 canned cycles, G41/G42 compensation
+Canned cycles   : G81-G85 programmed feed/rapid distance computed (G90 only).
+                  CANNED_CYCLE_MOTION_AUTOMATICALLY_PROMOTED_TO_CUTTING=NO
+                  G83 peck-retract rapid PARTIAL (controller-specific).
+                  G84 cycle time PARTIAL (spindle reversal not modelled).
+                  G82 dwell: P-word evidence only (units controller-specific).
+                  G91 inside canned cycles DEFERRED.
+                  L repeat inside canned cycles DEFERRED.
+Detected (no expand): G86-G89 canned cycles, G41/G42 compensation
 Rejected        : R-format G2/G3, M98/M99 subprograms, # macro variables,
                   WHILE/IF control flow
 
@@ -46,7 +55,7 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 PARSER_PROFILE = "GENERIC_ISO_GCODE_SUBSET"
-PARSER_VERSION = "2.0.0"
+PARSER_VERSION = "3.0.0"
 _MAX_LINES = 100_000
 _INCH_TO_MM = 25.4
 _ARC_RADIUS_ABS_TOL_MM = 0.001   # 1 µm absolute
@@ -159,6 +168,16 @@ class _ModalState:
     y: float | None = None
     z: float | None = None
     feed_mm_min: float | None = None
+    # Canned cycle modal state (G80-G85, G98/G99)
+    canned_active: bool = False
+    canned_code: int | None = None        # 81 | 82 | 83 | 84 | 85
+    canned_r_mm: float | None = None      # retract plane, mm absolute
+    canned_z_mm: float | None = None      # Z depth, mm absolute
+    canned_initial_z_mm: float | None = None  # Z at cycle activation (G98)
+    canned_return_mode: str = "G99"       # "G98" | "G99"
+    canned_p_raw: float | None = None     # G82 dwell P-word (controller units)
+    canned_q_mm: float | None = None      # G83 peck increment, mm
+    canned_prev_motion: str | None = None  # motion mode saved before CANNED
 
 
 @dataclass
@@ -466,6 +485,84 @@ def _finalize_segment(seg: _SegState, end_line: int) -> NcMotionSegment:
 
 
 # ---------------------------------------------------------------------------
+# Canned cycle execution
+# ---------------------------------------------------------------------------
+
+
+def _execute_canned_hole(
+    state: _ModalState,
+    cycle_code: int,
+    hole_x_mm: float | None,
+    hole_y_mm: float | None,
+) -> tuple[float, float, list[str], list[str]]:
+    """Compute (feed_mm, rapid_mm, partial_tags, limitations) for one hole.
+
+    Reads canned modal state: state.canned_z_mm, state.canned_r_mm,
+    state.canned_return_mode, state.canned_initial_z_mm.
+
+    CANNED_CYCLE_MOTION_AUTOMATICALLY_PROMOTED_TO_CUTTING=NO
+    INITIAL_LEVEL_GUESSED=NO
+    G91_CANNED_CYCLE_DEFERRED — only called under G90.
+    """
+    z_depth = state.canned_z_mm
+    r_plane = state.canned_r_mm
+
+    if z_depth is None:
+        return 0.0, 0.0, [f"G{cycle_code}_MISSING_Z_DEPTH"], []
+    if r_plane is None:
+        return 0.0, 0.0, [f"G{cycle_code}_MISSING_R_PLANE"], []
+
+    feed = 0.0
+    rapid = 0.0
+    partial_tags: list[str] = []
+    limitations: list[str] = []
+
+    target_x = hole_x_mm if hole_x_mm is not None else state.x
+    target_y = hole_y_mm if hole_y_mm is not None else state.y
+
+    # Lateral rapid to hole XY
+    if (state.x is not None and state.y is not None
+            and target_x is not None and target_y is not None):
+        dx = target_x - state.x
+        dy = target_y - state.y
+        rapid += math.sqrt(dx * dx + dy * dy)
+
+    # Axial rapid: current Z to R plane
+    if state.z is not None:
+        rapid += abs(state.z - r_plane)
+
+    # Axial feed stroke
+    feed_stroke = abs(z_depth - r_plane)
+    if feed_stroke < 1e-9:
+        partial_tags.append(f"G{cycle_code}_CANNED_ZERO_DEPTH")
+        return feed, rapid, partial_tags, limitations
+
+    if cycle_code in (81, 82):
+        feed += feed_stroke
+    elif cycle_code == 83:
+        feed += feed_stroke
+        partial_tags.append("G83_PECK_RAPID_CONTROLLER_SPECIFIC")
+    elif cycle_code == 84:
+        feed += 2.0 * feed_stroke
+        partial_tags.append("G84_CYCLE_TIME_SPINDLE_DEPENDENT")
+        limitations.append(
+            "G84_F_UNITS_MAY_BE_FPR — F in tapping context may be "
+            "feed-per-revolution on some controllers."
+        )
+    elif cycle_code == 85:
+        feed += 2.0 * feed_stroke
+
+    # Return rapid (G98: R plane → initial level; G99: stays at R)
+    if state.canned_return_mode == "G98":
+        if state.canned_initial_z_mm is not None:
+            rapid += abs(r_plane - state.canned_initial_z_mm)
+        else:
+            partial_tags.append("CANNED_CYCLE_G98_INITIAL_Z_UNKNOWN")
+
+    return feed, rapid, partial_tags, limitations
+
+
+# ---------------------------------------------------------------------------
 # Public parser
 # ---------------------------------------------------------------------------
 
@@ -568,6 +665,8 @@ def parse_nc_motion(
         new_k: float | None = None
         new_r: float | None = None
         new_f: float | None = None
+        new_p: float | None = None   # G82 dwell (time word — not mm-converted)
+        new_q: float | None = None   # G83 peck depth (mm after conversion)
 
         for letter, val in words:
             if letter == "G":
@@ -592,6 +691,10 @@ def parse_nc_motion(
                 new_r = val
             elif letter == "F":
                 new_f = val
+            elif letter == "P":
+                new_p = val          # time word; no unit conversion
+            elif letter == "Q":
+                new_q = _mm(val, state)  # peck depth: distance, unit-converted
 
         # Update units (before coord conversion)
         for gn in g_nums:
@@ -609,6 +712,8 @@ def parse_nc_motion(
                     new_j = new_j * _INCH_TO_MM
                 if new_k is not None:
                     new_k = new_k * _INCH_TO_MM
+                if new_q is not None:
+                    new_q = new_q * _INCH_TO_MM
             elif gn == 21:
                 state.units = "mm"
 
@@ -640,7 +745,41 @@ def parse_nc_motion(
                 this_line_arc = True
             elif gn in (17, 18, 19):
                 state.plane = f"G{gn}"
-            elif gn in (81, 82, 83, 84, 85, 86, 87, 88, 89):
+            elif gn == 80:
+                # G80 — cancel canned cycle modal
+                state.canned_active = False
+                state.canned_code = None
+                if state.motion == "CANNED":
+                    state.motion = state.canned_prev_motion
+                state.canned_prev_motion = None
+            elif gn == 98:
+                state.canned_return_mode = "G98"
+            elif gn == 99:
+                state.canned_return_mode = "G99"
+            elif gn in (81, 82, 83, 84, 85):
+                # G81-G85: activate canned cycle modal
+                if state.positioning == "incremental":
+                    # G91 + canned cycles: DEFERRED
+                    has_partial = True
+                    cur_seg.has_partial = True
+                    feat = f"G{gn}_CANNED_G91_DEFERRED"
+                    _add_unsupported(feat)
+                    _seg_add_unsupported(cur_seg, feat)
+                    state.motion = "CANNED"
+                    this_line_motion = "CANNED"
+                    this_line_canned = True
+                else:
+                    # Capture initial Z (for G98) at first activation / re-activation
+                    state.canned_initial_z_mm = state.z
+                    if state.motion != "CANNED":
+                        state.canned_prev_motion = state.motion
+                    state.canned_active = True
+                    state.canned_code = gn
+                    state.motion = "CANNED"
+                    this_line_motion = "CANNED"
+                    this_line_canned = True
+            elif gn in (86, 87, 88, 89):
+                # G86-G89: detected but not expanded
                 has_partial = True
                 cur_seg.has_partial = True
                 feat = f"G{gn}_CANNED_CYCLE_DETECTED"
@@ -712,6 +851,21 @@ def parse_nc_motion(
         # Track T word for next M6
         if t_num is not None:
             pending_t = t_num
+
+        # Update canned cycle modal parameters from current block words
+        # Applies to both activation blocks and modal continuation blocks.
+        if state.canned_active:
+            if new_z is not None:
+                state.canned_z_mm = new_z   # already mm
+            if new_r is not None:
+                # R word = retract plane (Z coordinate) — convert to mm
+                state.canned_r_mm = (
+                    new_r * _INCH_TO_MM if state.units == "inch" else new_r
+                )
+            if new_p is not None:
+                state.canned_p_raw = new_p  # time word, no distance conversion
+            if new_q is not None:
+                state.canned_q_mm = new_q   # already mm
 
         # Compute motion distance
         has_coords = new_x is not None or new_y is not None or new_z is not None
@@ -792,7 +946,41 @@ def parse_nc_motion(
             _seg_add_unsupported(cur_seg, feat)
 
         elif has_coords and active_motion == "CANNED":
-            _update_position(state, new_x, new_y, new_z)
+            has_xy = new_x is not None or new_y is not None
+            if (state.canned_active
+                    and state.canned_code in (81, 82, 83, 84, 85)
+                    and has_xy):
+                # Execute one canned cycle hole invocation
+                c_feed, c_rapid, c_partial, c_lim = _execute_canned_hole(
+                    state, state.canned_code, new_x, new_y,
+                )
+                feed_mm += c_feed
+                cur_seg.feed_mm += c_feed
+                rapid_mm += c_rapid
+                cur_seg.rapid_mm += c_rapid
+                supported_count += 1
+                cur_seg.linear_count += 1
+                for ptag in c_partial:
+                    has_partial = True
+                    cur_seg.has_partial = True
+                    _add_unsupported(ptag)
+                    _seg_add_unsupported(cur_seg, ptag)
+                for lim in c_lim:
+                    if lim not in limitations:
+                        limitations.append(lim)
+                # Update position after cycle return
+                tgt_x = new_x if new_x is not None else state.x
+                tgt_y = new_y if new_y is not None else state.y
+                state.x = tgt_x
+                state.y = tgt_y
+                if (state.canned_return_mode == "G98"
+                        and state.canned_initial_z_mm is not None):
+                    state.z = state.canned_initial_z_mm
+                elif state.canned_r_mm is not None:
+                    state.z = state.canned_r_mm  # G99: return to R plane
+            else:
+                # G86-G89 (not expanded) or no XY present: position update only
+                _update_position(state, new_x, new_y, new_z)
 
         elif has_coords and active_motion in ("G2", "G3") and not this_line_arc:
             # Modal arc continuation (no G word on this block, state.motion is G2/G3)
@@ -868,9 +1056,25 @@ def parse_nc_motion(
                 "ARC_MOTION_PARTIAL — some G2/G3 arcs could not be measured. "
                 "ARC_AS_CHORD_APPROXIMATION=NO."
             )
-    if any("CANNED" in f for f in unsupported):
+    if any("_CANNED_CYCLE_DETECTED" in f for f in unsupported):
         limitations.append(
-            "CANNED_CYCLE_DETECTED — G81-G89 not expanded; axial path not counted."
+            "CANNED_CYCLE_G86_G89_NOT_EXPANDED — G86-G89 detected; axial path not counted."
+        )
+    if any("G83_PECK_RAPID" in f for f in unsupported):
+        limitations.append(
+            "G83_PECK_RAPID_CONTROLLER_SPECIFIC — G83 feed stroke computed; "
+            "peck-retract rapid omitted (controller-specific strategy)."
+        )
+    if any("G84_CYCLE_TIME" in f for f in unsupported):
+        limitations.append(
+            "G84_CYCLE_TIME_SPINDLE_DEPENDENT — G84 path distance computed; "
+            "cycle time omitted (spindle reversal not modelled). "
+            "G84_F_UNITS_MAY_BE_FPR."
+        )
+    if any("_CANNED_G91_DEFERRED" in f for f in unsupported):
+        limitations.append(
+            "CANNED_CYCLE_G91_DEFERRED — G91 incremental mode inside canned cycles "
+            "not supported; use G90."
         )
     if any("M98" in f or "M99" in f for f in unsupported):
         limitations.append(

@@ -916,4 +916,12 @@ export const trTranslations: TranslationDictionary = {
   ppNcSegmentPreamble: 'Giriş',
   ppNcSegmentNoTool: '—',
   ppNcToolIdRawNote: 'T sözcüğü NC cep numarasıdır — katalog takım kimliği değil',
+  ppNcCannedCycles: 'Çevrim Hareketleri',
+  ppNcCannedCode: 'Çevrim',
+  ppNcCannedHoles: 'Delik',
+  ppNcCannedFeedNote: 'G81-G85 programlı ilerleme — malzeme teması doğrulanmamış',
+  ppNcCannedDwellRaw: 'Bekleme (ham P)',
+  ppNcCannedG83Note: 'G83 peck geri hareketi hesaplanmadı — kontrolcüye özgü',
+  ppNcCannedG84Note: 'G84 yalnızca yol mesafesi — çevrim süresi mil modeli gerektirir',
+  ppNcCannedG91Note: 'G91 çevrim içinde desteklenmiyor — G90 kullanın',
 }

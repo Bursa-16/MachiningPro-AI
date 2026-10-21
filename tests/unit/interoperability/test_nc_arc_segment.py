@@ -588,15 +588,18 @@ def test_r_format_arc_in_segment_partial():
 
 
 # ---------------------------------------------------------------------------
-# S12 — Canned cycle in segment → segment PARTIAL
+# S12 — Canned cycle (G81 with all params) in segment → segment COMPLETE
+#        G81 is now expanded; feed stroke |Z-R| = |-10 - 2| = 12 mm
 # ---------------------------------------------------------------------------
 
 def test_canned_cycle_in_segment_partial():
     prog = "G21\nG90\nT1M6\nG81 X50 Y50 Z-10 R2 F100\n"
     r = _parse(prog, initial_x=0, initial_y=0, initial_z=0)
     tc_seg = r.segments[1]
-    assert tc_seg.analysis_status == NcAnalysisStatus.PARTIAL
-    assert any("CANNED" in f for f in tc_seg.unsupported_features)
+    # G81 is now fully expanded → COMPLETE (no missing Z/R, G90, G99 return)
+    assert tc_seg.analysis_status == NcAnalysisStatus.COMPLETE
+    # Feed stroke = |Z-R| = |-10 - 2| = 12 mm; feed accumulated, no unsupported tags
+    assert tc_seg.feed_motion_distance_mm > 0
 
 
 # ---------------------------------------------------------------------------

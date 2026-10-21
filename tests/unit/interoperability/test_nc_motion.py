@@ -304,32 +304,39 @@ def test_unsupported_arc_prevents_complete():
 
 
 def test_g81_detected_not_expanded():
+    """G81 is now expanded — feed stroke |Z-R| = |-10-2| = 12 mm, COMPLETE."""
     r = _parse("G21\nG90\nG81 X50 Y50 Z-10 R2 F100\n",
                initial_x=0, initial_y=0, initial_z=0)
-    assert any("G81" in f for f in r.unsupported_features)
-    assert r.analysis_status == NcAnalysisStatus.PARTIAL
+    # G81 fully expanded: no unsupported features for G81
+    assert not any("G81" in f for f in r.unsupported_features)
+    assert r.analysis_status == NcAnalysisStatus.COMPLETE
+    assert r.feed_distance_mm > 0
 
 
 def test_g83_detected_not_expanded():
+    """G83 expanded with feed stroke; PARTIAL due to peck-rapid limitation."""
     r = _parse("G21\nG90\nG83 X10 Y10 Z-20 Q5 R2 F80\n",
                initial_x=0, initial_y=0, initial_z=0)
     assert any("G83" in f for f in r.unsupported_features)
     assert r.analysis_status == NcAnalysisStatus.PARTIAL
+    assert r.feed_distance_mm > 0   # feed stroke |Z-R| = 22 mm accumulated
 
 
 def test_g84_detected_not_expanded():
-    r = _parse("G21\nG90\nG84 X20 Y20 Z-15 F100\n",
+    """G84 with R: expanded with 2×|Z-R| path; PARTIAL due to spindle limitation."""
+    r = _parse("G21\nG90\nG84 X20 Y20 Z-15 R5 F100\n",
                initial_x=0, initial_y=0, initial_z=0)
     assert any("G84" in f for f in r.unsupported_features)
     assert r.analysis_status == NcAnalysisStatus.PARTIAL
+    assert r.feed_distance_mm > 0   # 2×|Z-R| = 2×20 = 40 mm
 
 
 def test_canned_cycle_expansion_not_implemented():
-    """Canned cycle count is non-zero; no expanded distance added."""
+    """G81 is now expanded — feed stroke is counted (not zero)."""
     r = _parse("G21\nG90\nG81 X0 Y0 Z-10 R2 F100\n",
                initial_x=0, initial_y=0, initial_z=0)
-    # Only canned; no G1 → feed_distance_mm = 0
-    assert _approx(r.feed_distance_mm, 0.0)
+    # Feed stroke |Z-R| = |-10-2| = 12 mm; feed_distance_mm > 0
+    assert r.feed_distance_mm > 0
 
 
 # ---------------------------------------------------------------------------

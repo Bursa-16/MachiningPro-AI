@@ -457,6 +457,9 @@ function StepRow({
               {mr.arc_motion_count > 0 && (
                 <div className="text-[10px] text-tp-text-3 italic">{t('ppNcArcFeedNote')}</div>
               )}
+              {mr.unsupported_features && mr.unsupported_features.some(f => /^G8[1-5]/.test(f) || f.includes('CANNED')) && (
+                <div className="text-[10px] text-tp-text-3 italic">{t('ppNcCannedFeedNote')}</div>
+              )}
               {mr.segments && mr.segments.length > 0 && (
                 <div className="border-t border-tp-border/30 pt-2">
                   <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1.5">
@@ -517,6 +520,15 @@ function StepRow({
                     </table>
                   </div>
                   <div className="text-[9px] text-tp-text-3 italic mt-1">{t('ppNcToolIdRawNote')}</div>
+                  {mr.unsupported_features && mr.unsupported_features.some(f => f.includes('G83_PECK_RAPID')) && (
+                    <div className="text-[9px] text-amber-400/80 italic mt-0.5">{t('ppNcCannedG83Note')}</div>
+                  )}
+                  {mr.unsupported_features && mr.unsupported_features.some(f => f.includes('G84_CYCLE_TIME')) && (
+                    <div className="text-[9px] text-amber-400/80 italic mt-0.5">{t('ppNcCannedG84Note')}</div>
+                  )}
+                  {mr.unsupported_features && mr.unsupported_features.some(f => f.includes('G91_DEFERRED')) && (
+                    <div className="text-[9px] text-orange-400/80 italic mt-0.5">{t('ppNcCannedG91Note')}</div>
+                  )}
                 </div>
               )}
               <div className="flex gap-2 flex-wrap pt-1 border-t border-tp-border/40">

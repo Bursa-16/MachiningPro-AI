@@ -915,4 +915,13 @@ export interface TranslationDictionary {
   ppNcSegmentPreamble: string
   ppNcSegmentNoTool: string
   ppNcToolIdRawNote: string
+  // Canned cycle evidence (NC_CANNED_CYCLE_FOUNDATION_01)
+  ppNcCannedCycles: string
+  ppNcCannedCode: string
+  ppNcCannedHoles: string
+  ppNcCannedFeedNote: string
+  ppNcCannedDwellRaw: string
+  ppNcCannedG83Note: string
+  ppNcCannedG84Note: string
+  ppNcCannedG91Note: string
 }

@@ -95,6 +95,15 @@ export interface PathEvidence {
   linear_motion_count?: number
   arc_motion_count?: number
   feed_change_count?: number
+  // Canned cycle provenance (optional — present when evidence includes canned cycle data)
+  // CANNED_CYCLE_MOTION_AUTOMATICALLY_PROMOTED_TO_CUTTING=NO
+  // CANNED_CYCLE_AUTOMATIC_OPERATION_MAPPING=NO
+  canned_cycle_code?: number | null         // G-code number (81..85)
+  hole_count?: number | null                // number of cycle invocations
+  cycle_repeat_count?: number | null        // L-word count (future)
+  programmed_feed_distance_mm?: number | null  // canned feed strokes only
+  programmed_rapid_distance_mm?: number | null // canned rapid paths only
+  dwell_command_raw?: number | null         // G82 P-word; units controller-specific
   // Safety flags — always false
   nc_feed_move_equals_confirmed_cutting: false
   arc_chord_approximation_used: false

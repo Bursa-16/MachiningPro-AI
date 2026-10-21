@@ -110,6 +110,17 @@ class PathEvidence(BaseModel):
     arc_motion_count: int = 0
     feed_change_count: int = 0
 
+    # Canned cycle provenance (NC_CANNED_CYCLE_FOUNDATION_01 — Phase 2)
+    # All fields optional for backward compatibility.
+    # CANNED_CYCLE_MOTION_AUTOMATICALLY_PROMOTED_TO_CUTTING=NO
+    # CANNED_CYCLE_AUTOMATIC_OPERATION_MAPPING=NO
+    canned_cycle_code: int | None = None        # G-code number (81..85)
+    hole_count: int | None = None               # number of cycle invocations
+    cycle_repeat_count: int | None = None       # L-word count (when supported)
+    programmed_feed_distance_mm: float | None = None   # canned feed strokes only
+    programmed_rapid_distance_mm: float | None = None  # canned rapid paths only
+    dwell_command_raw: float | None = None      # G82 P-word; units controller-specific
+
     # Immutable safety flags — always False; present for explicit audit
     nc_feed_move_equals_confirmed_cutting: bool = False
     arc_chord_approximation_used: bool = False
