@@ -899,4 +899,21 @@ export const enTranslations: TranslationDictionary = {
   ppNcPasteHere: 'Paste NC program here…',
   ppNcToolChanges: 'tool changes',
   ppNcUnknownStartMoves: 'moves with unknown start position',
+  // Arc evidence
+  ppNcArcMotions: 'Arc Motions',
+  ppNcArcDistance: 'Arc Feed Distance (mm)',
+  ppNcArcFeedNote: 'G2/G3 arc — exact analytic length, not confirmed cutting',
+  // Segment evidence
+  ppNcSegments: 'NC Motion Segments',
+  ppNcSegmentId: 'Segment',
+  ppNcSegmentLines: 'Lines',
+  ppNcSegmentTool: 'T (raw)',
+  ppNcSegmentFeed: 'Feed (mm)',
+  ppNcSegmentRapid: 'Rapid (mm)',
+  ppNcSegmentLinear: 'Linear',
+  ppNcSegmentArc: 'Arc',
+  ppNcSegmentFeedRange: 'F range (mm/min)',
+  ppNcSegmentPreamble: 'Preamble',
+  ppNcSegmentNoTool: '—',
+  ppNcToolIdRawNote: 'T-word is NC pocket number — not a catalog tool ID',
 }

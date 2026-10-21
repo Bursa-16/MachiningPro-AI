@@ -14,15 +14,38 @@ export interface NcAnalyzeRequest {
   initial_z?: number | null
 }
 
+export type NcAnalysisStatusValue =
+  | 'COMPLETE'
+  | 'PARTIAL'
+  | 'UNSUPPORTED_SEMANTICS'
+  | 'INVALID_PROGRAM'
+  | 'INSUFFICIENT_DATA'
+
+// NC Motion Segment — bounded by T+M6 tool-change events.
+// NC_TOOL_ID_AUTOMATICALLY_MAPPED_TO_CATALOG=NO — tool_id_raw is the raw NC T-word.
+export interface NcMotionSegment {
+  segment_id: string
+  start_line: number
+  end_line: number
+  tool_id_raw: string | null          // NC T-word; NOT a catalog tool ID
+  feed_motion_distance_mm: number
+  rapid_motion_distance_mm: number
+  linear_motion_count: number
+  arc_motion_count: number
+  commanded_feed_min: number | null
+  commanded_feed_max: number | null
+  feed_change_count: number
+  analysis_status: NcAnalysisStatusValue
+  unsupported_features: string[]
+  // Immutable safety flags
+  nc_feed_move_equals_confirmed_cutting: false
+  arc_chord_approximation_used: false
+}
+
 export interface NcMotionResult {
   parser_profile: string
   parser_version: string
-  analysis_status:
-    | 'COMPLETE'
-    | 'PARTIAL'
-    | 'UNSUPPORTED_SEMANTICS'
-    | 'INVALID_PROGRAM'
-    | 'INSUFFICIENT_DATA'
+  analysis_status: NcAnalysisStatusValue
   feed_distance_mm: number
   rapid_distance_mm: number
   block_count_total: number
@@ -30,10 +53,12 @@ export interface NcMotionResult {
   unsupported_construct_count: number
   unknown_start_count: number
   tool_change_count: number
+  arc_motion_count: number
   units_declared: string | null
   nc_commanded_feed_mm_min: number | null
   unsupported_features: string[]
   limitations: string[]
+  segments: NcMotionSegment[]
   // Safety flags — always false
   nc_feed_move_equals_confirmed_cutting: false
   arc_chord_approximation_used: false
@@ -61,6 +86,15 @@ export interface PathEvidence {
   unsupported_features: string[]
   limitations: string[]
   operation_association: string | null
+  // Segment provenance (optional — present when evidence comes from a specific segment)
+  // NC_TOOL_ID_AUTOMATICALLY_MAPPED_TO_CATALOG=NO
+  segment_id?: string | null
+  segment_start_line?: number | null
+  segment_end_line?: number | null
+  tool_id_raw?: string | null
+  linear_motion_count?: number
+  arc_motion_count?: number
+  feed_change_count?: number
   // Safety flags — always false
   nc_feed_move_equals_confirmed_cutting: false
   arc_chord_approximation_used: false

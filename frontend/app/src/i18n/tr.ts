@@ -899,4 +899,21 @@ export const trTranslations: TranslationDictionary = {
   ppNcPasteHere: 'NC programını buraya yapıştırın…',
   ppNcToolChanges: 'takım değişimi',
   ppNcUnknownStartMoves: 'başlangıç konumu bilinmeyen hareket',
+  // Arc evidence
+  ppNcArcMotions: 'Ark Hareketleri',
+  ppNcArcDistance: 'Ark İlerleme Mesafesi (mm)',
+  ppNcArcFeedNote: 'G2/G3 ark — kesin analitik uzunluk, malzeme teması doğrulanmamış',
+  // Segment evidence
+  ppNcSegments: 'NC Hareket Segmentleri',
+  ppNcSegmentId: 'Segment',
+  ppNcSegmentLines: 'Satırlar',
+  ppNcSegmentTool: 'T (ham)',
+  ppNcSegmentFeed: 'İlerleme (mm)',
+  ppNcSegmentRapid: 'Hızlı (mm)',
+  ppNcSegmentLinear: 'Doğrusal',
+  ppNcSegmentArc: 'Ark',
+  ppNcSegmentFeedRange: 'F aralığı (mm/dak)',
+  ppNcSegmentPreamble: 'Giriş',
+  ppNcSegmentNoTool: '—',
+  ppNcToolIdRawNote: 'T sözcüğü NC cep numarasıdır — katalog takım kimliği değil',
 }

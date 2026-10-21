@@ -898,4 +898,21 @@ export interface TranslationDictionary {
   ppNcPasteHere: string
   ppNcToolChanges: string
   ppNcUnknownStartMoves: string
+  // Arc evidence (NC_ARC_AND_OPERATION_SEGMENTATION_01)
+  ppNcArcMotions: string
+  ppNcArcDistance: string
+  ppNcArcFeedNote: string
+  // Segment evidence
+  ppNcSegments: string
+  ppNcSegmentId: string
+  ppNcSegmentLines: string
+  ppNcSegmentTool: string
+  ppNcSegmentFeed: string
+  ppNcSegmentRapid: string
+  ppNcSegmentLinear: string
+  ppNcSegmentArc: string
+  ppNcSegmentFeedRange: string
+  ppNcSegmentPreamble: string
+  ppNcSegmentNoTool: string
+  ppNcToolIdRawNote: string
 }

@@ -431,6 +431,9 @@ function StepRow({
               </div>
               <div className="flex gap-4 text-tp-text-3 flex-wrap">
                 <span>{t('ppNcSupportedMotions')}: <span className="text-tp-text">{mr.supported_motion_count}</span></span>
+                {mr.arc_motion_count > 0 && (
+                  <span>{t('ppNcArcMotions')}: <span className="text-tp-text">{mr.arc_motion_count}</span></span>
+                )}
                 {mr.tool_change_count > 0 && (
                   <span>{t('ppNcToolChangeDetected')}: <span className="text-tp-text">{mr.tool_change_count} {t('ppNcToolChanges')}</span></span>
                 )}
@@ -451,6 +454,71 @@ function StepRow({
                 </div>
               )}
               <div className="text-[10px] text-tp-text-3 italic">{t('ppNcFeedMotionNote')}</div>
+              {mr.arc_motion_count > 0 && (
+                <div className="text-[10px] text-tp-text-3 italic">{t('ppNcArcFeedNote')}</div>
+              )}
+              {mr.segments && mr.segments.length > 0 && (
+                <div className="border-t border-tp-border/30 pt-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1.5">
+                    {t('ppNcSegments')} ({mr.segments.length})
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[10px] border-collapse">
+                      <thead>
+                        <tr className="text-tp-text-3 text-left">
+                          <th className="pr-2 pb-1 font-medium">{t('ppNcSegmentId')}</th>
+                          <th className="pr-2 pb-1 font-medium">{t('ppNcSegmentTool')}</th>
+                          <th className="pr-2 pb-1 font-medium text-right">{t('ppNcSegmentFeed')}</th>
+                          <th className="pr-2 pb-1 font-medium text-right">{t('ppNcSegmentRapid')}</th>
+                          <th className="pr-2 pb-1 font-medium text-right">{t('ppNcSegmentLinear')}</th>
+                          <th className="pr-2 pb-1 font-medium text-right">{t('ppNcSegmentArc')}</th>
+                          <th className="pr-2 pb-1 font-medium">{t('ppNcAnalysisStatus')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mr.segments.map(seg => {
+                          const segStatusCls: Record<string, string> = {
+                            COMPLETE: 'text-emerald-300',
+                            PARTIAL: 'text-amber-300',
+                            UNSUPPORTED_SEMANTICS: 'text-orange-300',
+                            INVALID_PROGRAM: 'text-red-400',
+                            INSUFFICIENT_DATA: 'text-tp-text-3',
+                          }
+                          const toolLabel = seg.tool_id_raw
+                            ? `T${seg.tool_id_raw}`
+                            : t('ppNcSegmentNoTool')
+                          return (
+                            <tr key={seg.segment_id} className="border-t border-tp-border/20">
+                              <td className="pr-2 py-0.5 font-mono text-tp-text">
+                                {seg.segment_id === 'SEG_PREAMBLE'
+                                  ? t('ppNcSegmentPreamble')
+                                  : seg.segment_id}
+                              </td>
+                              <td className="pr-2 py-0.5 text-tp-text-2">{toolLabel}</td>
+                              <td className="pr-2 py-0.5 text-right font-mono text-tp-text">
+                                {seg.feed_motion_distance_mm.toFixed(3)}
+                              </td>
+                              <td className="pr-2 py-0.5 text-right font-mono text-tp-text">
+                                {seg.rapid_motion_distance_mm.toFixed(3)}
+                              </td>
+                              <td className="pr-2 py-0.5 text-right text-tp-text-2">
+                                {seg.linear_motion_count}
+                              </td>
+                              <td className="pr-2 py-0.5 text-right text-tp-text-2">
+                                {seg.arc_motion_count}
+                              </td>
+                              <td className={`py-0.5 font-semibold ${segStatusCls[seg.analysis_status] ?? 'text-tp-text-3'}`}>
+                                {seg.analysis_status}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="text-[9px] text-tp-text-3 italic mt-1">{t('ppNcToolIdRawNote')}</div>
+                </div>
+              )}
               <div className="flex gap-2 flex-wrap pt-1 border-t border-tp-border/40">
                 <span className="text-[10px] text-tp-text-3 self-center">{t('ppNcExplicitAssignment')}:</span>
                 <button

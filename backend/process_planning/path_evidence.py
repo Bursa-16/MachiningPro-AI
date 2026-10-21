@@ -17,7 +17,7 @@ import uuid
 
 from pydantic import BaseModel
 
-from backend.interoperability.nc_motion import NcAnalysisStatus, NcMotionResult
+from backend.interoperability.nc_motion import NcAnalysisStatus, NcMotionResult, NcMotionSegment
 
 __all__ = [
     "PathSourceType",
@@ -26,6 +26,8 @@ __all__ = [
     "PathEvidence",
     "feed_evidence_from_nc",
     "rapid_evidence_from_nc",
+    "segment_feed_evidence_from_nc",
+    "segment_rapid_evidence_from_nc",
 ]
 
 # ---------------------------------------------------------------------------
@@ -96,6 +98,17 @@ class PathEvidence(BaseModel):
     # Operation association (explicit user assignment)
     # PATH_TO_OPERATION_MAPPING_METHOD=EXPLICIT_USER_ASSIGNMENT
     operation_association: str | None = None  # step_id when user associates
+
+    # NC Motion Segment provenance (NC_ARC_AND_OPERATION_SEGMENTATION_01 — Phase 2)
+    # All fields optional for backward compatibility with Phase 1 evidence records.
+    # NC_TOOL_ID_AUTOMATICALLY_MAPPED_TO_CATALOG=NO — tool_id_raw is raw NC T-word.
+    segment_id: str | None = None
+    segment_start_line: int | None = None
+    segment_end_line: int | None = None
+    tool_id_raw: str | None = None        # NC T-word; NOT a catalog tool ID
+    linear_motion_count: int = 0
+    arc_motion_count: int = 0
+    feed_change_count: int = 0
 
     # Immutable safety flags — always False; present for explicit audit
     nc_feed_move_equals_confirmed_cutting: bool = False
@@ -181,6 +194,97 @@ def rapid_evidence_from_nc(
         tool_change_count=result.tool_change_count,
         unsupported_features=list(result.unsupported_features),
         limitations=list(result.limitations),
+        nc_feed_move_equals_confirmed_cutting=False,
+        arc_chord_approximation_used=False,
+    )
+
+
+def segment_feed_evidence_from_nc(
+    segment: NcMotionSegment,
+    whole_result: NcMotionResult,
+    source_name_safe: str | None = None,
+) -> PathEvidence:
+    """Build FEED_MOTION PathEvidence from one NC Motion Segment.
+
+    NC_TOOL_ID_AUTOMATICALLY_MAPPED_TO_CATALOG=NO
+    NC_FEED_MOVE_EQUALS_CONFIRMED_CUTTING=NO
+    """
+    validation = (
+        COMPUTED_FROM_NC
+        if segment.analysis_status not in (
+            NcAnalysisStatus.INVALID_PROGRAM,
+            NcAnalysisStatus.INSUFFICIENT_DATA,
+        )
+        else INSUFFICIENT_DATA_STATUS
+    )
+    return PathEvidence(
+        evidence_id=str(uuid.uuid4()),
+        source_type=NC_PROGRAM,
+        semantic_type=FEED_MOTION,
+        distance_mm=segment.feed_motion_distance_mm,
+        validation_status=validation,
+        source_name_safe=source_name_safe,
+        units_original=whole_result.units_declared,
+        units_canonical="mm",
+        parser_profile=whole_result.parser_profile,
+        parser_version=whole_result.parser_version,
+        analysis_status=str(segment.analysis_status),
+        supported_motion_count=segment.linear_motion_count + segment.arc_motion_count,
+        unsupported_construct_count=len(segment.unsupported_features),
+        tool_change_count=0,
+        unsupported_features=list(segment.unsupported_features),
+        limitations=[],
+        segment_id=segment.segment_id,
+        segment_start_line=segment.start_line,
+        segment_end_line=segment.end_line,
+        tool_id_raw=segment.tool_id_raw,
+        linear_motion_count=segment.linear_motion_count,
+        arc_motion_count=segment.arc_motion_count,
+        feed_change_count=segment.feed_change_count,
+        nc_commanded_feed_mm_min=segment.commanded_feed_min,
+        nc_feed_move_equals_confirmed_cutting=False,
+        arc_chord_approximation_used=False,
+    )
+
+
+def segment_rapid_evidence_from_nc(
+    segment: NcMotionSegment,
+    whole_result: NcMotionResult,
+    source_name_safe: str | None = None,
+) -> PathEvidence:
+    """Build RAPID_MOTION PathEvidence from one NC Motion Segment."""
+    validation = (
+        COMPUTED_FROM_NC
+        if segment.analysis_status not in (
+            NcAnalysisStatus.INVALID_PROGRAM,
+            NcAnalysisStatus.INSUFFICIENT_DATA,
+        )
+        else INSUFFICIENT_DATA_STATUS
+    )
+    return PathEvidence(
+        evidence_id=str(uuid.uuid4()),
+        source_type=NC_PROGRAM,
+        semantic_type=RAPID_MOTION,
+        distance_mm=segment.rapid_motion_distance_mm,
+        validation_status=validation,
+        source_name_safe=source_name_safe,
+        units_original=whole_result.units_declared,
+        units_canonical="mm",
+        parser_profile=whole_result.parser_profile,
+        parser_version=whole_result.parser_version,
+        analysis_status=str(segment.analysis_status),
+        supported_motion_count=segment.linear_motion_count,
+        unsupported_construct_count=len(segment.unsupported_features),
+        tool_change_count=0,
+        unsupported_features=list(segment.unsupported_features),
+        limitations=[],
+        segment_id=segment.segment_id,
+        segment_start_line=segment.start_line,
+        segment_end_line=segment.end_line,
+        tool_id_raw=segment.tool_id_raw,
+        linear_motion_count=segment.linear_motion_count,
+        arc_motion_count=segment.arc_motion_count,
+        feed_change_count=segment.feed_change_count,
         nc_feed_move_equals_confirmed_cutting=False,
         arc_chord_approximation_used=False,
     )
