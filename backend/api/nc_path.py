@@ -30,6 +30,10 @@ from backend.compatibility.engine import (
     _TOOLS,
 )
 from backend.interoperability.nc_motion import NcMotionResult, parse_nc_motion
+from backend.process_planning.engineering_review import (
+    NCProgramEngineeringReview,
+    build_engineering_review,
+)
 from backend.process_planning.nc_validation import (
     NCProgramValidationSummary,
     validate_nc_feed_spindle,
@@ -95,6 +99,12 @@ class NcAnalyzeResponse(BaseModel):
     # Feed/spindle validation summary (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
     # PATH_EVIDENCE_SHOULD_CARRY_VALIDATION_RESULTS=NO — separate model.
     validation_summary: NCProgramValidationSummary
+
+    # Engineering review (NC_PROGRAM_ENGINEERING_REVIEW_01)
+    # ENGINEERING_REVIEW_MODEL_IMPLEMENTED=YES
+    # VALIDATION_SUMMARY_REMAINS_SEPARATE=YES
+    # API_BACKWARD_COMPATIBILITY_PRESERVED=YES — optional field addition
+    engineering_review: NCProgramEngineeringReview | None = None
 
     # Immutable safety flags — always constant; present for explicit audit
     nc_feed_move_equals_confirmed_cutting: bool = False
@@ -200,11 +210,48 @@ def analyze_nc_path(req: NcAnalyzeRequest) -> NcAnalyzeResponse:
         cutting_param_registry=registry,
     )
 
+    # -----------------------------------------------------------------------
+    # Engineering review synthesis (NC_PROGRAM_ENGINEERING_REVIEW_01)
+    # NC_PARSE_RESULT_REUSED=YES, PATH_EVIDENCE_REUSED=YES
+    # NC_VALIDATION_SUMMARY_REUSED=YES, FEED_SPINDLE_VALIDATION_DUPLICATED=NO
+    # -----------------------------------------------------------------------
+    machine_display: str | None = None
+    cutting_tool_display: str | None = None
+    tool_holder_display: str | None = None
+    if req.machine_id and req.machine_id in _MACHINES:
+        m = _MACHINES[req.machine_id]
+        machine_display = f"{m.manufacturer} {m.model}"
+    if req.cutting_tool_id and req.cutting_tool_id in _TOOLS:
+        t = _TOOLS[req.cutting_tool_id]
+        cutting_tool_display = f"{t.manufacturer} {t.product_name}"
+    if req.tool_holder_id and req.tool_holder_id in _HOLDERS:
+        h = _HOLDERS[req.tool_holder_id]
+        tool_holder_display = f"{h.manufacturer} {h.product_name}"
+
+    engineering_review = build_engineering_review(
+        result,
+        feed_ev,
+        rapid_ev,
+        validation,
+        source_name_safe=req.source_name,
+        machine_id=req.machine_id,
+        machine_spindle_max_rpm=machine_spindle_max_rpm,
+        machine_display=machine_display,
+        cutting_tool_id=req.cutting_tool_id,
+        tool_max_rpm=tool_max_rpm,
+        cutting_tool_display=cutting_tool_display,
+        tool_holder_id=req.tool_holder_id,
+        holder_max_rpm=holder_max_rpm,
+        tool_holder_display=tool_holder_display,
+        operation_association=req.operation,
+    )
+
     return NcAnalyzeResponse(
         feed_evidence=feed_ev,
         rapid_evidence=rapid_ev,
         motion_result=result,
         validation_summary=validation,
+        engineering_review=engineering_review,
         nc_feed_move_equals_confirmed_cutting=False,
         arc_chord_approximation_used=False,
         nc_file_executed=False,

@@ -969,4 +969,103 @@ export interface TranslationDictionary {
   ncPvOperationContext: string
   ncPvMaterialGroup: string
   ncPvUnit: string
+
+  // NC Engineering Review (NC_PROGRAM_ENGINEERING_REVIEW_01)
+  ncEngineeringReview: string
+  ncErExecutiveSummary: string
+  ncErProgramCoverage: string
+  ncErMachineConfig: string
+  ncErToolConfig: string
+  ncErHolderConfig: string
+  ncErFeedSpindleValidation: string
+  ncErCuttingParamReview: string
+  ncErMotionSummary: string
+  ncErCycleTimeEvidence: string
+  ncErCannedCycleReview: string
+  ncErFindings: string
+  ncErLimitations: string
+  ncErStatus: string
+
+  // Parser feature states
+  ncErStateSupported: string
+  ncErStateBounded: string
+  ncErStateDeferred: string
+  ncErStateUnsupported: string
+  ncErStateInsufficientSemantics: string
+
+  // Review status values
+  ncErStatusPassWithEvidence: string
+  ncErStatusPassWithAdvisories: string
+  ncErStatusReviewRequired: string
+  ncErStatusBlockedByKnownLimit: string
+  ncErStatusInsufficientData: string
+  ncErStatusUnsupportedFeaturesPresent: string
+
+  // Motion labels
+  ncErProgrammedMotion: string
+  ncErKnownCycleTimeSubtotal: string
+  ncErPartialCycleTimeEvidence: string
+  ncErUnsupportedFeatures: string
+  ncErMappedOperations: string
+  ncErUnmappedSegments: string
+
+  // Severity / status labels
+  ncErHardLimitExceeded: string
+  ncErEngineeringAdvisory: string
+  ncErInsufficientDataLabel: string
+  ncErNotApplicableLabel: string
+  ncErNotComparable: string
+
+  // Finding title keys
+  ncErFindingMachineRpm: string
+  ncErFindingToolRpm: string
+  ncErFindingHolderRpm: string
+  ncErFindingEffectiveRpm: string
+  ncErFindingVc: string
+  ncErFindingFz: string
+  ncErFindingFeedRev: string
+  ncErFindingG93Deferred: string
+  ncErFindingG96Deferred: string
+  ncErFindingG83Bounded: string
+  ncErFindingG84Bounded: string
+  ncErFindingCannedDetected: string
+  ncErFindingSubprogramUnsupported: string
+  ncErFindingMacroUnsupported: string
+  ncErFindingControlFlowUnsupported: string
+  ncErFindingRArcDeferred: string
+  ncErFindingSpindleStoppedFeed: string
+
+  // Finding message keys
+  ncErG83BoundedMsg: string
+  ncErG84BoundedMsg: string
+  ncErCannedDetectedMsg: string
+  ncErSubprogramUnsupportedMsg: string
+  ncErMacroUnsupportedMsg: string
+  ncErControlFlowUnsupportedMsg: string
+  ncErRArcDeferredMsg: string
+  ncErSpindleStoppedFeedMsg: string
+
+  // Labels
+  ncErParserProfile: string
+  ncErSegments: string
+  ncErToolChanges: string
+  ncErSupportedMotions: string
+  ncErUnsupportedConstructs: string
+  ncErTotalFeedDistance: string
+  ncErTotalRapidDistance: string
+  ncErEffectiveRpmLimit: string
+  ncErMissingFields: string
+  ncErDetected: string
+  ncErNotDetected: string
+  ncErNote: string
+  ncErProgrammedFeedNote: string
+  ncErProgrammedRapidNote: string
+  ncErCycleTimeSubtotalLabel: string
+  ncErCycleTimeNotAvailable: string
+  ncErBlockingCount: string
+  ncErWarningCount: string
+  ncErAdvisoryCount: string
+  ncErUnsupportedCount: string
+  ncErNoFindings: string
+  ncErNoLimitations: string
 }

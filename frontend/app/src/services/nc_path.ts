@@ -204,6 +204,139 @@ export interface PathEvidence {
   arc_chord_approximation_used: false
 }
 
+// ---------------------------------------------------------------------------
+// NC Engineering Review types (NC_PROGRAM_ENGINEERING_REVIEW_01)
+// ---------------------------------------------------------------------------
+
+export type ParserFeatureStateValue =
+  | 'SUPPORTED'
+  | 'BOUNDED'
+  | 'DEFERRED'
+  | 'UNSUPPORTED'
+  | 'INSUFFICIENT_SEMANTICS'
+
+export type EngReviewStatusValue =
+  | 'PASS_WITH_EVIDENCE'
+  | 'PASS_WITH_ADVISORIES'
+  | 'REVIEW_REQUIRED'
+  | 'BLOCKED_BY_KNOWN_LIMIT'
+  | 'INSUFFICIENT_DATA'
+  | 'UNSUPPORTED_FEATURES_PRESENT'
+
+export interface ParserFeatureCoverage {
+  feature: string
+  state: ParserFeatureStateValue
+  detected: boolean
+  note: string | null
+}
+
+export interface CannedCycleNote {
+  cycle_code_str: string
+  state: ParserFeatureStateValue
+  bounded_reason: string | null
+  detected_limitations: string[]
+  // Safety flag — always false
+  bounded_canned_cycle_mislabeled_complete: false
+}
+
+export interface EquipmentSummary {
+  machine_id: string | null
+  machine_display: string | null
+  cutting_tool_id: string | null
+  cutting_tool_display: string | null
+  tool_holder_id: string | null
+  tool_holder_display: string | null
+  machine_spindle_max_rpm: number | null
+  tool_max_rpm: number | null
+  holder_max_rpm: number | null
+  effective_rpm_limit: number | null
+  effective_rpm_limit_source: string | null
+  missing_fields: string[]
+}
+
+export interface EngReviewFinding {
+  finding_code: string
+  category: string
+  severity: NCValidationSeverityValue
+  title_key: string
+  message_key: string
+  observed_value: number | null
+  limit_value: number | null
+  unit: string | null
+  source: string | null
+  evidence_type: string | null
+  segment_id: string | null
+  limitation: string | null
+}
+
+export interface NCProgramEngineeringReview {
+  // A. Program Identity
+  source_name_safe: string | null
+  parser_profile: string
+  parser_version: string
+  units_declared: string | null
+  analysis_status: string
+  segment_count: number
+  tool_change_count: number
+  supported_motion_count: number
+  unsupported_construct_count: number
+  arc_motion_count: number
+  // B. Parser Coverage
+  feature_coverage: ParserFeatureCoverage[]
+  deferred_features_detected: string[]
+  unsupported_features_detected: string[]
+  // C. Motion Summary (programmed only — PROGRAMMED_MOTION_EQUALS_EXECUTED_MOTION=NO)
+  total_feed_distance_mm: number
+  total_rapid_distance_mm: number
+  // D. Segments
+  segments: NcMotionSegment[]
+  // E. Equipment
+  equipment: EquipmentSummary
+  // F. Compatibility
+  compatibility_status: string | null
+  // G. Validation (reused — NC_PROGRAM_VALIDATION_REUSED=YES)
+  validation_summary: NCProgramValidationSummary
+  // H. Operation mapping
+  operation_association: string | null
+  // I. Cycle Time (CYCLE_TIME_FOUNDATION_REUSED=YES)
+  cycle_time_known_subtotal_sec: number | null
+  cycle_time_status: string | null
+  cycle_time_limitations: string[]
+  // K. Canned Cycles
+  canned_cycle_notes: CannedCycleNote[]
+  // L. Findings
+  findings: EngReviewFinding[]
+  // M. Counts
+  blocking_count: number
+  warning_count: number
+  advisory_count: number
+  info_count: number
+  insufficient_data_count: number
+  unsupported_count: number
+  // M. Limitations
+  limitations: string[]
+  // N. Overall Status
+  review_status: EngReviewStatusValue
+  // Safety flags — all always false
+  nc_file_executed: false
+  machine_behavior_simulated: false
+  collision_check_performed: false
+  machine_kinematics_simulated: false
+  gouge_check_performed: false
+  false_controller_compatibility_claim: false
+  false_production_approval_claim: false
+  false_safe_to_run_claim: false
+  false_collision_free_claim: false
+  arbitrary_numeric_engineering_score_implemented: false
+  programmed_motion_equals_executed_motion: false
+  programmed_feed_distance_equals_confirmed_cutting: false
+  t_word_equals_confirmed_tool_identity: false
+  partial_time_mislabeled_total: false
+  bounded_canned_cycle_mislabeled_complete: false
+  private_local_path_visible: false
+  private_path_in_api_response: false
+}
+
 export interface NcAnalyzeResponse {
   feed_evidence: PathEvidence
   rapid_evidence: PathEvidence
@@ -211,6 +344,10 @@ export interface NcAnalyzeResponse {
   // Feed/spindle validation (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
   // PATH_EVIDENCE_SHOULD_CARRY_VALIDATION_RESULTS=NO — separate model
   validation_summary: NCProgramValidationSummary
+  // Engineering review (NC_PROGRAM_ENGINEERING_REVIEW_01)
+  // VALIDATION_SUMMARY_REMAINS_SEPARATE=YES
+  // API_BACKWARD_COMPATIBILITY_PRESERVED=YES — optional field
+  engineering_review: NCProgramEngineeringReview | null
   // Immutable safety flags — always false
   nc_feed_move_equals_confirmed_cutting: false
   arc_chord_approximation_used: false

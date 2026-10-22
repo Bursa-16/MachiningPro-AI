@@ -22,6 +22,9 @@ import {
   type NCValidationFinding,
   type NCValidationSeverityValue,
   type NCValidationStatusValue,
+  type NCProgramEngineeringReview,
+  type EngReviewStatusValue,
+  type ParserFeatureStateValue,
 } from '../services/nc_path'
 
 type TFunc = (key: keyof TranslationDictionary) => string
@@ -554,6 +557,9 @@ function StepRow({
                 </button>
               </div>
               {vs && <NcProgramValidationSection vs={vs} t={t} />}
+              {step.nc_analysis.engineering_review && (
+                <NcEngineeringReviewSection er={step.nc_analysis.engineering_review} t={t} />
+              )}
             </div>
           )
         })()}
@@ -736,6 +742,261 @@ function NcProgramValidationSection({
           <div className="text-[9px] text-tp-text-3 italic">{t('ncPvReferenceAdvisoryNote')}</div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── NC Engineering Review section ────────────────────────────────────────────
+
+const ER_STATUS_CLS: Record<EngReviewStatusValue, string> = {
+  PASS_WITH_EVIDENCE: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+  PASS_WITH_ADVISORIES: 'bg-sky-500/15 text-sky-300 border border-sky-500/30',
+  REVIEW_REQUIRED: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+  BLOCKED_BY_KNOWN_LIMIT: 'bg-red-500/15 text-red-300 border border-red-500/30',
+  INSUFFICIENT_DATA: 'bg-tp-surface-2 text-tp-text-3 border border-tp-border',
+  UNSUPPORTED_FEATURES_PRESENT: 'bg-orange-500/15 text-orange-300 border border-orange-500/30',
+}
+
+const ER_STATE_CLS: Record<ParserFeatureStateValue, string> = {
+  SUPPORTED: 'text-emerald-400',
+  BOUNDED: 'text-amber-400',
+  DEFERRED: 'text-orange-400',
+  UNSUPPORTED: 'text-red-400',
+  INSUFFICIENT_SEMANTICS: 'text-tp-text-3',
+}
+
+function NcEngineeringReviewSection({
+  er,
+  t,
+}: {
+  er: NCProgramEngineeringReview
+  t: TFunc
+}) {
+  const statusLabel: Record<EngReviewStatusValue, string> = {
+    PASS_WITH_EVIDENCE: t('ncErStatusPassWithEvidence'),
+    PASS_WITH_ADVISORIES: t('ncErStatusPassWithAdvisories'),
+    REVIEW_REQUIRED: t('ncErStatusReviewRequired'),
+    BLOCKED_BY_KNOWN_LIMIT: t('ncErStatusBlockedByKnownLimit'),
+    INSUFFICIENT_DATA: t('ncErStatusInsufficientData'),
+    UNSUPPORTED_FEATURES_PRESENT: t('ncErStatusUnsupportedFeaturesPresent'),
+  }
+  const stateLabel: Record<ParserFeatureStateValue, string> = {
+    SUPPORTED: t('ncErStateSupported'),
+    BOUNDED: t('ncErStateBounded'),
+    DEFERRED: t('ncErStateDeferred'),
+    UNSUPPORTED: t('ncErStateUnsupported'),
+    INSUFFICIENT_SEMANTICS: t('ncErStateInsufficientSemantics'),
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-tp-border/40 space-y-3">
+      {/* Header */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <SectionLabel text={t('ncEngineeringReview')} />
+        <Badge label={statusLabel[er.review_status]} cls={ER_STATUS_CLS[er.review_status]} />
+      </div>
+
+      {/* Executive Summary */}
+      <div className="p-2 bg-tp-surface-2 rounded border border-tp-border/40 space-y-1">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1">
+          {t('ncErExecutiveSummary')}
+        </div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
+          <span className="text-tp-text-3">{t('ncErSegments')}</span>
+          <span className="text-tp-text font-mono">{er.segment_count}</span>
+          <span className="text-tp-text-3">{t('ncErToolChanges')}</span>
+          <span className="text-tp-text font-mono">{er.tool_change_count}</span>
+          <span className="text-tp-text-3">{t('ncErSupportedMotions')}</span>
+          <span className="text-tp-text font-mono">{er.supported_motion_count}</span>
+          {er.unsupported_construct_count > 0 && (
+            <>
+              <span className="text-amber-400">{t('ncErUnsupportedConstructs')}</span>
+              <span className="text-amber-300 font-mono">{er.unsupported_construct_count}</span>
+            </>
+          )}
+          {er.blocking_count > 0 && (
+            <>
+              <span className="text-red-400">{t('ncErBlockingCount')}</span>
+              <span className="text-red-300 font-mono">{er.blocking_count}</span>
+            </>
+          )}
+          {er.warning_count > 0 && (
+            <>
+              <span className="text-amber-400">{t('ncErWarningCount')}</span>
+              <span className="text-amber-300 font-mono">{er.warning_count}</span>
+            </>
+          )}
+          {er.advisory_count > 0 && (
+            <>
+              <span className="text-sky-400">{t('ncErAdvisoryCount')}</span>
+              <span className="text-sky-300 font-mono">{er.advisory_count}</span>
+            </>
+          )}
+          {er.unsupported_count > 0 && (
+            <>
+              <span className="text-orange-400">{t('ncErUnsupportedCount')}</span>
+              <span className="text-orange-300 font-mono">{er.unsupported_count}</span>
+            </>
+          )}
+        </div>
+        {(er.total_feed_distance_mm > 0 || er.total_rapid_distance_mm > 0) && (
+          <div className="border-t border-tp-border/20 pt-1 mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
+            <span className="text-tp-text-3">{t('ncErTotalFeedDistance')}</span>
+            <span className="text-tp-text font-mono">{er.total_feed_distance_mm.toFixed(3)}</span>
+            <span className="text-tp-text-3">{t('ncErTotalRapidDistance')}</span>
+            <span className="text-tp-text font-mono">{er.total_rapid_distance_mm.toFixed(3)}</span>
+          </div>
+        )}
+        <div className="text-[9px] text-tp-text-3 italic pt-0.5">{t('ncErProgrammedFeedNote')}</div>
+      </div>
+
+      {/* Program Coverage */}
+      <div className="border border-tp-border/40 rounded overflow-hidden">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light px-2 py-1 bg-tp-surface-2">
+          {t('ncErProgramCoverage')}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[10px] border-collapse">
+            <tbody>
+              {er.feature_coverage.filter(f =>
+                f.state !== 'SUPPORTED' || f.detected
+              ).map(f => (
+                <tr key={f.feature} className="border-t border-tp-border/20">
+                  <td className="pr-3 py-0.5 pl-2 text-tp-text-2">{f.feature}</td>
+                  <td className={`pr-3 py-0.5 font-semibold ${ER_STATE_CLS[f.state]}`}>
+                    {stateLabel[f.state]}
+                  </td>
+                  <td className="pr-2 py-0.5 text-tp-text-3 italic text-[9px]">
+                    {f.detected ? t('ncErDetected') : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Configuration */}
+      {(er.equipment.machine_id || er.equipment.cutting_tool_id || er.equipment.tool_holder_id) && (
+        <div className="p-2 bg-tp-surface-2 rounded border border-tp-border/40 space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1">
+            {t('ncErMachineConfig')}
+          </div>
+          <div className="text-[11px] space-y-0.5">
+            {er.equipment.machine_display && (
+              <div className="flex justify-between">
+                <span className="text-tp-text-3">{t('ncErMachineConfig')}</span>
+                <span className="text-tp-text">{er.equipment.machine_display}</span>
+              </div>
+            )}
+            {er.equipment.cutting_tool_display && (
+              <div className="flex justify-between">
+                <span className="text-tp-text-3">{t('ncErToolConfig')}</span>
+                <span className="text-tp-text">{er.equipment.cutting_tool_display}</span>
+              </div>
+            )}
+            {er.equipment.tool_holder_display && (
+              <div className="flex justify-between">
+                <span className="text-tp-text-3">{t('ncErHolderConfig')}</span>
+                <span className="text-tp-text">{er.equipment.tool_holder_display}</span>
+              </div>
+            )}
+            {er.equipment.effective_rpm_limit != null && (
+              <div className="flex justify-between">
+                <span className="text-tp-text-3">{t('ncErEffectiveRpmLimit')}</span>
+                <span className="text-tp-text font-mono">{er.equipment.effective_rpm_limit} rpm
+                  {er.equipment.effective_rpm_limit_source && (
+                    <span className="ml-1 text-tp-text-3 text-[9px]">
+                      ({er.equipment.effective_rpm_limit_source})
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cycle Time Evidence */}
+      {er.cycle_time_known_subtotal_sec != null && (
+        <div className="p-2 bg-tp-surface-2 rounded border border-tp-border/40 text-[11px]">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1">
+            {t('ncErCycleTimeEvidence')}
+          </div>
+          <div className="flex justify-between">
+            <span className="text-tp-text-3">{t('ncErCycleTimeSubtotalLabel')}</span>
+            <span className="text-tp-text font-mono">
+              {er.cycle_time_known_subtotal_sec.toFixed(1)} s
+              <span className="ml-2 text-tp-text-3 text-[9px]">≠ Total</span>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Canned Cycle Notes */}
+      {er.canned_cycle_notes.length > 0 && (
+        <div className="p-2 bg-tp-surface-2 rounded border border-tp-border/40">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1">
+            {t('ncErCannedCycleReview')}
+          </div>
+          {er.canned_cycle_notes.map(note => (
+            <div key={note.cycle_code_str} className="flex items-center gap-2 text-[11px] py-0.5">
+              <span className="font-mono text-tp-text">{note.cycle_code_str}</span>
+              <span className={`font-semibold ${ER_STATE_CLS[note.state]}`}>
+                {stateLabel[note.state]}
+              </span>
+              {note.bounded_reason && (
+                <span className="text-tp-text-3 italic text-[9px]">{note.bounded_reason}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Findings */}
+      {er.findings.length > 0 ? (
+        <div className="space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+            {t('ncErFindings')}
+          </div>
+          {er.findings.map(f => (
+            <div
+              key={f.finding_code}
+              className={`flex items-start gap-2 px-2 py-1 rounded border text-[11px] ${PV_SEVERITY_CLS[f.severity] ?? 'border-tp-border text-tp-text-3'}`}
+            >
+              <span className="font-semibold whitespace-nowrap">{t(f.title_key as keyof TranslationDictionary)}</span>
+              {f.observed_value != null && (
+                <span className="font-mono">{f.observed_value.toFixed(1)} {f.unit ?? ''}</span>
+              )}
+              {f.limit_value != null && (
+                <span className="text-[10px] opacity-70">/ {f.limit_value.toFixed(0)}</span>
+              )}
+              {f.source && (
+                <span className="text-[9px] opacity-60 ml-auto">{f.source}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-[11px] text-tp-text-3 italic">{t('ncErNoFindings')}</div>
+      )}
+
+      {/* Limitations */}
+      {er.limitations.length > 0 && (
+        <div className="space-y-0.5">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+            {t('ncErLimitations')}
+          </div>
+          {er.limitations.map((lim, i) => (
+            <div key={i} className="text-[10px] text-tp-text-3 italic">{lim}</div>
+          ))}
+        </div>
+      )}
+
+      {/* Safety disclaimer */}
+      <div className="text-[9px] text-tp-text-3 italic border-t border-tp-border/20 pt-1">
+        NC_FILE_EXECUTED=NO · COLLISION_CHECK_PERFORMED=NO · FALSE_PRODUCTION_APPROVAL_CLAIM=NO
+      </div>
     </div>
   )
 }
