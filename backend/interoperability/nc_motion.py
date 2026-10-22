@@ -3,11 +3,18 @@
 PROCESS_PLAN_CYCLE_TIME_CAD_CAM_INTEGRATION_01 — Phase 2
 NC_ARC_AND_OPERATION_SEGMENTATION_01 — Phase 2
 NC_CANNED_CYCLE_FOUNDATION_01 — Phase 2
+NC_FEED_SPINDLE_PROGRAM_VALIDATION_01 — Phase 2
 
 Parser profile  : GENERIC_ISO_GCODE_SUBSET
 Supported       : G20/G21, G90/G91, G0/G00, G1/G01, G17/G18/G19,
-                  G2/G3 (IJK relative-center only), X/Y/Z/I/J/K, F,
-                  G80, G81, G82, G83, G84, G85, G98, G99, P, Q
+                  G2/G3 (IJK relative-center only), X/Y/Z/I/J/K, F, S,
+                  G80, G81, G82, G83, G84, G85, G98, G99, P, Q,
+                  G94 (feed/min), G95 (feed/rev), G97 (constant RPM),
+                  M3 (CW), M4 (CCW), M5 (STOP)
+Feed modes      : G94 mm/min (default), G95 mm/rev tracked separately.
+                  G93 (inverse time) DEFERRED.
+Spindle modes   : G97 (constant RPM) tracked; S word captured as RPM.
+                  G96 (CSS) DEFERRED — diameter-dependent.
 Arc support     : Exact analytic arcs. R-format DEFERRED.
                   ARC_FALLBACK_TO_CHORD=NO
 Segmentation    : NC Motion Segments bounded by T+M6 tool-change events.
@@ -32,13 +39,18 @@ Safety constants enforced here:
     UNKNOWN_INITIAL_POSITION_GUESSED=NO
     PRIVATE_PATH_IN_PATH_EVIDENCE=NO
     NC_TOOL_ID_AUTOMATICALLY_MAPPED_TO_CATALOG=NO
+    NC_COMMANDED_SPINDLE_SPEED_EQUALS_ACTUAL_RPM=NO
+    NC_COMMANDED_FEED_EQUALS_ACTUAL_FEED=NO
+    G96_CSS_RPM_CALCULATED=NO
+    NC_PROGRAM_AUTOMATIC_OPERATION_CLASSIFICATION=NO
 """
 
 from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
+from dataclasses import field as dc_field
 from enum import StrEnum
 
 from pydantic import BaseModel
@@ -101,10 +113,20 @@ class NcMotionSegment(BaseModel):
     linear_motion_count: int = 0
     arc_motion_count: int = 0
 
-    # Commanded feed summary (mm/min; NOT reference engineering feed)
+    # Commanded feed summary (mm/min; G94 only; NOT reference engineering feed)
     commanded_feed_min: float | None = None
     commanded_feed_max: float | None = None
     feed_change_count: int = 0
+
+    # Feed/spindle evidence (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
+    # All fields optional — backward compatible with clients before Phase 2.
+    # NC_COMMANDED_SPINDLE_SPEED_EQUALS_ACTUAL_RPM=NO
+    # NC_COMMANDED_FEED_EQUALS_ACTUAL_FEED=NO
+    feed_mode: str | None = None               # "G94" | "G95" | "G93"
+    commanded_feed_mm_rev: float | None = None  # F value when G95 active (mm/rev)
+    commanded_spindle_rpm: float | None = None  # S value when G97 active (RPM)
+    spindle_state: str | None = None           # "M3_CW" | "M4_CCW" | "M5_STOP"
+    spindle_direction: str | None = None       # "CW" | "CCW"
 
     # Quality
     analysis_status: NcAnalysisStatus = NcAnalysisStatus.INSUFFICIENT_DATA
@@ -137,8 +159,14 @@ class NcMotionResult(BaseModel):
     # Units
     units_declared: str | None = None
 
-    # Feed
+    # Feed (G94 mm/min; NOT reference engineering feed)
     nc_commanded_feed_mm_min: float | None = None
+
+    # Feed/spindle summary (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
+    # NC_COMMANDED_SPINDLE_SPEED_EQUALS_ACTUAL_RPM=NO
+    nc_feed_mode: str | None = None            # last active feed mode
+    nc_commanded_spindle_rpm: float | None = None  # last commanded spindle RPM
+    nc_spindle_state: str | None = None        # last spindle state
 
     # Diagnostics
     unsupported_features: list[str] = []
@@ -168,6 +196,12 @@ class _ModalState:
     y: float | None = None
     z: float | None = None
     feed_mm_min: float | None = None
+    # Feed/spindle modal state (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
+    feed_mode: str = "G94"            # "G94" | "G95" | "G93" — default mm/min
+    feed_mm_rev: float | None = None   # F when G95 active (mm/rev)
+    spindle_mode: str = "G97"         # "G97" | "G96" — default constant RPM
+    spindle_rpm: float | None = None   # last S value when G97 active
+    spindle_state: str | None = None   # "M3_CW" | "M4_CCW" | "M5_STOP"
     # Canned cycle modal state (G80-G85, G98/G99)
     canned_active: bool = False
     canned_code: int | None = None        # 81 | 82 | 83 | 84 | 85
@@ -193,6 +227,12 @@ class _SegState:
     feed_min: float | None = None
     feed_max: float | None = None
     feed_change_count: int = 0
+    # Feed/spindle segment accumulator (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
+    feed_mode: str | None = None           # feed mode in this segment
+    feed_mm_rev: float | None = None       # last G95 F value seen
+    spindle_rpm: float | None = None       # last commanded spindle RPM seen
+    spindle_state: str | None = None       # last spindle state seen
+    spindle_direction: str | None = None   # "CW" | "CCW"
     has_partial: bool = False
     has_unsupported_semantics: bool = False
     unsupported: list[str] = dc_field(default_factory=list)
@@ -479,6 +519,15 @@ def _finalize_segment(seg: _SegState, end_line: int) -> NcMotionSegment:
         commanded_feed_min=round(seg.feed_min, 4) if seg.feed_min is not None else None,
         commanded_feed_max=round(seg.feed_max, 4) if seg.feed_max is not None else None,
         feed_change_count=seg.feed_change_count,
+        feed_mode=seg.feed_mode,
+        commanded_feed_mm_rev=(
+            round(seg.feed_mm_rev, 4) if seg.feed_mm_rev is not None else None
+        ),
+        commanded_spindle_rpm=(
+            round(seg.spindle_rpm, 4) if seg.spindle_rpm is not None else None
+        ),
+        spindle_state=seg.spindle_state,
+        spindle_direction=seg.spindle_direction,
         analysis_status=status,
         unsupported_features=list(seg.unsupported),
     )
@@ -665,6 +714,7 @@ def parse_nc_motion(
         new_k: float | None = None
         new_r: float | None = None
         new_f: float | None = None
+        new_s: float | None = None   # S word — spindle speed command
         new_p: float | None = None   # G82 dwell (time word — not mm-converted)
         new_q: float | None = None   # G83 peck depth (mm after conversion)
 
@@ -691,6 +741,8 @@ def parse_nc_motion(
                 new_r = val
             elif letter == "F":
                 new_f = val
+            elif letter == "S":
+                new_s = val          # spindle speed command
             elif letter == "P":
                 new_p = val          # time word; no unit conversion
             elif letter == "Q":
@@ -717,14 +769,32 @@ def parse_nc_motion(
             elif gn == 21:
                 state.units = "mm"
 
-        # Convert F word to mm/min
+        # Convert F word according to active feed mode
+        # NC_COMMANDED_FEED_EQUALS_ACTUAL_FEED=NO
         if new_f is not None:
-            if state.units == "inch":
-                state.feed_mm_min = new_f * _INCH_TO_MM
+            if state.feed_mode == "G95":
+                # G95: feed per revolution — do NOT store as mm/min
+                if state.units == "inch":
+                    state.feed_mm_rev = new_f * _INCH_TO_MM
+                else:
+                    state.feed_mm_rev = new_f
+                cur_seg.feed_mm_rev = state.feed_mm_rev
+                if cur_seg.feed_mode is None:
+                    cur_seg.feed_mode = "G95"
+            elif state.feed_mode == "G93":
+                # G93: inverse-time — semantics deferred; raw value not converted
+                if cur_seg.feed_mode is None:
+                    cur_seg.feed_mode = "G93"
             else:
-                state.feed_mm_min = new_f
-            last_feed_mm_min = state.feed_mm_min
-            _seg_update_feed(cur_seg, state.feed_mm_min)
+                # G94 (default): feed per minute
+                if state.units == "inch":
+                    state.feed_mm_min = new_f * _INCH_TO_MM
+                else:
+                    state.feed_mm_min = new_f
+                last_feed_mm_min = state.feed_mm_min
+                _seg_update_feed(cur_seg, state.feed_mm_min)
+                if cur_seg.feed_mode is None:
+                    cur_seg.feed_mode = "G94"
 
         # Process G codes
         this_line_motion: str | None = None
@@ -817,11 +887,56 @@ def parse_nc_motion(
             elif gn == 92:
                 if "G92_COORDINATE_SHIFT_NOTED" not in unsupported:
                     unsupported.append("G92_COORDINATE_SHIFT_NOTED")
+            elif gn == 94:
+                state.feed_mode = "G94"
+                cur_seg.feed_mode = "G94"
+            elif gn == 95:
+                state.feed_mode = "G95"
+                cur_seg.feed_mode = "G95"
+            elif gn == 93:
+                # G93 inverse-time feed: deferred — semantics require displacement context
+                state.feed_mode = "G93"
+                cur_seg.feed_mode = "G93"
+                has_partial = True
+                cur_seg.has_partial = True
+                feat = "G93_INVERSE_TIME_DEFERRED"
+                _add_unsupported(feat)
+                _seg_add_unsupported(cur_seg, feat)
+            elif gn == 97:
+                state.spindle_mode = "G97"
+            elif gn == 96:
+                # G96 CSS: deferred — requires dynamic diameter for RPM derivation
+                state.spindle_mode = "G96"
+                has_partial = True
+                cur_seg.has_partial = True
+                feat = "G96_CSS_DEFERRED"
+                _add_unsupported(feat)
+                _seg_add_unsupported(cur_seg, feat)
             # All other G codes silently ignored
+
+        # S word — spindle speed command (processed after G codes so G96 mode is set)
+        # NC_COMMANDED_SPINDLE_SPEED_EQUALS_ACTUAL_RPM=NO
+        # G96 (CSS): S is surface speed, not RPM — deferred; not stored as RPM.
+        # G97 (constant RPM, default): S is commanded RPM.
+        if new_s is not None:
+            if state.spindle_mode != "G96":
+                state.spindle_rpm = new_s
+                cur_seg.spindle_rpm = new_s
 
         # Process M codes
         for mn in m_nums:
-            if mn == 6:
+            if mn == 3:
+                state.spindle_state = "M3_CW"
+                cur_seg.spindle_state = "M3_CW"
+                cur_seg.spindle_direction = "CW"
+            elif mn == 4:
+                state.spindle_state = "M4_CCW"
+                cur_seg.spindle_state = "M4_CCW"
+                cur_seg.spindle_direction = "CCW"
+            elif mn == 5:
+                state.spindle_state = "M5_STOP"
+                cur_seg.spindle_state = "M5_STOP"
+            elif mn == 6:
                 if pending_t is not None or t_num is not None:
                     tool_change_count += 1
                     raw_tid = str(t_num if t_num is not None else pending_t)
@@ -1071,6 +1186,17 @@ def parse_nc_motion(
             "cycle time omitted (spindle reversal not modelled). "
             "G84_F_UNITS_MAY_BE_FPR."
         )
+    if any("G93_INVERSE_TIME_DEFERRED" in f for f in unsupported):
+        limitations.append(
+            "G93_INVERSE_TIME_DEFERRED — G93 inverse-time feed mode detected; "
+            "F-word semantics differ per block. Feed units not converted."
+        )
+    if any("G96_CSS_DEFERRED" in f for f in unsupported):
+        limitations.append(
+            "G96_CSS_DEFERRED — G96 constant surface speed detected; "
+            "RPM derivation requires dynamic diameter. "
+            "G96_CSS_RPM_CALCULATED=NO. S word not stored as RPM when G96 active."
+        )
     if any("_CANNED_G91_DEFERRED" in f for f in unsupported):
         limitations.append(
             "CANNED_CYCLE_G91_DEFERRED — G91 incremental mode inside canned cycles "
@@ -1099,6 +1225,11 @@ def parse_nc_motion(
         nc_commanded_feed_mm_min=(
             round(last_feed_mm_min, 4) if last_feed_mm_min is not None else None
         ),
+        nc_feed_mode=state.feed_mode,
+        nc_commanded_spindle_rpm=(
+            round(state.spindle_rpm, 4) if state.spindle_rpm is not None else None
+        ),
+        nc_spindle_state=state.spindle_state,
         unsupported_features=unsupported,
         limitations=limitations,
         segments=completed_segments,

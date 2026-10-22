@@ -18,6 +18,10 @@ import {
 import {
   analyzeNcPath,
   type NcAnalyzeResponse,
+  type NCProgramValidationSummary,
+  type NCValidationFinding,
+  type NCValidationSeverityValue,
+  type NCValidationStatusValue,
 } from '../services/nc_path'
 
 type TFunc = (key: keyof TranslationDictionary) => string
@@ -403,6 +407,7 @@ function StepRow({
           const mr = step.nc_analysis.motion_result
           const fe = step.nc_analysis.feed_evidence
           const re = step.nc_analysis.rapid_evidence
+          const vs = step.nc_analysis.validation_summary
           const statusLabel: Record<string, string> = {
             COMPLETE: t('ppNcStatusComplete'),
             PARTIAL: t('ppNcStatusPartial'),
@@ -548,11 +553,189 @@ function StepRow({
                   {t('ppNcUseAsRapidDistance')}
                 </button>
               </div>
+              {vs && <NcProgramValidationSection vs={vs} t={t} />}
             </div>
           )
         })()}
       </div>
 
+    </div>
+  )
+}
+
+// ── NC Program Validation section ────────────────────────────────────────────
+
+const PV_SEVERITY_CLS: Record<NCValidationSeverityValue, string> = {
+  BLOCKING: 'bg-red-500/15 text-red-300 border border-red-500/30',
+  WARNING: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+  ADVISORY: 'bg-sky-500/15 text-sky-300 border border-sky-500/30',
+  INFO: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+  INSUFFICIENT_DATA: 'bg-tp-surface-2 text-tp-text-3 border border-tp-border',
+  NOT_APPLICABLE: 'bg-tp-surface-2 text-tp-text-3 border border-tp-border',
+}
+
+function PvFindingRow({
+  finding,
+  label,
+  t,
+}: {
+  finding: NCValidationFinding | null
+  label: string
+  t: TFunc
+}) {
+  if (!finding) return null
+  const sevLabel: Record<NCValidationSeverityValue, string> = {
+    BLOCKING: t('ncPvSeverityBlocking'),
+    WARNING: t('ncPvSeverityAdvisory'),
+    ADVISORY: t('ncPvSeverityAdvisory'),
+    INFO: t('ncPvSeverityInfo'),
+    INSUFFICIENT_DATA: t('ncPvSeverityInsuffData'),
+    NOT_APPLICABLE: t('ncPvStatusNotApplicable'),
+  }
+  const statusLabel: Record<NCValidationStatusValue, string> = {
+    WITHIN_LIMIT: t('ncPvStatusWithinLimit'),
+    EXCEEDS_LIMIT: t('ncPvStatusExceedsLimit'),
+    WITHIN_REFERENCE_RANGE: t('ncPvStatusWithinRef'),
+    BELOW_REFERENCE_RANGE: t('ncPvStatusBelowRef'),
+    ABOVE_REFERENCE_RANGE: t('ncPvStatusAboveRef'),
+    NOT_COMPARABLE: t('ncPvStatusInsuffData'),
+    INSUFFICIENT_DATA: t('ncPvStatusInsuffData'),
+    NOT_APPLICABLE: t('ncPvStatusNotApplicable'),
+  }
+  return (
+    <div className="flex items-center justify-between gap-2 text-[11px]">
+      <span className="text-tp-text-2 min-w-0 truncate">{label}</span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {finding.observed_value != null && (
+          <span className="text-tp-text font-mono">
+            {finding.observed_value.toFixed(finding.observed_unit === 'rpm' ? 0 : 3)}
+            <span className="text-tp-text-3 ml-0.5">{finding.observed_unit}</span>
+          </span>
+        )}
+        {finding.limit_or_reference != null && (
+          <span className="text-tp-text-3">
+            / {finding.limit_or_reference.toFixed(finding.limit_unit === 'rpm' ? 0 : 3)}
+            <span className="ml-0.5">{finding.limit_unit}</span>
+          </span>
+        )}
+        <Badge label={sevLabel[finding.severity]} cls={PV_SEVERITY_CLS[finding.severity]} />
+        <span className="text-tp-text-3 text-[10px]">{statusLabel[finding.status]}</span>
+      </div>
+    </div>
+  )
+}
+
+function NcProgramValidationSection({
+  vs,
+  t,
+}: {
+  vs: NCProgramValidationSummary
+  t: TFunc
+}) {
+  const hasFeedSpindle = vs.nc_commanded_spindle_rpm != null || vs.nc_commanded_feed_mm_min != null || vs.nc_commanded_feed_mm_rev != null
+  const hasCalc = vs.calculated_cutting_speed_m_min != null || vs.calculated_feed_per_tooth_mm != null || vs.calculated_feed_per_rev_mm != null
+  const hasLimitChecks = vs.machine_rpm_limit_check != null || vs.tool_rpm_limit_check != null || vs.holder_rpm_limit_check != null || vs.effective_rpm_limit_check != null
+  const hasRefChecks = vs.cutting_speed_check != null || vs.feed_per_tooth_check != null || vs.feed_per_rev_check != null
+
+  return (
+    <div className="mt-3 pt-3 border-t border-tp-border/40 space-y-2.5">
+      <SectionLabel text={t('ncProgramValidation')} />
+
+      {/* Summary badges */}
+      {(vs.blocking_count > 0 || vs.advisory_count > 0) && (
+        <div className="flex gap-2 flex-wrap">
+          {vs.blocking_count > 0 && (
+            <Badge
+              label={`${vs.blocking_count} ${t('ncPvBlockingCount')}`}
+              cls={PV_SEVERITY_CLS.BLOCKING}
+            />
+          )}
+          {vs.advisory_count > 0 && (
+            <Badge
+              label={`${vs.advisory_count} ${t('ncPvAdvisoryCount')}`}
+              cls={PV_SEVERITY_CLS.ADVISORY}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Feed/spindle evidence */}
+      {hasFeedSpindle && (
+        <div className="space-y-1 p-2 bg-tp-surface-2 rounded border border-tp-border/40">
+          <div className="text-[10px] font-semibold text-tp-text-3 uppercase tracking-wide mb-1">
+            {t('ncPvFeedMode')}: {vs.nc_feed_mode ?? '—'}
+          </div>
+          {vs.nc_commanded_feed_mm_min != null && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvCommandedFeedMmMin')}</span>
+              <span className="text-tp-text font-mono">{vs.nc_commanded_feed_mm_min.toFixed(1)}</span>
+            </div>
+          )}
+          {vs.nc_commanded_feed_mm_rev != null && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvCommandedFeedMmRev')}</span>
+              <span className="text-tp-text font-mono">{vs.nc_commanded_feed_mm_rev.toFixed(4)}</span>
+            </div>
+          )}
+          {vs.nc_commanded_spindle_rpm != null && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvCommandedRpm')}</span>
+              <span className="text-tp-text font-mono">{vs.nc_commanded_spindle_rpm.toFixed(0)}</span>
+            </div>
+          )}
+          {vs.nc_spindle_state && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvSpindleState')}</span>
+              <span className="text-tp-text font-mono">{vs.nc_spindle_state}</span>
+            </div>
+          )}
+          <div className="text-[9px] text-tp-text-3 italic pt-0.5">{t('ncPvNcCommandedNotActual')}</div>
+        </div>
+      )}
+
+      {/* RPM limit checks */}
+      {hasLimitChecks && (
+        <div className="space-y-1.5">
+          <PvFindingRow finding={vs.machine_rpm_limit_check} label={t('ncPvRpmLimitMachine')} t={t} />
+          <PvFindingRow finding={vs.tool_rpm_limit_check} label={t('ncPvRpmLimitTool')} t={t} />
+          <PvFindingRow finding={vs.holder_rpm_limit_check} label={t('ncPvRpmLimitHolder')} t={t} />
+          <PvFindingRow finding={vs.effective_rpm_limit_check} label={t('ncPvRpmLimitEffective')} t={t} />
+        </div>
+      )}
+
+      {/* Calculated engineering values */}
+      {hasCalc && (
+        <div className="space-y-1 p-2 bg-tp-surface-2 rounded border border-tp-border/40">
+          {vs.calculated_cutting_speed_m_min != null && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvCalcVc')}</span>
+              <span className="text-tp-text font-mono">{vs.calculated_cutting_speed_m_min.toFixed(1)} m/min</span>
+            </div>
+          )}
+          {vs.calculated_feed_per_tooth_mm != null && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvCalcFz')}</span>
+              <span className="text-tp-text font-mono">{vs.calculated_feed_per_tooth_mm.toFixed(4)} mm/tooth</span>
+            </div>
+          )}
+          {vs.calculated_feed_per_rev_mm != null && (
+            <div className="flex justify-between text-[11px]">
+              <span className="text-tp-text-2">{t('ncPvCalcFeedRev')}</span>
+              <span className="text-tp-text font-mono">{vs.calculated_feed_per_rev_mm.toFixed(4)} mm/rev</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reference range checks */}
+      {hasRefChecks && (
+        <div className="space-y-1.5">
+          <PvFindingRow finding={vs.cutting_speed_check} label={t('ncPvCalcVc')} t={t} />
+          <PvFindingRow finding={vs.feed_per_tooth_check} label={t('ncPvCalcFz')} t={t} />
+          <PvFindingRow finding={vs.feed_per_rev_check} label={t('ncPvCalcFeedRev')} t={t} />
+          <div className="text-[9px] text-tp-text-3 italic">{t('ncPvReferenceAdvisoryNote')}</div>
+        </div>
+      )}
     </div>
   )
 }

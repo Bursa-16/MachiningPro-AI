@@ -924,4 +924,49 @@ export interface TranslationDictionary {
   ppNcCannedG83Note: string
   ppNcCannedG84Note: string
   ppNcCannedG91Note: string
+
+  // NC Program Validation (NC_FEED_SPINDLE_PROGRAM_VALIDATION_01)
+  ncProgramValidation: string
+  ncPvFeedMode: string
+  ncPvFeedModeG94: string
+  ncPvFeedModeG95: string
+  ncPvFeedModeG93: string
+  ncPvCommandedFeedMmMin: string
+  ncPvCommandedFeedMmRev: string
+  ncPvCommandedRpm: string
+  ncPvSpindleState: string
+  ncPvSpindleStateCw: string
+  ncPvSpindleStateCcw: string
+  ncPvSpindleStateStop: string
+  ncPvCalcVc: string
+  ncPvCalcFz: string
+  ncPvCalcFeedRev: string
+  ncPvRpmLimitMachine: string
+  ncPvRpmLimitTool: string
+  ncPvRpmLimitHolder: string
+  ncPvRpmLimitEffective: string
+  ncPvStatusWithinLimit: string
+  ncPvStatusExceedsLimit: string
+  ncPvStatusWithinRef: string
+  ncPvStatusBelowRef: string
+  ncPvStatusAboveRef: string
+  ncPvStatusInsuffData: string
+  ncPvStatusNotApplicable: string
+  ncPvSeverityBlocking: string
+  ncPvSeverityAdvisory: string
+  ncPvSeverityInfo: string
+  ncPvSeverityInsuffData: string
+  ncPvBlockingCount: string
+  ncPvAdvisoryCount: string
+  ncPvReferenceSource: string
+  ncPvLimitations: string
+  ncPvEvidenceSources: string
+  ncPvNoSpindleCommand: string
+  ncPvG96Deferred: string
+  ncPvG93Deferred: string
+  ncPvNcCommandedNotActual: string
+  ncPvReferenceAdvisoryNote: string
+  ncPvOperationContext: string
+  ncPvMaterialGroup: string
+  ncPvUnit: string
 }
