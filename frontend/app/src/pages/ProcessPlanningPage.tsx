@@ -17,6 +17,7 @@ import {
 } from '../services/process_planning'
 import {
   analyzeNcPath,
+  type NcAnalyzeRequest,
   type NcAnalyzeResponse,
   type NCProgramValidationSummary,
   type NCValidationFinding,
@@ -217,9 +218,13 @@ function StepRow({
     setNcAnalyzing(true)
     onChange({ ...step, nc_analysis: null, nc_analysis_error: null })
     try {
-      const req = step.nc_init_origin
-        ? { nc_text: step.nc_text, initial_x: 0, initial_y: 0, initial_z: 0 }
-        : { nc_text: step.nc_text }
+      const req: NcAnalyzeRequest = {
+        nc_text: step.nc_text,
+        ...(step.nc_init_origin ? { initial_x: 0, initial_y: 0, initial_z: 0 } : {}),
+        ...(step.machine_id ? { machine_id: step.machine_id } : {}),
+        ...(step.cutting_tool_id ? { cutting_tool_id: step.cutting_tool_id } : {}),
+        ...(step.operation ? { operation: step.operation } : {}),
+      }
       const result = await analyzeNcPath(req)
       onChange({ ...step, nc_analysis: result, nc_analysis_error: null })
     } catch (err: unknown) {
