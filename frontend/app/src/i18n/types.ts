@@ -1079,4 +1079,32 @@ export interface TranslationDictionary {
   ncErExportDisclaimer: string
   ncErExportProvenance: string
   ncErExportScopeTitle: string
+
+  // NC_PROGRAM_TRACEABILITY_AND_AUDIT_01
+  ncErTraceabilitySection: string
+  ncErReviewId: string
+  ncErProgramFingerprint: string
+  ncErConfigFingerprint: string
+  ncErAnalysisFingerprint: string
+  ncErGeneratedAt: string
+  ncErReviewSchemaVersion: string
+  ncErTraceabilityStatus: string
+  ncErTraceabilityTraceable: string
+  ncErTraceabilityPartiallyTraceable: string
+  ncErTraceabilityInsufficientData: string
+  ncErMatchUnchanged: string
+  ncErMatchProgramChanged: string
+  ncErMatchConfigChanged: string
+  ncErMatchBothChanged: string
+  ncErMatchVersionChanged: string
+  ncErMatchUnknown: string
+  ncErCopyFingerprint: string
+  ncErFingerprintCopied: string
+  ncErAuditEvent: string
+  ncErAuditAnalysisCreated: string
+  ncErAuditReviewGenerated: string
+  ncErAuditJsonExported: string
+  ncErAuditCsvExported: string
+  ncErAuditPrintOpened: string
+  ncErAuditReviewed: string
 }

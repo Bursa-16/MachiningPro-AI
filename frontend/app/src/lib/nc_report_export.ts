@@ -9,6 +9,7 @@
 
 import type {
   NCProgramEngineeringReview,
+  NCAnalysisTraceability,
   NCValidationFinding,
   NcMotionSegment,
   ParserFeatureCoverage,
@@ -24,6 +25,8 @@ export const EXPORT_SCHEMA_VERSION = '1.0'
 export const EXPORT_REPORT_TYPE = 'NC_PROGRAM_ENGINEERING_REVIEW' as const
 export const EXPORT_APPLICATION_NAME = 'MachiningPro AI'
 export const EXPORT_APPLICATION_VERSION = '0.1.0-alpha.10'
+// NC_PROGRAM_TRACEABILITY_AND_AUDIT_01 — aligns with backend REVIEW_SCHEMA_VERSION
+export const REVIEW_SCHEMA_VERSION = '1.0'
 
 // Provenance categories — safe descriptive strings, no filesystem paths
 const PROVENANCE: Record<string, string> = {
@@ -87,9 +90,79 @@ export interface NcReviewSegmentExport {
   unsupported_features: string[]
 }
 
+// NC_PROGRAM_TRACEABILITY_AND_AUDIT_01 — export DTO types
+export type TraceabilityStatusExport =
+  | 'TRACEABLE'
+  | 'PARTIALLY_TRACEABLE'
+  | 'INSUFFICIENT_TRACEABILITY_DATA'
+
+export type TraceabilityChangeState =
+  | 'UNCHANGED'
+  | 'PROGRAM_CHANGED'
+  | 'CONFIGURATION_CHANGED'
+  | 'PROGRAM_AND_CONFIGURATION_CHANGED'
+  | 'VERSION_CHANGED'
+  | 'UNKNOWN'
+
+export interface NCAnalysisTraceabilityExport {
+  review_id: string | null
+  program_fingerprint: string | null
+  configuration_fingerprint: string | null
+  analysis_fingerprint: string | null
+  traceability_status: TraceabilityStatusExport
+  generated_at: string
+  review_schema_version: string
+  parser_profile: string
+  parser_version: string
+  machine_id: string | null
+  cutting_tool_id: string | null
+  tool_holder_id: string | null
+  operation: string | null
+  process_step_id: string | null
+  material_iso_group: string | null
+  // Immutable safety flags — always false
+  hash_equals_digital_signature: false
+  hash_equals_approval: false
+  hash_equals_certification: false
+  false_immutable_audit_claim: false
+}
+
+export type NcAuditEventType =
+  | 'NC_ANALYSIS_CREATED'
+  | 'NC_REVIEW_GENERATED'
+  | 'NC_JSON_EXPORTED'
+  | 'NC_CSV_EXPORTED'
+  | 'NC_PRINT_OPENED'
+  | 'NC_REVIEWED'
+
+export interface NcAuditEvent {
+  event_id: string
+  event_type: NcAuditEventType
+  timestamp: string
+  review_id: string | null
+  analysis_fingerprint: string | null
+  export_format: string | null
+}
+
+// Module-level session audit log (in-memory, not persisted)
+const _sessionAuditLog: NcAuditEvent[] = []
+
+export function getAuditEvents(): Readonly<NcAuditEvent[]> {
+  return _sessionAuditLog
+}
+
+export function clearAuditEvents(): void {
+  _sessionAuditLog.length = 0
+}
+
+export function addAuditEvent(event: NcAuditEvent): void {
+  _sessionAuditLog.push(event)
+}
+
 export interface NcReviewExportJson {
   schema_version: string
   report_type: typeof EXPORT_REPORT_TYPE
+  traceability: NCAnalysisTraceabilityExport | null
   metadata: NcReviewExportMeta
   program_identity: {
     source_name_safe: string | null
@@ -256,24 +329,152 @@ export function triggerBrowserDownload(
 // Do NOT log raw NC content, credentials, or filesystem paths.
 // ---------------------------------------------------------------------------
 
-export function logExportEvent(format: string, reviewStatus: string): void {
-  console.info('[nc-export]', { event: 'nc_review_exported', format, review_status: reviewStatus, timestamp: new Date().toISOString() })
+export function logExportEvent(
+  format: string,
+  reviewStatus: string,
+  reviewId?: string | null,
+  analysisFingerprint?: string | null,
+): void {
+  const eventTypeMap: Record<string, NcAuditEventType> = {
+    json: 'NC_JSON_EXPORTED',
+    csv_findings: 'NC_CSV_EXPORTED',
+    csv_segments: 'NC_CSV_EXPORTED',
+    csv_coverage: 'NC_CSV_EXPORTED',
+    print: 'NC_PRINT_OPENED',
+  }
+  const eventType: NcAuditEventType = eventTypeMap[format] ?? 'NC_REVIEW_GENERATED'
+  const event: NcAuditEvent = {
+    event_id: crypto.randomUUID(),
+    event_type: eventType,
+    timestamp: new Date().toISOString(),
+    review_id: reviewId ?? null,
+    analysis_fingerprint: analysisFingerprint ?? null,
+    export_format: format,
+  }
+  addAuditEvent(event)
+  console.info('[nc-export]', { event: 'nc_review_exported', format, review_status: reviewStatus, timestamp: event.timestamp, review_id: event.review_id })
 }
 
 // ---------------------------------------------------------------------------
-// NC content fingerprint (async, browser Crypto API)
+// NC content normalization and fingerprinting
+// NC_NORMALIZATION_POLICY=CONSERVATIVE
+// NC_NORMALIZATION_SEMANTIC_RISK=LOW
 // ---------------------------------------------------------------------------
+
+export function normalizeNcContent(ncText: string): string {
+  let s = ncText.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  if (s.startsWith('﻿')) s = s.slice(1)
+  return s.split('\n').map(line => line.trimEnd()).join('\n')
+}
 
 export async function computeNcSha256(ncText: string): Promise<string | null> {
   try {
     const encoder = new TextEncoder()
-    const normalized = ncText.replace(/\s+/g, ' ').trim()
+    const normalized = normalizeNcContent(ncText)
     const data = encoder.encode(normalized)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   } catch {
     return null
+  }
+}
+
+export async function computeConfigFingerprint(config: {
+  machine_id?: string | null
+  cutting_tool_id?: string | null
+  tool_holder_id?: string | null
+  operation?: string | null
+  material_iso_group?: string | null
+  process_step_id?: string | null
+}): Promise<string | null> {
+  try {
+    const stable = {
+      cutting_tool_id: config.cutting_tool_id ?? null,
+      machine_id: config.machine_id ?? null,
+      material_iso_group: config.material_iso_group ?? null,
+      operation: config.operation ? config.operation.toLowerCase() : null,
+      process_step_id: config.process_step_id ?? null,
+      tool_holder_id: config.tool_holder_id ?? null,
+    }
+    const json = JSON.stringify(stable, Object.keys(stable).sort())
+    const encoder = new TextEncoder()
+    const data = encoder.encode(json)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  } catch {
+    return null
+  }
+}
+
+export async function computeAnalysisFingerprint(
+  programFingerprint: string | null,
+  configFingerprint: string | null,
+  parserProfile: string,
+  reviewSchemaVersion: string,
+): Promise<string | null> {
+  if (!programFingerprint || !configFingerprint) return null
+  try {
+    const combined = `${programFingerprint}|${configFingerprint}|${parserProfile}|${reviewSchemaVersion}`
+    const encoder = new TextEncoder()
+    const data = encoder.encode(combined)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  } catch {
+    return null
+  }
+}
+
+export function buildShortHash(fullHash: string | null | undefined, length = 12): string {
+  if (!fullHash) return '—'
+  return fullHash.slice(0, length) + '…'
+}
+
+export function computeChangeState(
+  current: NCAnalysisTraceabilityExport,
+  prior: NCAnalysisTraceabilityExport,
+): TraceabilityChangeState {
+  if (
+    current.review_schema_version !== prior.review_schema_version ||
+    current.parser_profile !== prior.parser_profile ||
+    current.parser_version !== prior.parser_version
+  ) {
+    return 'VERSION_CHANGED'
+  }
+  const progSame = current.program_fingerprint === prior.program_fingerprint
+  const cfgSame = current.configuration_fingerprint === prior.configuration_fingerprint
+  if (progSame && cfgSame) return 'UNCHANGED'
+  if (!progSame && !cfgSame) return 'PROGRAM_AND_CONFIGURATION_CHANGED'
+  if (!progSame) return 'PROGRAM_CHANGED'
+  if (!cfgSame) return 'CONFIGURATION_CHANGED'
+  return 'UNKNOWN'
+}
+
+function _buildTraceabilityExport(
+  tr: NCAnalysisTraceability,
+): NCAnalysisTraceabilityExport {
+  return {
+    review_id: tr.review_id,
+    program_fingerprint: tr.program_fingerprint,
+    configuration_fingerprint: tr.configuration_fingerprint,
+    analysis_fingerprint: tr.analysis_fingerprint,
+    traceability_status: tr.traceability_status as TraceabilityStatusExport,
+    generated_at: tr.generated_at,
+    review_schema_version: tr.review_schema_version,
+    parser_profile: tr.parser_profile,
+    parser_version: tr.parser_version,
+    machine_id: tr.machine_id,
+    cutting_tool_id: tr.cutting_tool_id,
+    tool_holder_id: tr.tool_holder_id,
+    operation: tr.operation,
+    process_step_id: tr.process_step_id,
+    material_iso_group: tr.material_iso_group,
+    hash_equals_digital_signature: false,
+    hash_equals_approval: false,
+    hash_equals_certification: false,
+    false_immutable_audit_claim: false,
   }
 }
 
@@ -354,9 +555,13 @@ export function buildNcReviewJson(
     UNSUPPORTED_FEATURES_PRESENT: t('ncErStatusUnsupportedFeaturesPresent'),
   }
 
+  const traceabilityExport: NCAnalysisTraceabilityExport | null =
+    er.traceability ? _buildTraceabilityExport(er.traceability) : null
+
   return {
     schema_version: EXPORT_SCHEMA_VERSION,
     report_type: EXPORT_REPORT_TYPE,
+    traceability: traceabilityExport,
     metadata: meta,
     program_identity: {
       source_name_safe: er.source_name_safe,
@@ -483,13 +688,20 @@ export function buildFindingsCsv(
   er: NCProgramEngineeringReview,
   t: (key: string) => string,
 ): string {
+  const reviewId = er.traceability?.review_id ?? null
+  const analysisFingerprint = er.traceability?.analysis_fingerprint ?? null
+  const programFingerprint = er.traceability?.program_fingerprint ?? null
   const header = csvRow([
+    'review_id', 'analysis_fingerprint', 'program_fingerprint',
     'finding_code', 'category', 'severity', 'title', 'message',
     'observed_value', 'limit_value', 'unit', 'source', 'evidence_type',
     'segment_id', 'limitation',
   ])
   const rows = er.findings.map((f: EngReviewFinding) =>
     csvRow([
+      reviewId,
+      analysisFingerprint,
+      programFingerprint,
       f.finding_code,
       f.category,
       f.severity,
@@ -508,7 +720,11 @@ export function buildFindingsCsv(
 }
 
 export function buildSegmentsCsv(er: NCProgramEngineeringReview): string {
+  const reviewId = er.traceability?.review_id ?? null
+  const analysisFingerprint = er.traceability?.analysis_fingerprint ?? null
+  const programFingerprint = er.traceability?.program_fingerprint ?? null
   const header = csvRow([
+    'review_id', 'analysis_fingerprint', 'program_fingerprint',
     'segment_id', 'tool_id_raw_nc_t_word', 't_word_equals_confirmed_tool_identity',
     'feed_motion_distance_mm', 'rapid_motion_distance_mm',
     'linear_motion_count', 'arc_motion_count',
@@ -518,6 +734,9 @@ export function buildSegmentsCsv(er: NCProgramEngineeringReview): string {
   ])
   const rows = er.segments.map((s: NcMotionSegment) =>
     csvRow([
+      reviewId,
+      analysisFingerprint,
+      programFingerprint,
       s.segment_id,
       s.tool_id_raw,
       false,
@@ -541,7 +760,11 @@ export function buildCoverageCsv(
   er: NCProgramEngineeringReview,
   t: (key: string) => string,
 ): string {
-  const header = csvRow(['feature', 'state', 'detected', 'note'])
+  const reviewId = er.traceability?.review_id ?? null
+  const analysisFingerprint = er.traceability?.analysis_fingerprint ?? null
+  const programFingerprint = er.traceability?.program_fingerprint ?? null
+  const header = csvRow(['review_id', 'analysis_fingerprint', 'program_fingerprint', 'feature', 'state', 'detected', 'note'])
+  void header
   const stateLabel: Record<string, string> = {
     SUPPORTED: t('ncErStateSupported'),
     BOUNDED: t('ncErStateBounded'),
@@ -557,10 +780,16 @@ export function buildCoverageCsv(
       fc.note,
     ])
   )
-  // Include state label column for readability
-  const headerWithLabel = csvRow(['feature', 'state', 'state_label', 'detected', 'note'])
+  // Include state label column and leading traceability columns
+  const headerWithLabel = csvRow([
+    'review_id', 'analysis_fingerprint', 'program_fingerprint',
+    'feature', 'state', 'state_label', 'detected', 'note',
+  ])
   const rowsWithLabel = er.feature_coverage.map((fc: ParserFeatureCoverage) =>
     csvRow([
+      reviewId,
+      analysisFingerprint,
+      programFingerprint,
       fc.feature,
       fc.state,
       stateLabel[fc.state] ?? fc.state,
@@ -568,8 +797,7 @@ export function buildCoverageCsv(
       fc.note,
     ])
   )
-  void rows // suppress unused warning
-  void header
+  void rows
   return CSV_BOM + [headerWithLabel, ...rowsWithLabel].join('\r\n')
 }
 
@@ -879,6 +1107,28 @@ export function generatePrintHtml(
   <table style="width:100%;border-collapse:collapse">${provRows}</table>
 </div>`
 
+  // ---- Traceability (NC_PROGRAM_TRACEABILITY_AND_AUDIT_01) ----
+  const tr = er.traceability ?? null
+  const traceabilityLabels: Record<string, string> = {
+    TRACEABLE: t('ncErTraceabilityTraceable'),
+    PARTIALLY_TRACEABLE: t('ncErTraceabilityPartiallyTraceable'),
+    INSUFFICIENT_TRACEABILITY_DATA: t('ncErTraceabilityInsufficientData'),
+  }
+  const traceabilitySection = tr ? `
+<div>
+  ${sectionTitle(t('ncErTraceabilitySection'))}
+  <table style="width:100%;border-collapse:collapse;margin-bottom:12pt">
+    ${kv(t('ncErReviewId'), tr.review_id)}
+    ${kv(t('ncErTraceabilityStatus'), traceabilityLabels[tr.traceability_status] ?? tr.traceability_status)}
+    ${kv(t('ncErProgramFingerprint'), tr.program_fingerprint ? `${tr.program_fingerprint.slice(0, 16)}…` : null)}
+    ${kv(t('ncErConfigFingerprint'), tr.configuration_fingerprint ? `${tr.configuration_fingerprint.slice(0, 16)}…` : null)}
+    ${kv(t('ncErAnalysisFingerprint'), tr.analysis_fingerprint ? `${tr.analysis_fingerprint.slice(0, 16)}…` : null)}
+    ${kv(t('ncErReviewSchemaVersion'), tr.review_schema_version)}
+    ${kv(t('ncErGeneratedAt'), tr.generated_at)}
+  </table>
+  <p style="font-size:8pt;color:#6b7280;font-style:italic">HASH_EQUALS_DIGITAL_SIGNATURE=NO · HASH_EQUALS_APPROVAL=NO · HASH_EQUALS_CERTIFICATION=NO · FALSE_IMMUTABLE_AUDIT_CLAIM=NO · ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO</p>
+</div>` : ''
+
   // ---- Disclaimer ----
   const disclaimerSection = `
 <div>
@@ -926,6 +1176,7 @@ ${cannedCycles}
 ${findings}
 ${limitations}
 ${provenance}
+${traceabilitySection}
 ${disclaimerSection}
 </body>
 </html>`

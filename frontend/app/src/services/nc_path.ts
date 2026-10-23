@@ -19,6 +19,9 @@ export interface NcAnalyzeRequest {
   tool_holder_id?: string | null
   operation?: string | null
   material_iso_group?: string | null
+  // NC_PROGRAM_TRACEABILITY_AND_AUDIT_01 — optional pass-through
+  review_id?: string | null
+  process_step_id?: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -223,6 +226,39 @@ export type EngReviewStatusValue =
   | 'INSUFFICIENT_DATA'
   | 'UNSUPPORTED_FEATURES_PRESENT'
 
+// NC_PROGRAM_TRACEABILITY_AND_AUDIT_01
+// ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO — separate model
+export type TraceabilityStatusValue =
+  | 'TRACEABLE'
+  | 'PARTIALLY_TRACEABLE'
+  | 'INSUFFICIENT_TRACEABILITY_DATA'
+
+export interface NCAnalysisTraceability {
+  review_id: string | null
+  program_fingerprint: string | null
+  configuration_fingerprint: string | null
+  analysis_fingerprint: string | null
+  traceability_status: TraceabilityStatusValue
+  generated_at: string
+  review_schema_version: string
+  parser_profile: string
+  parser_version: string
+  machine_id: string | null
+  cutting_tool_id: string | null
+  tool_holder_id: string | null
+  operation: string | null
+  process_step_id: string | null
+  material_iso_group: string | null
+  provenance_summary: string[]
+  source_counts: Record<string, number>
+  limitations_count: number
+  // Immutable safety flags — always false
+  hash_equals_digital_signature: false
+  hash_equals_approval: false
+  hash_equals_certification: false
+  false_immutable_audit_claim: false
+}
+
 export interface ParserFeatureCoverage {
   feature: string
   state: ParserFeatureStateValue
@@ -274,6 +310,7 @@ export interface NCProgramEngineeringReview {
   source_name_safe: string | null
   parser_profile: string
   parser_version: string
+  review_schema_version: string
   units_declared: string | null
   analysis_status: string
   segment_count: number
@@ -317,6 +354,9 @@ export interface NCProgramEngineeringReview {
   limitations: string[]
   // N. Overall Status
   review_status: EngReviewStatusValue
+  // O. Traceability (NC_PROGRAM_TRACEABILITY_AND_AUDIT_01)
+  // ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO
+  traceability?: NCAnalysisTraceability | null
   // Safety flags — all always false
   nc_file_executed: false
   machine_behavior_simulated: false

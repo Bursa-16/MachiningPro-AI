@@ -33,6 +33,9 @@ Safety constants enforced here:
 
 from __future__ import annotations
 
+import hashlib
+import json
+from datetime import UTC, datetime
 from enum import StrEnum
 
 from pydantic import BaseModel
@@ -47,12 +50,15 @@ from backend.process_planning.path_evidence import PathEvidence
 __all__ = [
     "ParserFeatureState",
     "EngReviewStatus",
+    "TraceabilityStatus",
     "ParserFeatureCoverage",
     "CannedCycleNote",
     "EquipmentSummary",
     "EngReviewFinding",
+    "NCAnalysisTraceability",
     "NCProgramEngineeringReview",
     "build_engineering_review",
+    "REVIEW_SCHEMA_VERSION",
 ]
 
 # ---------------------------------------------------------------------------
@@ -75,6 +81,30 @@ class EngReviewStatus(StrEnum):
     BLOCKED_BY_KNOWN_LIMIT = "BLOCKED_BY_KNOWN_LIMIT"
     INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
     UNSUPPORTED_FEATURES_PRESENT = "UNSUPPORTED_FEATURES_PRESENT"
+
+
+class TraceabilityStatus(StrEnum):
+    """Separate from EngReviewStatus.
+    ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO
+    """
+    TRACEABLE = "TRACEABLE"
+    PARTIALLY_TRACEABLE = "PARTIALLY_TRACEABLE"
+    INSUFFICIENT_TRACEABILITY_DATA = "INSUFFICIENT_TRACEABILITY_DATA"
+
+
+# Review model schema version — separate from application_version, parser_version,
+# export_schema_version.  Increment when NCProgramEngineeringReview fields change.
+REVIEW_SCHEMA_VERSION = "1.0"
+
+# Stable formula semantic IDs — never expose Python module paths externally.
+# FORMULA_SEMANTIC_IDS_IMPLEMENTED=YES
+FORMULA_SEMANTIC_IDS: dict[str, str] = {
+    "cutting_speed": "CUTTING_SPEED_V1",
+    "feed_per_tooth": "FEED_PER_TOOTH_V1",
+    "feed_per_rev": "FEED_PER_REV_V1",
+    "cycle_time_distance_feed": "CYCLE_TIME_DISTANCE_FEED_V1",
+    "effective_rpm_min": "EFFECTIVE_RPM_MIN_V1",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +171,42 @@ class EngReviewFinding(BaseModel):
     evidence_type: str | None = None   # provenance category
     segment_id: str | None = None
     limitation: str | None = None
+
+
+class NCAnalysisTraceability(BaseModel):
+    """Deterministic traceability metadata for one NC analysis session.
+
+    NC_PROGRAM_TRACEABILITY_AND_AUDIT_01
+    HASH_EQUALS_DIGITAL_SIGNATURE=NO
+    HASH_EQUALS_APPROVAL=NO
+    HASH_EQUALS_CERTIFICATION=NO
+    FALSE_IMMUTABLE_AUDIT_CLAIM=NO
+    ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO
+    """
+
+    review_id: str | None = None                    # client-generated UUID v4 (optional)
+    program_fingerprint: str | None = None          # SHA-256(conservative-normalized NC text)
+    configuration_fingerprint: str | None = None    # SHA-256(sorted-JSON of stable IDs)
+    analysis_fingerprint: str | None = None         # SHA-256(program+config+parser+schema)
+    traceability_status: TraceabilityStatus = TraceabilityStatus.INSUFFICIENT_TRACEABILITY_DATA
+    generated_at: str = ""                          # UTC ISO 8601
+    review_schema_version: str = REVIEW_SCHEMA_VERSION
+    parser_profile: str = ""
+    parser_version: str = ""
+    machine_id: str | None = None
+    cutting_tool_id: str | None = None
+    tool_holder_id: str | None = None
+    operation: str | None = None
+    process_step_id: str | None = None
+    material_iso_group: str | None = None
+    provenance_summary: list[str] = []
+    source_counts: dict[str, int] = {}
+    limitations_count: int = 0
+    # Immutable safety flags
+    hash_equals_digital_signature: bool = False
+    hash_equals_approval: bool = False
+    hash_equals_certification: bool = False
+    false_immutable_audit_claim: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +320,7 @@ class NCProgramEngineeringReview(BaseModel):
     source_name_safe: str | None = None   # PRIVATE_LOCAL_PATH_VISIBLE=NO
     parser_profile: str
     parser_version: str
+    review_schema_version: str = REVIEW_SCHEMA_VERSION
     units_declared: str | None = None
     analysis_status: str
     segment_count: int = 0
@@ -310,6 +377,10 @@ class NCProgramEngineeringReview(BaseModel):
 
     # N. Overall Engineering Review Status
     review_status: EngReviewStatus
+
+    # O. Traceability (NC_PROGRAM_TRACEABILITY_AND_AUDIT_01)
+    # ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO — separate model
+    traceability: NCAnalysisTraceability | None = None
 
     # Immutable safety flags — always constant
     nc_file_executed: bool = False
@@ -657,6 +728,100 @@ def _effective_rpm_limit(
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Traceability helpers (NC_PROGRAM_TRACEABILITY_AND_AUDIT_01)
+# ---------------------------------------------------------------------------
+
+
+def _normalize_nc_content(nc_text: str) -> str:
+    """Conservative NC content normalization.
+
+    NC_NORMALIZATION_POLICY=CONSERVATIVE
+    NC_NORMALIZATION_SEMANTIC_RISK=LOW
+    Preserves: line ordering, command ordering, numeric precision,
+    G/M/T/S/F words, comments, leading whitespace.
+    Normalizes: line endings only; strips trailing whitespace per line.
+    """
+    normalized = nc_text.replace('\r\n', '\n').replace('\r', '\n')
+    if normalized.startswith('﻿'):
+        normalized = normalized[1:]
+    lines = [line.rstrip() for line in normalized.split('\n')]
+    return '\n'.join(lines)
+
+
+def _compute_nc_fingerprint(nc_text: str) -> str | None:
+    """SHA-256 fingerprint of conservatively normalized NC content."""
+    try:
+        normalized = _normalize_nc_content(nc_text)
+        return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
+    except Exception:
+        return None
+
+
+def _compute_config_fingerprint(
+    machine_id: str | None,
+    cutting_tool_id: str | None,
+    tool_holder_id: str | None,
+    operation: str | None,
+    material_iso_group: str | None,
+    process_step_id: str | None,
+) -> str | None:
+    """Deterministic configuration fingerprint from sorted stable IDs.
+
+    Fields sorted alphabetically; null for absent optional fields.
+    """
+    try:
+        config = {
+            "cutting_tool_id": cutting_tool_id,
+            "machine_id": machine_id,
+            "material_iso_group": material_iso_group,
+            "operation": operation.lower() if operation else None,
+            "process_step_id": process_step_id,
+            "tool_holder_id": tool_holder_id,
+        }
+        config_json = json.dumps(config, sort_keys=True, separators=(',', ':'))
+        return hashlib.sha256(config_json.encode('utf-8')).hexdigest()
+    except Exception:
+        return None
+
+
+def _compute_analysis_fingerprint(
+    program_fingerprint: str | None,
+    configuration_fingerprint: str | None,
+    parser_profile: str,
+    review_schema_version: str,
+) -> str | None:
+    """Deterministic analysis fingerprint combining all inputs."""
+    if not program_fingerprint or not configuration_fingerprint:
+        return None
+    try:
+        combined = (
+            f"{program_fingerprint}|{configuration_fingerprint}"
+            f"|{parser_profile}|{review_schema_version}"
+        )
+        return hashlib.sha256(combined.encode('utf-8')).hexdigest()
+    except Exception:
+        return None
+
+
+def _compute_traceability_status(
+    program_fingerprint: str | None,
+    configuration_fingerprint: str | None,
+    machine_id: str | None,
+    cutting_tool_id: str | None,
+    tool_holder_id: str | None,
+    operation: str | None,
+) -> TraceabilityStatus:
+    """Determine traceability status from available fingerprints."""
+    if program_fingerprint is None:
+        return TraceabilityStatus.INSUFFICIENT_TRACEABILITY_DATA
+    has_config_input = any([machine_id, cutting_tool_id, tool_holder_id, operation])
+    if has_config_input and configuration_fingerprint:
+        return TraceabilityStatus.TRACEABLE
+    return TraceabilityStatus.PARTIALLY_TRACEABLE
+
+
+# ---------------------------------------------------------------------------
 # Public synthesis function
 # ---------------------------------------------------------------------------
 
@@ -682,6 +847,11 @@ def build_engineering_review(
     cycle_time_known_subtotal_sec: float | None = None,
     cycle_time_status: str | None = None,
     cycle_time_limitations: list[str] | None = None,
+    # NC_PROGRAM_TRACEABILITY_AND_AUDIT_01 params
+    nc_text: str | None = None,
+    review_id: str | None = None,
+    process_step_id: str | None = None,
+    material_iso_group: str | None = None,
 ) -> NCProgramEngineeringReview:
     """Build a deterministic engineering review from existing evidence.
 
@@ -757,11 +927,49 @@ def build_engineering_review(
             f"Unsupported features detected: {', '.join(unsupported_detected[:4])}"
         )
 
+    # --- O. Traceability ---
+    prog_fp = _compute_nc_fingerprint(nc_text) if nc_text else None
+    cfg_fp = _compute_config_fingerprint(
+        machine_id, cutting_tool_id, tool_holder_id,
+        operation_association, material_iso_group, process_step_id,
+    )
+    anl_fp = _compute_analysis_fingerprint(
+        prog_fp, cfg_fp, motion_result.parser_profile, REVIEW_SCHEMA_VERSION,
+    )
+    tr_status = _compute_traceability_status(
+        prog_fp, cfg_fp, machine_id, cutting_tool_id, tool_holder_id, operation_association,
+    )
+    traceability = NCAnalysisTraceability(
+        review_id=review_id,
+        program_fingerprint=prog_fp,
+        configuration_fingerprint=cfg_fp,
+        analysis_fingerprint=anl_fp,
+        traceability_status=tr_status,
+        generated_at=datetime.now(UTC).isoformat(),
+        review_schema_version=REVIEW_SCHEMA_VERSION,
+        parser_profile=motion_result.parser_profile,
+        parser_version=motion_result.parser_version,
+        machine_id=machine_id,
+        cutting_tool_id=cutting_tool_id,
+        tool_holder_id=tool_holder_id,
+        operation=operation_association,
+        process_step_id=process_step_id,
+        material_iso_group=material_iso_group,
+        provenance_summary=list(validation_summary.evidence_sources),
+        source_counts={
+            "segments": len(motion_result.segments),
+            "findings": len(all_findings),
+            "limitations": len(limitations),
+        },
+        limitations_count=len(limitations),
+    )
+
     return NCProgramEngineeringReview(
         # A. Identity
         source_name_safe=source_name_safe,
         parser_profile=motion_result.parser_profile,
         parser_version=motion_result.parser_version,
+        review_schema_version=REVIEW_SCHEMA_VERSION,
         units_declared=motion_result.units_declared,
         analysis_status=str(motion_result.analysis_status),
         segment_count=len(motion_result.segments),
@@ -805,6 +1013,8 @@ def build_engineering_review(
         limitations=limitations,
         # N. Status
         review_status=status,
+        # O. Traceability
+        traceability=traceability,
         # Safety flags
         nc_file_executed=False,
         machine_behavior_simulated=False,

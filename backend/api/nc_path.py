@@ -87,6 +87,17 @@ class NcAnalyzeRequest(BaseModel):
     material_iso_group: str | None = Field(
         None, description="ISO material group (P, M, K, N, S, H) for reference range lookup."
     )
+    # NC_PROGRAM_TRACEABILITY_AND_AUDIT_01 — optional pass-through fields
+    review_id: str | None = Field(
+        None,
+        max_length=64,
+        description="Client-generated UUID v4 for traceability correlation (optional).",
+    )
+    process_step_id: str | None = Field(
+        None,
+        max_length=128,
+        description="Process plan step ID for process mapping traceability (optional).",
+    )
 
 
 class NcAnalyzeResponse(BaseModel):
@@ -244,6 +255,11 @@ def analyze_nc_path(req: NcAnalyzeRequest) -> NcAnalyzeResponse:
         holder_max_rpm=holder_max_rpm,
         tool_holder_display=tool_holder_display,
         operation_association=req.operation,
+        # NC_PROGRAM_TRACEABILITY_AND_AUDIT_01
+        nc_text=req.nc_text,
+        review_id=req.review_id,
+        process_step_id=req.process_step_id,
+        material_iso_group=req.material_iso_group,
     )
 
     return NcAnalyzeResponse(
