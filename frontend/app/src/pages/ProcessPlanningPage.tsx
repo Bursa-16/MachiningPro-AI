@@ -1,5 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '../i18n'
+import {
+  buildNcReviewJson,
+  buildFindingsCsv,
+  buildSegmentsCsv,
+  buildCoverageCsv,
+  openPrintWindow,
+  triggerBrowserDownload,
+  buildExportFilename,
+  buildExportFilenameSuffix,
+  logExportEvent,
+} from '../lib/nc_report_export'
 import type { TranslationDictionary } from '../i18n/types'
 import {
   fetchProcessPlanningSchema,
@@ -777,6 +788,9 @@ function NcEngineeringReviewSection({
   er: NCProgramEngineeringReview
   t: TFunc
 }) {
+  const { locale } = useLocale()
+  const [csvOpen, setCsvOpen] = useState(false)
+
   const statusLabel: Record<EngReviewStatusValue, string> = {
     PASS_WITH_EVIDENCE: t('ncErStatusPassWithEvidence'),
     PASS_WITH_ADVISORIES: t('ncErStatusPassWithAdvisories'),
@@ -793,12 +807,83 @@ function NcEngineeringReviewSection({
     INSUFFICIENT_SEMANTICS: t('ncErStateInsufficientSemantics'),
   }
 
+  const now = new Date()
+  const handleExportJson = () => {
+    const dto = buildNcReviewJson(er, k => t(k as Parameters<TFunc>[0]), locale)
+    const json = JSON.stringify(dto, null, 2)
+    const filename = buildExportFilename(er.source_name_safe, now, 'json')
+    triggerBrowserDownload(json, filename, 'application/json;charset=utf-8')
+    logExportEvent('json', er.review_status)
+  }
+
+  const handleExportFindingsCsv = () => {
+    const csv = buildFindingsCsv(er, k => t(k as Parameters<TFunc>[0]))
+    const filename = buildExportFilenameSuffix(er.source_name_safe, now, 'findings', 'csv')
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logExportEvent('csv_findings', er.review_status)
+    setCsvOpen(false)
+  }
+
+  const handleExportSegmentsCsv = () => {
+    const csv = buildSegmentsCsv(er)
+    const filename = buildExportFilenameSuffix(er.source_name_safe, now, 'segments', 'csv')
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logExportEvent('csv_segments', er.review_status)
+    setCsvOpen(false)
+  }
+
+  const handleExportCoverageCsv = () => {
+    const csv = buildCoverageCsv(er, k => t(k as Parameters<TFunc>[0]))
+    const filename = buildExportFilenameSuffix(er.source_name_safe, now, 'coverage', 'csv')
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logExportEvent('csv_coverage', er.review_status)
+    setCsvOpen(false)
+  }
+
+  const handleExportPrint = () => {
+    openPrintWindow(er, k => t(k as Parameters<TFunc>[0]), locale)
+    logExportEvent('print', er.review_status)
+  }
+
+  const btnCls = 'text-[11px] px-2 py-0.5 rounded border border-tp-border/60 text-tp-text-3 hover:text-tp-accent hover:border-tp-accent/40 transition-colors bg-tp-surface whitespace-nowrap'
+
   return (
     <div className="mt-3 pt-3 border-t border-tp-border/40 space-y-3">
-      {/* Header */}
-      <div className="flex items-center gap-3 flex-wrap">
+      {/* Header with export toolbar */}
+      <div className="flex items-center gap-2 flex-wrap">
         <SectionLabel text={t('ncEngineeringReview')} />
         <Badge label={statusLabel[er.review_status]} cls={ER_STATUS_CLS[er.review_status]} />
+        <div className="ml-auto flex items-center gap-1 flex-shrink-0 flex-wrap">
+          <button type="button" onClick={handleExportJson} className={btnCls}>
+            {t('ncErExportJson')}
+          </button>
+          <div className="relative">
+            <button type="button" onClick={() => setCsvOpen(v => !v)} className={btnCls}>
+              {t('ncErExportCsv')} ▾
+            </button>
+            {csvOpen && (
+              <div className="absolute right-0 top-full mt-1 z-10 bg-tp-surface-2 border border-tp-border rounded shadow-lg min-w-max">
+                {([
+                  ['ncErExportCsvFindings', handleExportFindingsCsv],
+                  ['ncErExportCsvSegments', handleExportSegmentsCsv],
+                  ['ncErExportCsvCoverage', handleExportCoverageCsv],
+                ] as const).map(([key, fn]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={fn}
+                    className="block w-full text-left px-3 py-1.5 text-[11px] text-tp-text-3 hover:text-tp-text hover:bg-tp-surface transition-colors"
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={handleExportPrint} className={btnCls}>
+            {t('ncErExportPrint')}
+          </button>
+        </div>
       </div>
 
       {/* Executive Summary */}

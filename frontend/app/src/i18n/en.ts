@@ -1061,4 +1061,15 @@ export const enTranslations: TranslationDictionary = {
   ncErUnsupportedCount: 'Unsupported',
   ncErNoFindings: 'No findings',
   ncErNoLimitations: 'No limitations recorded',
+
+  // NC Engineering Review Export (NC_PROGRAM_REPORTING_AND_EXPORT_01)
+  ncErExportJson: 'Export JSON',
+  ncErExportCsv: 'Export CSV',
+  ncErExportPrint: 'Print / Save as PDF',
+  ncErExportCsvFindings: 'Findings',
+  ncErExportCsvSegments: 'Segments',
+  ncErExportCsvCoverage: 'Coverage',
+  ncErExportDisclaimer: 'This report is a static engineering review of the NC program text provided. It is based on available program evidence, catalog data, and reference ranges. It does not constitute machine execution, collision verification, controller certification, or production approval. The NC program has not been executed. Programmed motion distances are derived from NC text and are not confirmed cutting engagement. Reference range comparisons are advisory engineering guidance, not safety limits. Verify all parameters against your machine controller documentation before machining.',
+  ncErExportProvenance: 'Provenance',
+  ncErExportScopeTitle: 'Scope & Disclaimer',
 }

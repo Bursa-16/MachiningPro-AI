@@ -1068,4 +1068,15 @@ export interface TranslationDictionary {
   ncErUnsupportedCount: string
   ncErNoFindings: string
   ncErNoLimitations: string
+
+  // NC Engineering Review Export (NC_PROGRAM_REPORTING_AND_EXPORT_01)
+  ncErExportJson: string
+  ncErExportCsv: string
+  ncErExportPrint: string
+  ncErExportCsvFindings: string
+  ncErExportCsvSegments: string
+  ncErExportCsvCoverage: string
+  ncErExportDisclaimer: string
+  ncErExportProvenance: string
+  ncErExportScopeTitle: string
 }

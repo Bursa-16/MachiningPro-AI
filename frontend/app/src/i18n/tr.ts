@@ -1061,4 +1061,15 @@ export const trTranslations: TranslationDictionary = {
   ncErUnsupportedCount: 'Desteklenmeyen',
   ncErNoFindings: 'Bulgu yok',
   ncErNoLimitations: 'Kayıtlı kısıt yok',
+
+  // NC Engineering Review Export (NC_PROGRAM_REPORTING_AND_EXPORT_01)
+  ncErExportJson: 'JSON Dışa Aktar',
+  ncErExportCsv: 'CSV Dışa Aktar',
+  ncErExportPrint: 'Yazdır / PDF Olarak Kaydet',
+  ncErExportCsvFindings: 'Bulgular',
+  ncErExportCsvSegments: 'Segmentler',
+  ncErExportCsvCoverage: 'Kapsam',
+  ncErExportDisclaimer: 'Bu rapor, sağlanan NC program metninin statik bir mühendislik incelemesidir. Mevcut program kanıtlarına, katalog verilerine ve referans aralıklarına dayanmaktadır. Makine çalıştırma, çarpışma doğrulama, kontrolör sertifikasyonu veya üretim onayı teşkil etmemektedir. NC programı çalıştırılmamıştır. Programlanmış hareket mesafeleri NC metninden türetilmiştir ve onaylanmış kesim etkileşimi değildir. Referans aralığı karşılaştırmaları tavsiye niteliğinde mühendislik rehberliğidir, güvenlik limitleri değildir. Tezgahlamadan önce tüm parametreleri makine kontrolörü belgelerinize göre doğrulayın.',
+  ncErExportProvenance: 'Kaynak',
+  ncErExportScopeTitle: 'Kapsam ve Sorumluluk Reddi',
 }
