@@ -10,6 +10,7 @@ import {
   buildExportFilename,
   buildExportFilenameSuffix,
   logExportEvent,
+  buildShortHash,
 } from '../lib/nc_report_export'
 import type { TranslationDictionary } from '../i18n/types'
 import {
@@ -1083,10 +1084,128 @@ function NcEngineeringReviewSection({
         </div>
       )}
 
+      {/* Traceability (NC_PROGRAM_TRACEABILITY_AND_AUDIT_01) */}
+      {er.traceability && (
+        <NcTraceabilitySection tr={er.traceability} t={t} />
+      )}
+
       {/* Safety disclaimer */}
       <div className="text-[9px] text-tp-text-3 italic border-t border-tp-border/20 pt-1">
         NC_FILE_EXECUTED=NO · COLLISION_CHECK_PERFORMED=NO · FALSE_PRODUCTION_APPROVAL_CLAIM=NO
       </div>
+    </div>
+  )
+}
+
+// ── Traceability section (NC_PROGRAM_TRACEABILITY_AND_AUDIT_01) ──────────────
+
+const TRACEABILITY_STATUS_CLS: Record<string, string> = {
+  TRACEABLE: 'text-emerald-300',
+  PARTIALLY_TRACEABLE: 'text-amber-300',
+  INSUFFICIENT_TRACEABILITY_DATA: 'text-tp-text-3',
+}
+
+function NcTraceabilitySection({
+  tr,
+  t,
+}: {
+  tr: NonNullable<NCProgramEngineeringReview['traceability']>
+  t: TFunc
+}) {
+  const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  const copyHash = (hash: string | null, key: string) => {
+    if (!hash) return
+    navigator.clipboard?.writeText(hash).then(() => {
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1500)
+    }).catch(() => {})
+  }
+
+  const traceabilityStatusLabels: Record<string, keyof TranslationDictionary> = {
+    TRACEABLE: 'ncErTraceabilityTraceable',
+    PARTIALLY_TRACEABLE: 'ncErTraceabilityPartiallyTraceable',
+    INSUFFICIENT_TRACEABILITY_DATA: 'ncErTraceabilityInsufficientData',
+  }
+  const statusLabelKey = traceabilityStatusLabels[tr.traceability_status]
+
+  return (
+    <div
+      className="border border-tp-border/40 rounded overflow-hidden"
+      data-testid="nc-traceability-section"
+    >
+      {/* Collapsible header */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-2 py-1 bg-tp-surface-2 text-left hover:bg-tp-surface transition-colors"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+          {t('ncErTraceabilitySection')}
+        </span>
+        <span className="flex items-center gap-2">
+          <span className={`text-[10px] font-semibold ${TRACEABILITY_STATUS_CLS[tr.traceability_status] ?? 'text-tp-text-3'}`}>
+            {statusLabelKey ? t(statusLabelKey) : tr.traceability_status}
+          </span>
+          <span className="text-[10px] text-tp-text-3">{open ? '▲' : '▼'}</span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="px-2 py-1.5 space-y-1 text-[10px]">
+          {/* Review ID */}
+          {tr.review_id && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-tp-text-3 shrink-0">{t('ncErReviewId')}</span>
+              <span className="font-mono text-tp-text-2 break-all">{tr.review_id}</span>
+            </div>
+          )}
+
+          {/* Fingerprints */}
+          {([
+            ['ncErProgramFingerprint', tr.program_fingerprint, 'prog'],
+            ['ncErConfigFingerprint', tr.configuration_fingerprint, 'cfg'],
+            ['ncErAnalysisFingerprint', tr.analysis_fingerprint, 'anl'],
+          ] as const).map(([labelKey, hash, key]) => hash && (
+            <div key={key} className="flex items-center gap-1 flex-wrap">
+              <span className="text-tp-text-3 shrink-0">{t(labelKey)}</span>
+              <span className="font-mono text-tp-text-2 text-[10px]">{buildShortHash(hash, 14)}</span>
+              <button
+                type="button"
+                onClick={() => copyHash(hash, key)}
+                className="text-[9px] px-1 py-0 rounded border border-tp-border/40 text-tp-text-3 hover:text-tp-accent hover:border-tp-accent/40 transition-colors ml-auto shrink-0"
+                title={t('ncErCopyFingerprint')}
+              >
+                {copied === key ? t('ncErFingerprintCopied') : t('ncErCopyFingerprint')}
+              </button>
+            </div>
+          ))}
+
+          {/* Schema / parser info */}
+          <div className="border-t border-tp-border/20 pt-1 mt-0.5 space-y-0.5">
+            <div className="flex gap-2 flex-wrap">
+              <span className="text-tp-text-3">{t('ncErReviewSchemaVersion')}</span>
+              <span className="font-mono text-tp-text-2">{tr.review_schema_version}</span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <span className="text-tp-text-3">{t('ncErParserProfile')}</span>
+              <span className="font-mono text-tp-text-2">{tr.parser_profile}</span>
+            </div>
+            {tr.generated_at && (
+              <div className="flex gap-2 flex-wrap">
+                <span className="text-tp-text-3">{t('ncErGeneratedAt')}</span>
+                <span className="font-mono text-tp-text-2 text-[9px] break-all">{tr.generated_at}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Safety claims footer */}
+          <div className="text-[8px] text-tp-text-3 italic border-t border-tp-border/20 pt-0.5 leading-relaxed">
+            HASH_EQUALS_DIGITAL_SIGNATURE=NO · HASH_EQUALS_APPROVAL=NO · HASH_EQUALS_CERTIFICATION=NO · FALSE_IMMUTABLE_AUDIT_CLAIM=NO · ENGINEERING_STATUS_EQUALS_TRACEABILITY_STATUS=NO
+          </div>
+        </div>
+      )}
     </div>
   )
 }
