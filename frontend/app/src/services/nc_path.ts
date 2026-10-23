@@ -409,3 +409,257 @@ export async function analyzeNcPath(
     body: JSON.stringify(req),
   })
 }
+
+// ---------------------------------------------------------------------------
+// NC Change Review types (NC_PROGRAM_CHANGE_MANAGEMENT_01)
+// ---------------------------------------------------------------------------
+
+export type ComparabilityStatusValue =
+  | 'COMPARABLE'
+  | 'PARTIALLY_COMPARABLE'
+  | 'NOT_COMPARABLE'
+
+export type OverallChangeStatusValue =
+  | 'NO_ENGINEERING_CHANGE'
+  | 'ENGINEERING_CHANGE_DETECTED'
+  | 'REVIEW_REQUIRED'
+  | 'COMPARISON_INCOMPLETE'
+  | 'NOT_COMPARABLE'
+
+export type ChangeSeverityValue =
+  | 'CRITICAL_REVIEW_REQUIRED'
+  | 'MAJOR_REVIEW_REQUIRED'
+  | 'MINOR_CHANGE'
+  | 'INFORMATIONAL_CHANGE'
+  | 'NO_CHANGE'
+  | 'UNKNOWN'
+
+export type NcBlockChangeTypeValue = 'ADDED' | 'REMOVED' | 'MODIFIED' | 'UNCHANGED'
+export type SemanticChangeTypeValue =
+  | 'SEMANTIC_CHANGE'
+  | 'FORMAT_ONLY_CHANGE'
+  | 'COMMENT_CHANGE'
+  | 'UNKNOWN_CHANGE'
+
+export type FindingChangeTypeValue =
+  | 'FINDING_ADDED'
+  | 'FINDING_RESOLVED'
+  | 'FINDING_UNCHANGED'
+  | 'FINDING_SEVERITY_CHANGED'
+  | 'FINDING_VALUE_CHANGED'
+  | 'FINDING_LIMIT_CHANGED'
+  | 'FINDING_SOURCE_CHANGED'
+
+export type SegmentChangeTypeValue =
+  | 'SEGMENT_ADDED'
+  | 'SEGMENT_REMOVED'
+  | 'SEGMENT_MODIFIED'
+  | 'SEGMENT_UNCHANGED'
+  | 'SEGMENT_MATCH_UNCERTAIN'
+
+export type CoverageChangeTypeValue =
+  | 'FEATURE_STATE_CHANGED'
+  | 'FEATURE_NEWLY_DETECTED'
+  | 'FEATURE_NO_LONGER_DETECTED'
+  | 'FEATURE_UNCHANGED'
+
+export interface NcBlockChange {
+  change_type: NcBlockChangeTypeValue
+  baseline_line_index: number | null
+  current_line_index: number | null
+  baseline_text: string | null
+  current_text: string | null
+  block_classification: string
+  semantic_change_type: SemanticChangeTypeValue
+  baseline_review_id: string | null
+  current_review_id: string | null
+  baseline_analysis_fingerprint: string | null
+  current_analysis_fingerprint: string | null
+}
+
+export interface NcSegmentChange {
+  baseline_segment_id: string | null
+  current_segment_id: string | null
+  change_type: SegmentChangeTypeValue
+  tool_id_raw_changed: boolean
+  baseline_tool_id_raw: string | null
+  current_tool_id_raw: string | null
+  feed_distance_delta_mm: number | null
+  rapid_distance_delta_mm: number | null
+  feed_distance_note: string
+  commanded_feed_changed: boolean
+  commanded_spindle_changed: boolean
+  analysis_status_changed: boolean
+  new_unsupported_features: string[]
+  baseline_review_id: string | null
+  current_review_id: string | null
+  baseline_analysis_fingerprint: string | null
+  current_analysis_fingerprint: string | null
+}
+
+export interface NcFindingChange {
+  finding_code: string
+  category: string
+  change_type: FindingChangeTypeValue
+  baseline_severity: string | null
+  current_severity: string | null
+  baseline_observed_value: number | null
+  current_observed_value: number | null
+  baseline_limit_value: number | null
+  current_limit_value: number | null
+  unit: string | null
+  source_changed: boolean
+  baseline_review_id: string | null
+  current_review_id: string | null
+  baseline_analysis_fingerprint: string | null
+  current_analysis_fingerprint: string | null
+}
+
+export interface NcCoverageChange {
+  feature: string
+  change_type: CoverageChangeTypeValue
+  baseline_state: string | null
+  current_state: string | null
+  baseline_detected: boolean
+  current_detected: boolean
+  baseline_review_id: string | null
+  current_review_id: string | null
+  baseline_analysis_fingerprint: string | null
+  current_analysis_fingerprint: string | null
+}
+
+export interface ConfigFieldChange {
+  field_name: string
+  baseline_value: string | null
+  current_value: string | null
+  changed: boolean
+}
+
+export interface FeedSpindleChangeSummary {
+  feed_mode_changed: boolean
+  baseline_feed_mode: string | null
+  current_feed_mode: string | null
+  commanded_feed_mm_min_changed: boolean
+  baseline_commanded_feed_mm_min: number | null
+  current_commanded_feed_mm_min: number | null
+  commanded_feed_mm_rev_changed: boolean
+  baseline_commanded_feed_mm_rev: number | null
+  current_commanded_feed_mm_rev: number | null
+  commanded_spindle_rpm_changed: boolean
+  baseline_commanded_spindle_rpm: number | null
+  current_commanded_spindle_rpm: number | null
+  spindle_state_changed: boolean
+  effective_rpm_limit_changed: boolean
+  baseline_effective_rpm_limit: number | null
+  current_effective_rpm_limit: number | null
+  // Safety flags — always false
+  commanded_feed_delta_equals_actual_feed_delta: false
+  commanded_rpm_delta_equals_actual_rpm_delta: false
+}
+
+export interface CycleTimeChangeSummary {
+  baseline_known_subtotal_sec: number | null
+  current_known_subtotal_sec: number | null
+  delta_sec: number | null
+  baseline_status: string | null
+  current_status: string | null
+  comparable: boolean
+  note: string
+  // Safety flag — always false
+  partial_cycle_time_delta_exported_as_total_delta: false
+}
+
+export interface NcChangeSummary {
+  blocks_added: number | null
+  blocks_removed: number | null
+  blocks_modified: number | null
+  blocks_unchanged: number | null
+  segments_added: number
+  segments_removed: number
+  segments_modified: number
+  new_findings: number
+  resolved_findings: number
+  unchanged_findings: number
+  changed_findings: number
+  new_blocking_findings: number
+  resolved_blocking_findings: number
+  unchanged_blocking_findings: number
+  new_warning_findings: number
+  resolved_warning_findings: number
+  new_advisory_findings: number
+  resolved_advisory_findings: number
+  coverage_changes: number
+  configuration_changes: number
+  feed_changed: boolean
+  spindle_changed: boolean
+  cycle_time_changed: boolean | null
+}
+
+export interface NCProgramChangeReview {
+  change_review_id: string
+  comparison_schema_version: string
+  comparison_fingerprint: string | null
+  baseline_review_id: string | null
+  current_review_id: string | null
+  baseline_analysis_fingerprint: string | null
+  current_analysis_fingerprint: string | null
+  baseline_program_fingerprint: string | null
+  current_program_fingerprint: string | null
+  baseline_configuration_fingerprint: string | null
+  current_configuration_fingerprint: string | null
+  baseline_review_schema_version: string | null
+  current_review_schema_version: string | null
+  baseline_parser_version: string | null
+  current_parser_version: string | null
+  baseline_parser_profile: string | null
+  current_parser_profile: string | null
+  baseline_generated_at: string | null
+  current_generated_at: string | null
+  program_change_status: string
+  configuration_change_status: string
+  version_change_status: string
+  configuration_changes: ConfigFieldChange[]
+  block_changes: NcBlockChange[] | null
+  segment_changes: NcSegmentChange[]
+  finding_changes: NcFindingChange[]
+  coverage_changes: NcCoverageChange[]
+  feed_spindle_changes: FeedSpindleChangeSummary | null
+  cycle_time_changes: CycleTimeChangeSummary | null
+  change_summary: NcChangeSummary
+  comparability_status: ComparabilityStatusValue
+  comparability_notes: string[]
+  change_severity: ChangeSeverityValue
+  overall_change_status: OverallChangeStatusValue
+  review_required: boolean
+  review_required_reasons: string[]
+  limitations: string[]
+  // Safety flags — all always false
+  programmed_motion_delta_equals_executed_motion_delta: false
+  commanded_feed_delta_equals_actual_feed_delta: false
+  commanded_rpm_delta_equals_actual_rpm_delta: false
+  t_word_change_equals_confirmed_tool_change: false
+  partial_cycle_time_delta_exported_as_total_delta: false
+  false_change_approval_claim: false
+  false_safe_change_claim: false
+  false_controller_certification_claim: false
+  false_collision_free_change_claim: false
+  nc_change_review_is_not_approval: true
+  nc_change_review_is_not_safety_certification: true
+}
+
+export interface NcChangeReviewRequest {
+  baseline_review: NCProgramEngineeringReview
+  current_review: NCProgramEngineeringReview
+  nc_text_baseline?: string | null
+  nc_text_current?: string | null
+  change_review_id?: string | null
+}
+
+export async function requestNcChangeReview(
+  req: NcChangeReviewRequest
+): Promise<NCProgramChangeReview> {
+  return api<NCProgramChangeReview>('/nc-path/change-review', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}

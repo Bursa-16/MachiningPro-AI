@@ -34,6 +34,10 @@ from backend.process_planning.engineering_review import (
     NCProgramEngineeringReview,
     build_engineering_review,
 )
+from backend.process_planning.nc_change_review import (
+    NCProgramChangeReview,
+    compare_engineering_reviews,
+)
 from backend.process_planning.nc_validation import (
     NCProgramValidationSummary,
     validate_nc_feed_spindle,
@@ -274,4 +278,83 @@ def analyze_nc_path(req: NcAnalyzeRequest) -> NcAnalyzeResponse:
         nc_feed_automatically_promoted_to_cutting_path=False,
         nc_commanded_spindle_speed_equals_actual_rpm=False,
         nc_commanded_feed_equals_actual_feed=False,
+    )
+
+
+# ---------------------------------------------------------------------------
+# NC Change Review — POST /api/nc-path/change-review
+# NC_PROGRAM_CHANGE_MANAGEMENT_01
+# ---------------------------------------------------------------------------
+
+_MAX_SNAPSHOT_TEXT_CHARS = 2_000_000
+
+
+class NcChangeReviewRequest(BaseModel):
+    """Request to compare two NCProgramEngineeringReview snapshots.
+
+    EXISTING_ANALYZE_CONTRACT_BROKEN=NO — separate endpoint.
+    FALSE_CHANGE_APPROVAL_CLAIM=NO
+    FALSE_SAFE_CHANGE_CLAIM=NO
+    NC_CHANGE_REVIEW_IS_NOT_APPROVAL=YES
+    """
+
+    baseline_review: NCProgramEngineeringReview = Field(
+        ..., description="Prior NCProgramEngineeringReview (baseline)."
+    )
+    current_review: NCProgramEngineeringReview = Field(
+        ..., description="Current NCProgramEngineeringReview."
+    )
+    # Optional raw NC texts for block-level diff
+    nc_text_baseline: str | None = Field(
+        None,
+        max_length=_MAX_SNAPSHOT_TEXT_CHARS,
+        description="Raw baseline NC text for block diff (optional).",
+    )
+    nc_text_current: str | None = Field(
+        None,
+        max_length=_MAX_SNAPSHOT_TEXT_CHARS,
+        description="Raw current NC text for block diff (optional).",
+    )
+    change_review_id: str | None = Field(
+        None,
+        max_length=64,
+        description="Client-supplied UUID v4 (generated if absent).",
+    )
+
+
+@router.post("/change-review", response_model=NCProgramChangeReview)
+def nc_change_review(req: NcChangeReviewRequest) -> NCProgramChangeReview:
+    """
+    Compare two NCProgramEngineeringReview snapshots and return a change review.
+
+    NC_PROGRAM_CHANGE_MANAGEMENT_01
+    CENTRAL_CHANGE_COMPARISON_ENGINE_IMPLEMENTED=YES
+    EXISTING_ANALYZE_CONTRACT_BROKEN=NO
+    NC_CHANGE_REVIEW_IS_NOT_APPROVAL=YES
+    FALSE_CHANGE_APPROVAL_CLAIM=NO
+    FALSE_SAFE_CHANGE_CLAIM=NO
+    FALSE_CONTROLLER_CERTIFICATION_CLAIM=NO
+    PROGRAMMED_MOTION_DELTA_EQUALS_EXECUTED_MOTION_DELTA=NO
+    COMMANDED_FEED_DELTA_EQUALS_ACTUAL_FEED_DELTA=NO
+    COMMANDED_RPM_DELTA_EQUALS_ACTUAL_RPM_DELTA=NO
+    T_WORD_CHANGE_EQUALS_CONFIRMED_TOOL_CHANGE=NO
+    PARTIAL_CYCLE_TIME_DELTA_EXPORTED_AS_TOTAL_DELTA=NO
+    PRIVATE_LOCAL_PATH_VISIBLE=NO
+    RAW_NC_LOGGED_IN_CHANGE_EVENT=NO
+    """
+    # Validate raw NC texts if supplied
+    for label, text in [("nc_text_baseline", req.nc_text_baseline),
+                         ("nc_text_current", req.nc_text_current)]:
+        if text is not None and len(text) > _MAX_SNAPSHOT_TEXT_CHARS:
+            raise HTTPException(
+                status_code=422,
+                detail=f"{label} exceeds maximum size ({_MAX_SNAPSHOT_TEXT_CHARS} characters)",
+            )
+
+    return compare_engineering_reviews(
+        baseline=req.baseline_review,
+        current=req.current_review,
+        nc_text_baseline=req.nc_text_baseline,
+        nc_text_current=req.nc_text_current,
+        change_review_id=req.change_review_id,
     )

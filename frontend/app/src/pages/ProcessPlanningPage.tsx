@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocale } from '../i18n'
 import {
   buildNcReviewJson,
@@ -12,6 +12,15 @@ import {
   logExportEvent,
   buildShortHash,
 } from '../lib/nc_report_export'
+import {
+  buildNcChangeReviewJson,
+  buildBlockChangesCsv,
+  buildFindingChangesCsv,
+  buildSegmentChangesCsv,
+  buildConfigChangesCsv,
+  buildChangeReviewPrintHtml,
+  logChangeReviewEvent,
+} from '../lib/nc_change_review'
 import type { TranslationDictionary } from '../i18n/types'
 import {
   fetchProcessPlanningSchema,
@@ -29,6 +38,7 @@ import {
 } from '../services/process_planning'
 import {
   analyzeNcPath,
+  requestNcChangeReview,
   type NcAnalyzeRequest,
   type NcAnalyzeResponse,
   type NCProgramValidationSummary,
@@ -38,6 +48,7 @@ import {
   type NCProgramEngineeringReview,
   type EngReviewStatusValue,
   type ParserFeatureStateValue,
+  type NCProgramChangeReview,
 } from '../services/nc_path'
 
 type TFunc = (key: keyof TranslationDictionary) => string
@@ -1210,6 +1221,552 @@ function NcTraceabilitySection({
   )
 }
 
+// ── NC Change Review panel (NC_PROGRAM_CHANGE_MANAGEMENT_01) ─────────────────
+
+const CR_OVERALL_CLS: Record<string, string> = {
+  NO_ENGINEERING_CHANGE: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+  ENGINEERING_CHANGE_DETECTED: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+  REVIEW_REQUIRED: 'bg-red-500/15 text-red-300 border border-red-500/30',
+  COMPARISON_INCOMPLETE: 'bg-sky-500/15 text-sky-300 border border-sky-500/30',
+  NOT_COMPARABLE: 'bg-tp-surface-2 text-tp-text-3 border border-tp-border',
+}
+
+const CR_SEVERITY_CLS: Record<string, string> = {
+  CRITICAL_REVIEW_REQUIRED: 'text-red-400',
+  MAJOR_REVIEW_REQUIRED: 'text-amber-400',
+  MINOR_CHANGE: 'text-sky-300',
+  INFORMATIONAL_CHANGE: 'text-tp-text-2',
+  NO_CHANGE: 'text-emerald-300',
+  UNKNOWN: 'text-tp-text-3',
+}
+
+const CR_BLOCK_CLS: Record<string, string> = {
+  ADDED: 'bg-emerald-500/10 border-l-2 border-emerald-500',
+  REMOVED: 'bg-red-500/10 border-l-2 border-red-500',
+  MODIFIED: 'bg-amber-500/10 border-l-2 border-amber-500',
+  UNCHANGED: '',
+}
+
+function NcChangeReviewPanel({
+  availableReviews,
+  t,
+}: {
+  availableReviews: { label: string; review: NCProgramEngineeringReview; ncText?: string }[]
+  t: TFunc
+}) {
+  const { locale } = useLocale()
+
+  // Baseline state — either loaded from JSON file or picked from availableReviews
+  const [baselineReview, setBaselineReview] = useState<NCProgramEngineeringReview | null>(null)
+  const [baselineLabel, setBaselineLabel] = useState<string | null>(null)
+  const [baselineNcText, setBaselineNcText] = useState<string | null>(null)
+  const [baselineFileError, setBaselineFileError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Current review selection
+  const [currentIdx, setCurrentIdx] = useState<number | null>(null)
+
+  // Comparison state
+  const [comparing, setComparing] = useState(false)
+  const [compareError, setCompareError] = useState<string | null>(null)
+  const [changeReview, setChangeReview] = useState<NCProgramChangeReview | null>(null)
+
+  // UI panels
+  const [showBlocks, setShowBlocks] = useState(false)
+  const [showSegments, setShowSegments] = useState(false)
+  const [showFindings, setShowFindings] = useState(false)
+  const [showConfig, setShowConfig] = useState(false)
+  const [showCsvMenu, setShowCsvMenu] = useState(false)
+
+  const handleLoadBaselineJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBaselineFileError(null)
+    const reader = new FileReader()
+    reader.onload = ev => {
+      try {
+        const text = ev.target?.result as string
+        const parsed = JSON.parse(text)
+        // Accept either a bare NCProgramEngineeringReview or a wrapped export JSON
+        const review: NCProgramEngineeringReview =
+          parsed.engineering_review ?? parsed
+        if (!review.parser_profile || !review.segments) {
+          setBaselineFileError('Invalid baseline JSON: missing required fields')
+          return
+        }
+        setBaselineReview(review)
+        setBaselineLabel(file.name)
+        setBaselineNcText(null)
+        setChangeReview(null)
+        logChangeReviewEvent('NC_BASELINE_SELECTED', null, review.traceability?.analysis_fingerprint ?? null)
+      } catch {
+        setBaselineFileError('Failed to parse baseline JSON')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  const handleSelectBaselineFromStep = (idx: number) => {
+    const entry = availableReviews[idx]
+    if (!entry) return
+    setBaselineReview(entry.review)
+    setBaselineLabel(entry.label)
+    setBaselineNcText(entry.ncText ?? null)
+    setBaselineFileError(null)
+    setChangeReview(null)
+    logChangeReviewEvent('NC_BASELINE_SELECTED', null, entry.review.traceability?.analysis_fingerprint ?? null)
+  }
+
+  const handleCompare = async () => {
+    if (!baselineReview || currentIdx === null) return
+    const currentEntry = availableReviews[currentIdx]
+    if (!currentEntry) return
+    setComparing(true)
+    setCompareError(null)
+    setChangeReview(null)
+    try {
+      const result = await requestNcChangeReview({
+        baseline_review: baselineReview,
+        current_review: currentEntry.review,
+        nc_text_baseline: baselineNcText,
+        nc_text_current: currentEntry.ncText ?? null,
+      })
+      setChangeReview(result)
+      logChangeReviewEvent('NC_CHANGE_REVIEW_CREATED', result.change_review_id, result.comparison_fingerprint)
+    } catch (err: unknown) {
+      setCompareError(err instanceof Error ? err.message : t('ncCrComparisonError'))
+    } finally {
+      setComparing(false)
+    }
+  }
+
+  const handleExportJson = () => {
+    if (!changeReview) return
+    const dto = buildNcChangeReviewJson(changeReview)
+    const json = JSON.stringify(dto, null, 2)
+    const filename = `nc-change-review-${changeReview.change_review_id.slice(0, 8)}.json`
+    triggerBrowserDownload(json, filename, 'application/json;charset=utf-8')
+    logChangeReviewEvent('NC_CHANGE_REPORT_JSON_EXPORTED', changeReview.change_review_id, changeReview.comparison_fingerprint, 'json')
+  }
+
+  const handleExportBlockCsv = () => {
+    if (!changeReview) return
+    const csv = buildBlockChangesCsv(changeReview)
+    const filename = `nc-change-blocks-${changeReview.change_review_id.slice(0, 8)}.csv`
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logChangeReviewEvent('NC_CHANGE_REPORT_CSV_EXPORTED', changeReview.change_review_id, changeReview.comparison_fingerprint, 'csv_blocks')
+    setShowCsvMenu(false)
+  }
+
+  const handleExportFindingCsv = () => {
+    if (!changeReview) return
+    const csv = buildFindingChangesCsv(changeReview)
+    const filename = `nc-change-findings-${changeReview.change_review_id.slice(0, 8)}.csv`
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logChangeReviewEvent('NC_CHANGE_REPORT_CSV_EXPORTED', changeReview.change_review_id, changeReview.comparison_fingerprint, 'csv_findings')
+    setShowCsvMenu(false)
+  }
+
+  const handleExportSegmentCsv = () => {
+    if (!changeReview) return
+    const csv = buildSegmentChangesCsv(changeReview)
+    const filename = `nc-change-segments-${changeReview.change_review_id.slice(0, 8)}.csv`
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logChangeReviewEvent('NC_CHANGE_REPORT_CSV_EXPORTED', changeReview.change_review_id, changeReview.comparison_fingerprint, 'csv_segments')
+    setShowCsvMenu(false)
+  }
+
+  const handleExportConfigCsv = () => {
+    if (!changeReview) return
+    const csv = buildConfigChangesCsv(changeReview)
+    const filename = `nc-change-config-${changeReview.change_review_id.slice(0, 8)}.csv`
+    triggerBrowserDownload(csv, filename, 'text/csv;charset=utf-8')
+    logChangeReviewEvent('NC_CHANGE_REPORT_CSV_EXPORTED', changeReview.change_review_id, changeReview.comparison_fingerprint, 'csv_config')
+    setShowCsvMenu(false)
+  }
+
+  const handlePrint = () => {
+    if (!changeReview) return
+    const html = buildChangeReviewPrintHtml(changeReview, locale)
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.write(html)
+      win.document.close()
+      win.focus()
+      win.print()
+    }
+    logChangeReviewEvent('NC_CHANGE_REPORT_PRINT_OPENED', changeReview.change_review_id, changeReview.comparison_fingerprint, 'print')
+  }
+
+  const btnCls = 'text-[11px] px-2 py-0.5 rounded border border-tp-border/60 text-tp-text-3 hover:text-tp-accent hover:border-tp-accent/40 transition-colors bg-tp-surface whitespace-nowrap'
+  const s = changeReview?.change_summary
+
+  return (
+    <div className="mt-6 border border-tp-border/50 rounded-lg overflow-hidden" data-testid="nc-change-review-panel">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-tp-surface-2">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-widest text-tp-accent-light">
+            {t('ncCrTitle')}
+          </div>
+          <div className="text-[10px] text-tp-text-3">{t('ncCrSubtitle')}</div>
+        </div>
+      </div>
+
+      <div className="p-3 space-y-3">
+        {/* Baseline selection */}
+        <div className="space-y-1.5">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-text-2">
+            {t('ncCrBaseline')}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className={btnCls}
+              data-testid="nc-cr-load-baseline-json"
+            >
+              {t('ncCrLoadBaselineJson')}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleLoadBaselineJson}
+              aria-label={t('ncCrLoadBaselineJson')}
+            />
+            {availableReviews.length > 0 && (
+              <select
+                className="bg-tp-surface border border-tp-border rounded px-2 py-0.5 text-[11px] text-tp-text focus:outline-none focus:border-tp-accent-light"
+                value=""
+                onChange={e => {
+                  const idx = Number(e.target.value)
+                  if (!isNaN(idx)) handleSelectBaselineFromStep(idx)
+                }}
+                aria-label={t('ncCrSelectBaseline')}
+              >
+                <option value="">{t('ncCrSelectBaseline')}</option>
+                {availableReviews.map((r, i) => (
+                  <option key={i} value={i}>{r.label}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          {baselineReview && (
+            <div className="text-[10px] text-emerald-300 font-mono truncate" data-testid="nc-cr-baseline-label">
+              ✓ {baselineLabel} — {baselineReview.parser_profile} v{baselineReview.parser_version}
+            </div>
+          )}
+          {baselineFileError && (
+            <div className="text-[10px] text-red-300">{baselineFileError}</div>
+          )}
+        </div>
+
+        {/* Current review selection */}
+        <div className="space-y-1.5">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-text-2">
+            {t('ncCrCurrent')}
+          </div>
+          {availableReviews.length === 0 ? (
+            <div className="text-[10px] text-tp-text-3 italic">
+              {t('ncCrNoBlockDiff')}
+            </div>
+          ) : (
+            <select
+              className="bg-tp-surface border border-tp-border rounded px-2 py-0.5 text-[11px] text-tp-text focus:outline-none focus:border-tp-accent-light"
+              value={currentIdx ?? ''}
+              onChange={e => {
+                const idx = Number(e.target.value)
+                setCurrentIdx(isNaN(idx) ? null : idx)
+                setChangeReview(null)
+                if (!isNaN(idx)) {
+                  const entry = availableReviews[idx]
+                  logChangeReviewEvent('NC_CURRENT_SELECTED', null, entry?.review.traceability?.analysis_fingerprint ?? null)
+                }
+              }}
+              data-testid="nc-cr-current-select"
+            >
+              <option value="">{t('ncCrCurrent')} …</option>
+              {availableReviews.map((r, i) => (
+                <option key={i} value={i}>{r.label}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Run comparison */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={!baselineReview || currentIdx === null || comparing}
+            onClick={handleCompare}
+            className="bg-tp-accent-light text-white font-semibold px-4 py-1.5 rounded text-[11px] hover:bg-tp-accent-light/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            data-testid="nc-cr-run-comparison"
+          >
+            {comparing ? t('ncCrComparing') : t('ncCrRunComparison')}
+          </button>
+        </div>
+
+        {compareError && (
+          <div className="text-[11px] text-red-300 bg-red-500/10 border border-red-500/20 rounded p-2">
+            {compareError}
+          </div>
+        )}
+
+        {/* Results */}
+        {changeReview && (
+          <div className="space-y-3 mt-1" data-testid="nc-cr-result">
+            {/* Status badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge
+                label={changeReview.overall_change_status}
+                cls={CR_OVERALL_CLS[changeReview.overall_change_status] ?? 'bg-tp-surface-2 text-tp-text-3 border border-tp-border'}
+              />
+              <span className={`text-[10px] font-semibold uppercase ${CR_SEVERITY_CLS[changeReview.change_severity] ?? 'text-tp-text-3'}`}>
+                {changeReview.change_severity}
+              </span>
+              <span className="text-[10px] text-tp-text-3">{changeReview.comparability_status}</span>
+            </div>
+
+            {/* Review required */}
+            {changeReview.review_required && (
+              <div className="bg-red-500/10 border border-red-500/25 rounded p-2 space-y-1" data-testid="nc-cr-review-required">
+                <div className="text-[10px] font-semibold text-red-300 uppercase tracking-wide">
+                  {t('ncCrReviewRequired')}
+                </div>
+                <ul className="space-y-0.5">
+                  {changeReview.review_required_reasons.map((r, i) => (
+                    <li key={i} className="text-[10px] text-red-200 font-mono">{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Change summary */}
+            {s && (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10px] border border-tp-border/30 rounded p-2 bg-tp-surface-2/30">
+                <div className="text-tp-text-3">{t('ncCrBlocksAdded')}</div>
+                <div className="font-mono text-tp-text" data-testid="nc-cr-blocks-added">{s.blocks_added ?? '—'}</div>
+                <div className="text-tp-text-3">{t('ncCrBlocksRemoved')}</div>
+                <div className="font-mono text-tp-text">{s.blocks_removed ?? '—'}</div>
+                <div className="text-tp-text-3">{t('ncCrBlocksModified')}</div>
+                <div className="font-mono text-tp-text">{s.blocks_modified ?? '—'}</div>
+                <div className="text-tp-text-3">{t('ncCrSegmentsAdded')}</div>
+                <div className="font-mono text-tp-text">{s.segments_added}</div>
+                <div className="text-tp-text-3">{t('ncCrSegmentsRemoved')}</div>
+                <div className="font-mono text-tp-text">{s.segments_removed}</div>
+                <div className="text-tp-text-3">{t('ncCrNewFindings')}</div>
+                <div className="font-mono text-tp-text">{s.new_findings}</div>
+                <div className="text-tp-text-3">{t('ncCrResolvedFindings')}</div>
+                <div className="font-mono text-tp-text">{s.resolved_findings}</div>
+                <div className="text-tp-text-3">{t('ncCrNewBlocking')}</div>
+                <div className={`font-mono font-semibold ${s.new_blocking_findings > 0 ? 'text-red-300' : 'text-tp-text'}`}>
+                  {s.new_blocking_findings}
+                </div>
+              </div>
+            )}
+
+            {/* Feed/spindle changes */}
+            {changeReview.feed_spindle_changes && (
+              changeReview.feed_spindle_changes.commanded_feed_mm_min_changed ||
+              changeReview.feed_spindle_changes.commanded_spindle_rpm_changed
+            ) && (
+              <div className="text-[10px] border border-amber-500/20 rounded p-2 bg-amber-500/5">
+                <div className="font-semibold text-amber-300 mb-1 uppercase tracking-wide">
+                  {t('ncCrFeedSpindleChanges')}
+                </div>
+                {changeReview.feed_spindle_changes.commanded_feed_mm_min_changed && (
+                  <div className="font-mono text-tp-text-2">
+                    F: {changeReview.feed_spindle_changes.baseline_commanded_feed_mm_min ?? '—'} → {changeReview.feed_spindle_changes.current_commanded_feed_mm_min ?? '—'} mm/min
+                  </div>
+                )}
+                {changeReview.feed_spindle_changes.commanded_spindle_rpm_changed && (
+                  <div className="font-mono text-tp-text-2">
+                    RPM: {changeReview.feed_spindle_changes.baseline_commanded_spindle_rpm ?? '—'} → {changeReview.feed_spindle_changes.current_commanded_spindle_rpm ?? '—'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Block changes panel */}
+            {changeReview.block_changes !== null && changeReview.block_changes !== undefined ? (
+              <div className="border border-tp-border/30 rounded overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowBlocks(v => !v)}
+                  className="w-full flex items-center justify-between px-2 py-1 bg-tp-surface-2 text-left hover:bg-tp-surface transition-colors"
+                  data-testid="nc-cr-block-changes-toggle"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+                    {t('ncCrBlockChanges')}
+                  </span>
+                  <span className="text-[10px] text-tp-text-3">
+                    +{s?.blocks_added ?? 0} −{s?.blocks_removed ?? 0} ~{s?.blocks_modified ?? 0} {showBlocks ? '▲' : '▼'}
+                  </span>
+                </button>
+                {showBlocks && (
+                  <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
+                    {changeReview.block_changes.filter(b => b.change_type !== 'UNCHANGED').length === 0 ? (
+                      <div className="text-[10px] text-tp-text-3 italic">{t('ncCrNoBlockDiff')}</div>
+                    ) : (
+                      changeReview.block_changes
+                        .filter(b => b.change_type !== 'UNCHANGED')
+                        .slice(0, 200)
+                        .map((b, i) => (
+                          <div key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${CR_BLOCK_CLS[b.change_type] ?? ''}`}>
+                            <span className="text-[9px] text-tp-text-3 mr-2">[{b.change_type}]</span>
+                            {b.current_text ?? b.baseline_text ?? ''}
+                          </div>
+                        ))
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-[10px] text-tp-text-3 italic px-1">{t('ncCrNoBlockDiff')}</div>
+            )}
+
+            {/* Segment changes panel */}
+            <div className="border border-tp-border/30 rounded overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowSegments(v => !v)}
+                className="w-full flex items-center justify-between px-2 py-1 bg-tp-surface-2 text-left hover:bg-tp-surface transition-colors"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+                  {t('ncCrSegmentChanges')}
+                </span>
+                <span className="text-[10px] text-tp-text-3">
+                  ({changeReview.segment_changes.length}) {showSegments ? '▲' : '▼'}
+                </span>
+              </button>
+              {showSegments && (
+                <div className="p-2 space-y-1 max-h-48 overflow-y-auto text-[10px]">
+                  {changeReview.segment_changes.filter(s => s.change_type !== 'SEGMENT_UNCHANGED').length === 0 ? (
+                    <div className="text-tp-text-3 italic">{t('ncCrUnchanged')}</div>
+                  ) : (
+                    changeReview.segment_changes
+                      .filter(s => s.change_type !== 'SEGMENT_UNCHANGED')
+                      .map((seg, i) => (
+                        <div key={i} className="font-mono text-tp-text-2">
+                          [{seg.change_type}] {seg.current_segment_id ?? seg.baseline_segment_id}
+                          {seg.feed_distance_delta_mm !== null && seg.feed_distance_delta_mm !== 0 && (
+                            <span className="ml-2 text-amber-300">ΔF={seg.feed_distance_delta_mm.toFixed(3)}mm</span>
+                          )}
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Finding changes panel */}
+            <div className="border border-tp-border/30 rounded overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowFindings(v => !v)}
+                className="w-full flex items-center justify-between px-2 py-1 bg-tp-surface-2 text-left hover:bg-tp-surface transition-colors"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+                  {t('ncCrFindingsChanges')}
+                </span>
+                <span className="text-[10px] text-tp-text-3">
+                  ({changeReview.finding_changes.length}) {showFindings ? '▲' : '▼'}
+                </span>
+              </button>
+              {showFindings && (
+                <div className="p-2 space-y-1 max-h-48 overflow-y-auto text-[10px]">
+                  {changeReview.finding_changes.filter(f => f.change_type !== 'FINDING_UNCHANGED').length === 0 ? (
+                    <div className="text-tp-text-3 italic">{t('ncCrUnchanged')}</div>
+                  ) : (
+                    changeReview.finding_changes
+                      .filter(f => f.change_type !== 'FINDING_UNCHANGED')
+                      .map((f, i) => (
+                        <div key={i} className="font-mono text-tp-text-2">
+                          [{f.change_type}] {f.finding_code}
+                          {f.baseline_severity !== f.current_severity && (
+                            <span className="ml-2 text-amber-300">{f.baseline_severity} → {f.current_severity}</span>
+                          )}
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Config changes panel */}
+            {changeReview.configuration_changes.some(c => c.changed) && (
+              <div className="border border-tp-border/30 rounded overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowConfig(v => !v)}
+                  className="w-full flex items-center justify-between px-2 py-1 bg-tp-surface-2 text-left hover:bg-tp-surface transition-colors"
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light">
+                    {t('ncCrConfigChanges')}
+                  </span>
+                  <span className="text-[10px] text-tp-text-3">
+                    ({changeReview.configuration_changes.filter(c => c.changed).length}) {showConfig ? '▲' : '▼'}
+                  </span>
+                </button>
+                {showConfig && (
+                  <div className="p-2 space-y-1 max-h-48 overflow-y-auto text-[10px]">
+                    {changeReview.configuration_changes
+                      .filter(c => c.changed)
+                      .map((c, i) => (
+                        <div key={i} className="font-mono text-tp-text-2">
+                          {c.field_name}: <span className="text-red-300">{c.baseline_value ?? '—'}</span> → <span className="text-emerald-300">{c.current_value ?? '—'}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Export toolbar */}
+            <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-tp-border/20">
+              <button type="button" onClick={handleExportJson} className={btnCls} data-testid="nc-cr-export-json">
+                {t('ncCrExportChangeJson')}
+              </button>
+              <div className="relative">
+                <button type="button" onClick={() => setShowCsvMenu(v => !v)} className={btnCls} data-testid="nc-cr-export-csv">
+                  {t('ncCrExportChangeBlockCsv')} ▾
+                </button>
+                {showCsvMenu && (
+                  <div className="absolute left-0 top-full mt-0.5 bg-tp-surface border border-tp-border rounded shadow-lg z-10 text-[11px] min-w-[160px]">
+                    <button type="button" className="w-full text-left px-3 py-1.5 hover:bg-tp-surface-2 text-tp-text-2 transition-colors" onClick={handleExportBlockCsv}>
+                      {t('ncCrExportChangeBlockCsv')}
+                    </button>
+                    <button type="button" className="w-full text-left px-3 py-1.5 hover:bg-tp-surface-2 text-tp-text-2 transition-colors" onClick={handleExportFindingCsv}>
+                      {t('ncCrExportChangeFindingCsv')}
+                    </button>
+                    <button type="button" className="w-full text-left px-3 py-1.5 hover:bg-tp-surface-2 text-tp-text-2 transition-colors" onClick={handleExportSegmentCsv}>
+                      {t('ncCrExportChangeSegmentCsv')}
+                    </button>
+                    <button type="button" className="w-full text-left px-3 py-1.5 hover:bg-tp-surface-2 text-tp-text-2 transition-colors" onClick={handleExportConfigCsv}>
+                      {t('ncCrExportChangeConfigCsv')}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button type="button" onClick={handlePrint} className={btnCls} data-testid="nc-cr-export-print">
+                {t('ncCrExportChangePrint')}
+              </button>
+            </div>
+
+            {/* Safety note */}
+            <div className="text-[9px] text-tp-text-3 italic border-t border-tp-border/20 pt-1">
+              NC_CHANGE_REVIEW_IS_NOT_APPROVAL=TRUE · FALSE_CHANGE_APPROVAL_CLAIM=NO · FALSE_SAFE_CHANGE_CLAIM=NO
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Cycle-time section ────────────────────────────────────────────────────────
 
 const CT_STATUS_CLS: Record<CycleTimeStatus, string> = {
@@ -2013,6 +2570,19 @@ export default function ProcessPlanningPage() {
           <PlanResult result={result} t={t} />
         </div>
       )}
+
+      {/* NC Change Review — available whenever any step has an engineering review */}
+      {(() => {
+        const availableReviews = steps
+          .filter(s => s.nc_analysis?.engineering_review != null)
+          .map(s => ({
+            label: `${s.step_id || `Step ${s.sequence_number}`} — ${s.nc_analysis!.engineering_review!.parser_profile}`,
+            review: s.nc_analysis!.engineering_review!,
+            ncText: s.nc_text || undefined,
+          }))
+        if (availableReviews.length === 0) return null
+        return <NcChangeReviewPanel availableReviews={availableReviews} t={t} />
+      })()}
     </div>
   )
 }
