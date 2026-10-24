@@ -1025,3 +1025,149 @@ describe('Backward compatibility', () => {
     assert.equal(d2.review_status, 'REVIEW_REQUIRED')
   })
 })
+
+// ---------------------------------------------------------------------------
+// CSV formula injection guard (NC_PROGRAM_RELEASE_READINESS_01)
+// CSV_FORMULA_INJECTION_MITIGATION=PASS
+// CSV_ENGINEERING_NUMERIC_VALUES_PRESERVED=YES
+// ---------------------------------------------------------------------------
+
+describe('CSV formula injection guard — buildFindingsCsv', () => {
+  // Helper: extract a single cell value from a CSV row (handles quoted fields).
+  // Strips trailing \r from the row before parsing.
+  function parseCsvCell(row: string, colIndex: number): string {
+    const clean = row.replace(/\r$/, '')
+    const cells: string[] = []
+    let i = 0
+    while (i < clean.length) {
+      if (clean[i] === '"') {
+        i++ // skip opening quote
+        let val = ''
+        while (i < clean.length) {
+          if (clean[i] === '"' && clean[i + 1] === '"') { val += '"'; i += 2 }
+          else if (clean[i] === '"') { i++; break }
+          else { val += clean[i++] }
+        }
+        if (clean[i] === ',') i++
+        cells.push(val)
+      } else {
+        let val = ''
+        while (i < clean.length && clean[i] !== ',') val += clean[i++]
+        if (clean[i] === ',') i++
+        cells.push(val)
+      }
+    }
+    return cells[colIndex] ?? ''
+  }
+
+  // buildFindingsCsv prepends 3 traceability cols (review_id, analysis_fp, program_fp)
+  // before finding_code, so finding_code is at column index 3.
+  const FINDING_CODE_COL = 3
+
+  function makeInjectionFinding(finding_code: string) {
+    return {
+      finding_code,
+      category: 'RPM_LIMIT',
+      severity: 'BLOCKING' as const,
+      title_key: 'ncErFindingMachineRpm',
+      message_key: 'ncErFindingMachineRpm',
+      observed_value: null as number | null,
+      limit_value: null as number | null,
+      unit: null as string | null,
+      source: null as string | null,
+      evidence_type: null as string | null,
+      segment_id: null as string | null,
+      limitation: null as string | null,
+    }
+  }
+
+  test('formula prefix = in string cell is tab-prefixed', () => {
+    const er = { ...makeBaseReview(), findings: [makeInjectionFinding('=HYPERLINK("evil.com")')] }
+    const csv = buildFindingsCsv(er, tEn)
+    const dataRow = csv.split('\n')[1]
+    const cell = parseCsvCell(dataRow, FINDING_CODE_COL)
+    assert.ok(cell.startsWith('\t'), 'Formula = cell should be tab-prefixed')
+    assert.ok(cell.includes('=HYPERLINK'), 'Original content preserved')
+  })
+
+  test('formula prefix + in string cell is tab-prefixed', () => {
+    const er = { ...makeBaseReview(), findings: [makeInjectionFinding('+cmd|whoami')] }
+    const csv = buildFindingsCsv(er, tEn)
+    const dataRow = csv.split('\n')[1]
+    const cell = parseCsvCell(dataRow, FINDING_CODE_COL)
+    assert.ok(cell.startsWith('\t'), 'Formula + cell should be tab-prefixed')
+  })
+
+  test('formula prefix - in string cell is tab-prefixed', () => {
+    const er = { ...makeBaseReview(), findings: [makeInjectionFinding('-2+3')] }
+    const csv = buildFindingsCsv(er, tEn)
+    const dataRow = csv.split('\n')[1]
+    const cell = parseCsvCell(dataRow, FINDING_CODE_COL)
+    assert.ok(cell.startsWith('\t'), 'Formula - string cell should be tab-prefixed')
+  })
+
+  test('formula prefix @ in string cell is tab-prefixed', () => {
+    const er = { ...makeBaseReview(), findings: [makeInjectionFinding('@SUM(A1:A10)')] }
+    const csv = buildFindingsCsv(er, tEn)
+    const dataRow = csv.split('\n')[1]
+    const cell = parseCsvCell(dataRow, FINDING_CODE_COL)
+    assert.ok(cell.startsWith('\t'), 'Formula @ cell should be tab-prefixed')
+  })
+
+  test('negative numeric observed_value is NOT tab-prefixed (engineering value)', () => {
+    const finding = {
+      ...makeInjectionFinding('RPM_OVER_LIMIT'),
+      observed_value: -500,
+      limit_value: 1000,
+      unit: 'rpm',
+    }
+    const er = { ...makeBaseReview(), findings: [finding] }
+    const csv = buildFindingsCsv(er, tEn)
+    // numeric -500 should appear as -500, no tab prefix, not quoted
+    assert.ok(csv.includes('-500'), 'Negative number preserved in output')
+    assert.ok(!csv.includes('"\t-500"'), 'Negative number not tab-prefixed')
+  })
+
+  test('pure numeric string "+1500.5" is NOT tab-prefixed', () => {
+    const finding = { ...makeInjectionFinding('FEED_HIGH'), observed_value: 1500.5, unit: 'mm/min' }
+    const er = { ...makeBaseReview(), findings: [finding] }
+    const csv = buildFindingsCsv(er, tEn)
+    assert.ok(csv.includes('1500.5'), 'Numeric value preserved')
+    assert.ok(!csv.includes('\t1500.5'), 'Numeric value not tab-prefixed')
+  })
+
+  test('normal engineering finding code is unmodified', () => {
+    const finding = {
+      ...makeInjectionFinding('RPM_LIMIT_MACHINE_RPM'),
+      observed_value: 15000,
+      limit_value: 12000,
+      unit: 'rpm',
+      source: 'MACHINE_CATALOG',
+    }
+    const er = { ...makeBaseReview(), findings: [finding] }
+    const csv = buildFindingsCsv(er, tEn)
+    const dataRow = csv.split('\n')[1]
+    // finding_code is at column 3, no quoting needed for this value
+    const cell = parseCsvCell(dataRow, FINDING_CODE_COL)
+    assert.equal(cell, 'RPM_LIMIT_MACHINE_RPM', 'Normal finding code unmodified')
+  })
+
+  test('i18n keys for NC scope panel exist in both locales', () => {
+    const scopeKeys = [
+      'ppNcScopeTitle',
+      'ppNcScopeNotice',
+      'ppNcScopeDeferredLabel',
+      'ppNcScopeDeferredItems',
+      'ppNcScopeUnsupportedLabel',
+      'ppNcScopeUnsupportedItems',
+    ]
+    for (const key of scopeKeys) {
+      assert.ok(key in enTranslations, `EN missing scope key: ${key}`)
+      assert.ok(key in trTranslations, `TR missing scope key: ${key}`)
+      assert.ok(typeof (enTranslations as Record<string, string>)[key] === 'string')
+      assert.ok(typeof (trTranslations as Record<string, string>)[key] === 'string')
+      assert.ok((enTranslations as Record<string, string>)[key].length > 0)
+      assert.ok((trTranslations as Record<string, string>)[key].length > 0)
+    }
+  })
+})

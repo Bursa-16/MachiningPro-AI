@@ -677,9 +677,19 @@ export function buildNcReviewJson(
 
 function csvField(v: string | number | null | undefined | boolean): string {
   if (v === null || v === undefined) return ''
+  // Numbers are always safe — cannot be formula prefixes
+  if (typeof v === 'number') return String(v)
   const s = String(v).replace(/\n/g, ' ').replace(/\r/g, '')
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-    return '"' + s.replace(/"/g, '""') + '"'
+  const trimmed = s.trimStart()
+  // OWASP CSV formula injection guard: strings starting with =, +, -, @ that are
+  // not pure numeric (e.g. G-code values like "+1.5" are numeric, not formulas)
+  const isFormulaPrefix = trimmed.length > 0 && /^[=+\-@]/.test(trimmed)
+  const isPureNumber = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(trimmed)
+  const needsFormulaGuard = isFormulaPrefix && !isPureNumber
+  const needsQuote = s.includes(',') || s.includes('"') || s.includes('\n') || needsFormulaGuard
+  if (needsQuote) {
+    const content = needsFormulaGuard ? '\t' + s : s
+    return '"' + content.replace(/"/g, '""') + '"'
   }
   return s
 }

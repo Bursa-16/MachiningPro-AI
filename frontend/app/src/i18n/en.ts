@@ -1185,4 +1185,11 @@ export const enTranslations: TranslationDictionary = {
   ncCrAuditChangeJsonExported: 'Change Review JSON Exported',
   ncCrAuditChangeCsvExported: 'Change Review CSV Exported',
   ncCrAuditChangePrintOpened: 'Change Review Print Opened',
+  // NC scope panel (NC_PROGRAM_RELEASE_READINESS_01)
+  ppNcScopeTitle: 'NC Parser Scope & Limitations',
+  ppNcScopeNotice: 'Profile: GENERIC_ISO_GCODE_SUBSET. Results are engineering data only — not a controller simulation.',
+  ppNcScopeDeferredLabel: 'Deferred (BLOCKED_BY_KNOWN_LIMIT):',
+  ppNcScopeDeferredItems: 'G96 CSS, G93 inverse-time, R-format arcs, G91 in canned cycles, L-repeat',
+  ppNcScopeUnsupportedLabel: 'Unsupported (UNSUPPORTED_SEMANTICS):',
+  ppNcScopeUnsupportedItems: 'M98/M99 subprograms, # macro variables, WHILE/IF flow control',
 }

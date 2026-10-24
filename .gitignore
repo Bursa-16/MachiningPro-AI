@@ -43,3 +43,20 @@ node_modules/
 *.patch
 MachiningPro_AI_VP100_*.xlsx
 data/literature_catalog.csv
+
+# --- NC release-readiness artifacts (NC_PROGRAM_RELEASE_READINESS_01) ---
+# Browser automation session data
+.playwright-mcp/
+
+# Sample/test CAD files (not redistributable source material)
+*.stl
+*.igs
+*.step
+
+# Screenshot artifacts from qualification runs
+pp_*.png
+selection-*.png
+
+# Qualification results and run logs (generated, not committed)
+docs/qualification/results/
+docs/qualification/run_logs/

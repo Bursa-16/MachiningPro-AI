@@ -110,9 +110,18 @@ export function buildNcChangeReviewJson(cr: NCProgramChangeReview): NcChangeRevi
 
 function escapeCsv(value: string | number | boolean | null | undefined): string {
   if (value === null || value === undefined) return ''
+  // Numbers and booleans are always safe
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   const s = String(value)
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-    return '"' + s.replace(/"/g, '""') + '"'
+  const trimmed = s.trimStart()
+  // OWASP CSV formula injection guard
+  const isFormulaPrefix = trimmed.length > 0 && /^[=+\-@]/.test(trimmed)
+  const isPureNumber = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(trimmed)
+  const needsFormulaGuard = isFormulaPrefix && !isPureNumber
+  const needsQuote = s.includes(',') || s.includes('"') || s.includes('\n') || needsFormulaGuard
+  if (needsQuote) {
+    const content = needsFormulaGuard ? '\t' + s : s
+    return '"' + content.replace(/"/g, '""') + '"'
   }
   return s
 }
@@ -228,7 +237,14 @@ export function buildChangeReviewPrintHtml(cr: NCProgramChangeReview, locale: st
   const nowStr = now.toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US')
   const s = cr.change_summary
 
-  const safeStr = (v: string | null | undefined) => v ?? '—'
+  const esc = (v: string | null | undefined): string =>
+    (v ?? '—')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+
+  const safeStr = esc
   const numStr = (v: number | null | undefined) => (v !== null && v !== undefined ? String(v) : '—')
 
   const blockRows = (cr.block_changes ?? [])
@@ -236,9 +252,9 @@ export function buildChangeReviewPrintHtml(cr: NCProgramChangeReview, locale: st
     .slice(0, 200)
     .map(b => `
       <tr>
-        <td>${b.change_type}</td>
-        <td>${b.semantic_change_type}</td>
-        <td>${b.block_classification}</td>
+        <td>${esc(b.change_type)}</td>
+        <td>${esc(b.semantic_change_type)}</td>
+        <td>${esc(b.block_classification)}</td>
         <td>${numStr(b.baseline_line_index)}</td>
         <td>${numStr(b.current_line_index)}</td>
         <td class="mono">${safeStr(b.baseline_text)}</td>
@@ -250,8 +266,8 @@ export function buildChangeReviewPrintHtml(cr: NCProgramChangeReview, locale: st
     .filter(f => f.change_type !== 'FINDING_UNCHANGED')
     .map(f => `
       <tr>
-        <td>${f.finding_code}</td>
-        <td>${f.change_type}</td>
+        <td>${esc(f.finding_code)}</td>
+        <td>${esc(f.change_type)}</td>
         <td>${safeStr(f.baseline_severity)}</td>
         <td>${safeStr(f.current_severity)}</td>
         <td>${numStr(f.baseline_observed_value)}</td>
@@ -264,7 +280,7 @@ export function buildChangeReviewPrintHtml(cr: NCProgramChangeReview, locale: st
     .filter(c => c.changed)
     .map(c => `
       <tr>
-        <td>${c.field_name}</td>
+        <td>${esc(c.field_name)}</td>
         <td>${safeStr(c.baseline_value)}</td>
         <td>${safeStr(c.current_value)}</td>
       </tr>`)
@@ -314,7 +330,7 @@ export function buildChangeReviewPrintHtml(cr: NCProgramChangeReview, locale: st
   <tr><td>Review Required</td><td>${cr.review_required ? 'YES' : 'NO'}</td></tr>
 </table>
 
-${cr.review_required ? `<h2>Review Required Reasons</h2><ul>${cr.review_required_reasons.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+${cr.review_required ? `<h2>Review Required Reasons</h2><ul>${cr.review_required_reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
 
 <h2>Change Summary</h2>
 <table>
@@ -352,7 +368,7 @@ ${configRows ? `<h2>Configuration Changes</h2>
   ${configRows}
 </table>` : ''}
 
-${cr.limitations.length > 0 ? `<h2>Limitations</h2><ul>${cr.limitations.map(l => `<li>${l}</li>`).join('')}</ul>` : ''}
+${cr.limitations.length > 0 ? `<h2>Limitations</h2><ul>${cr.limitations.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
 
 <div class="meta" style="margin-top:2rem">
   Baseline fingerprint: ${safeStr(cr.baseline_analysis_fingerprint)} &nbsp;|&nbsp;

@@ -428,6 +428,18 @@ function StepRow({
           </button>
         </div>
 
+        {/* Static NC scope limitations panel — NC_PROGRAM_RELEASE_READINESS_01 */}
+        <details className="mt-2 text-[10px] text-tp-text-3 border border-tp-border/40 rounded bg-tp-surface/30">
+          <summary className="cursor-pointer px-3 py-1.5 select-none hover:text-tp-text-2 transition-colors">
+            &#9432; {t('ppNcScopeTitle')}
+          </summary>
+          <div className="px-3 pb-2 space-y-1 pt-1">
+            <p className="italic">{t('ppNcScopeNotice')}</p>
+            <p><span className="font-semibold text-amber-400/80">{t('ppNcScopeDeferredLabel')}</span> {t('ppNcScopeDeferredItems')}</p>
+            <p><span className="font-semibold text-red-400/80">{t('ppNcScopeUnsupportedLabel')}</span> {t('ppNcScopeUnsupportedItems')}</p>
+          </div>
+        </details>
+
         {step.nc_analysis_error && (
           <div className="mt-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
             {t('ppNcAnalysisError')}: {step.nc_analysis_error}

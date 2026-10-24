@@ -1185,4 +1185,11 @@ export const trTranslations: TranslationDictionary = {
   ncCrAuditChangeJsonExported: 'Değişiklik İncelemesi JSON Dışa Aktarıldı',
   ncCrAuditChangeCsvExported: 'Değişiklik İncelemesi CSV Dışa Aktarıldı',
   ncCrAuditChangePrintOpened: 'Değişiklik İncelemesi Yazdırma Açıldı',
+  // NC kapsam paneli (NC_PROGRAM_RELEASE_READINESS_01)
+  ppNcScopeTitle: 'NC Çözümleyici Kapsamı ve Sınırlamaları',
+  ppNcScopeNotice: 'Profil: GENERIC_ISO_GCODE_SUBSET. Sonuçlar yalnızca mühendislik verisidir — kontrolör simülasyonu değildir.',
+  ppNcScopeDeferredLabel: 'Ertelenmiş (BLOCKED_BY_KNOWN_LIMIT):',
+  ppNcScopeDeferredItems: 'G96 CSS, G93 ters zaman, R-formatlı yaylar, konserve döngülerde G91, L-tekrar',
+  ppNcScopeUnsupportedLabel: 'Desteklenmiyor (UNSUPPORTED_SEMANTICS):',
+  ppNcScopeUnsupportedItems: 'M98/M99 alt programlar, # makro değişkenler, WHILE/IF akış kontrolü',
 }
