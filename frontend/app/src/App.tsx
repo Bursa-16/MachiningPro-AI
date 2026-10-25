@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { useLocale } from './i18n'
 import AppShell from './layouts/AppShell'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -15,20 +16,20 @@ import ToolHolderCatalogPage from './pages/ToolHolderCatalogPage'
 import ProcessPlanningPage from './pages/ProcessPlanningPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
+  const { t } = useLocale()
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-3xl">
         <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-2">
-          MachiningPro AI
+          {t('capPreviewBadge')}
         </div>
         <h1 className="text-xl font-semibold text-tp-text mb-3">{title}</h1>
         <div className="bg-tp-surface border border-tp-border rounded-lg p-5">
           <div className="text-sm font-medium text-tp-text mb-1">
-            Backend capability available
+            {t('capPreviewTitle')}
           </div>
           <div className="text-sm text-tp-text-2">
-            UI integration is pending. This public engineering preview does not expose
-            an unverified or cross-project workflow.
+            {t('capPreviewDesc')}
           </div>
         </div>
       </div>

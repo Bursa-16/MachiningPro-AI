@@ -199,7 +199,12 @@ export default function Sidebar({ role }: { role: string | null }) {
                         <span className="shrink-0 w-4 flex justify-center">
                           <Icon icon={item.icon} size={14} />
                         </span>
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate flex-1">{item.label}</span>
+                        {item.badge === 'preview' && (
+                          <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1 py-0.5 rounded bg-tp-border/60 text-tp-text-3">
+                            {t('navPreviewBadge')}
+                          </span>
+                        )}
                       </button>
                     )
                   })}

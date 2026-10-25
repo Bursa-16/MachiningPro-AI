@@ -1192,4 +1192,25 @@ export const trTranslations: TranslationDictionary = {
   ppNcScopeDeferredItems: 'G96 CSS, G93 ters zaman, R-formatlı yaylar, konserve döngülerde G91, L-tekrar',
   ppNcScopeUnsupportedLabel: 'Desteklenmiyor (UNSUPPORTED_SEMANTICS):',
   ppNcScopeUnsupportedItems: 'M98/M99 alt programlar, # makro değişkenler, WHILE/IF akış kontrolü',
+
+  // Gösterge tablosu demosu (MACHININGPRO_CUSTOMER_DEMO_RELEASE_01)
+  dbAlpha: 'Alfa Mühendislik Önizlemesi',
+  dbValueProp: 'Yapay zeka destekli, açıklanabilir karar desteğiyle deterministik işleme mühendisliği.',
+  dbWorkflowTitle: 'Önerilen Demo Akışı',
+  dbWorkflowDesc: 'Uçtan uca mühendislik demosu için buradan başlayın',
+  dbCapabilitiesTitle: 'Mevcut Yetenekler',
+  dbStatusTitle: 'Sistem Durumu',
+  dbStep1: 'Katalog — Makine, Kesici Takım ve Tutucu katalogları',
+  dbStep2: 'Uyumluluk — Makine · takım · tutucu üçlüsünü doğrula',
+  dbStep3: 'Proses Planlama — Operasyon planı oluştur',
+  dbStep4: 'NC İncelemesi — NC programını çözümle, mühendislik incelemesi al',
+  dbStep5: 'Dışa Aktarma & İzlenebilirlik — JSON/CSV dışa aktarma + SHA-256 parmak izleri',
+
+  // Yetenek bekleme sayfası
+  capPreviewBadge: 'Mühendislik Önizlemesi',
+  capPreviewTitle: 'Arka uç yeteneği mevcut',
+  capPreviewDesc: 'Kullanıcı arayüzü entegrasyonu devam ediyor. Bu rota mühendislik önizlemesinin bir parçasıdır ve henüz eksiksiz bir iş akışına bağlı değildir.',
+
+  // Gezinme önizleme rozeti
+  navPreviewBadge: 'Önizleme',
 }

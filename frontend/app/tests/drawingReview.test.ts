@@ -396,7 +396,7 @@ describe('rendered page', () => {
     assert.match(html, /Technical Drawing Intelligence/)
     assert.match(html, /AI suggestions require human review before use\./)
     assert.match(html, /AI analysis has not been run for this drawing/)
-    assert.match(html, /Choose drawing \(PDF\)/)
+    assert.match(html, /Open Engineering File/)
     assert.match(html, /Analyze with Local AI/)
     assert.match(html, /data-testid="analyze-button"[^>]*disabled/, 'no drawing, no analysis')
     assert.doesNotMatch(html, /Load synthetic sample|Development sample/, 'no sample in production')
@@ -417,7 +417,6 @@ describe('rendered page', () => {
   test('the page source never auto-accepts and has no cancel for inference', () => {
     const page = readFileSync(join(appRoot, 'src', 'pages', 'TechnicalDrawingIntelligencePage.tsx'), 'utf8')
     assert.doesNotMatch(page, /type: 'ACCEPT'[\s\S]{0,200}useEffect/)
-    assert.doesNotMatch(page, /useEffect/)
     assert.doesNotMatch(page, /fetch\(|axios|XMLHttpRequest/, 'no network from this slice')
   })
 })

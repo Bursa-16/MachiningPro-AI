@@ -1192,4 +1192,25 @@ export const enTranslations: TranslationDictionary = {
   ppNcScopeDeferredItems: 'G96 CSS, G93 inverse-time, R-format arcs, G91 in canned cycles, L-repeat',
   ppNcScopeUnsupportedLabel: 'Unsupported (UNSUPPORTED_SEMANTICS):',
   ppNcScopeUnsupportedItems: 'M98/M99 subprograms, # macro variables, WHILE/IF flow control',
+
+  // Dashboard demo (MACHININGPRO_CUSTOMER_DEMO_RELEASE_01)
+  dbAlpha: 'Alpha Engineering Preview',
+  dbValueProp: 'Deterministic machining engineering with AI-assisted, explainable decision support.',
+  dbWorkflowTitle: 'Recommended Demo Workflow',
+  dbWorkflowDesc: 'Start here for the full end-to-end engineering demonstration',
+  dbCapabilitiesTitle: 'Available Capabilities',
+  dbStatusTitle: 'System Status',
+  dbStep1: 'Catalog — Machine, Cutting Tool & Holder catalogs',
+  dbStep2: 'Compatibility — Verify machine · tool · holder triplet',
+  dbStep3: 'Process Planning — Generate operation plan',
+  dbStep4: 'NC Review — Parse NC program, get engineering review',
+  dbStep5: 'Export & Traceability — JSON/CSV export + SHA-256 fingerprints',
+
+  // Capability pending page
+  capPreviewBadge: 'Engineering Preview',
+  capPreviewTitle: 'Backend capability available',
+  capPreviewDesc: 'UI integration is in progress. This route is part of the engineering preview and is not yet connected to a complete workflow.',
+
+  // Navigation preview badge
+  navPreviewBadge: 'Preview',
 }

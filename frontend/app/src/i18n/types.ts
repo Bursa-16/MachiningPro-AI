@@ -1199,4 +1199,25 @@ export interface TranslationDictionary {
   ppNcScopeDeferredItems: string
   ppNcScopeUnsupportedLabel: string
   ppNcScopeUnsupportedItems: string
+
+  // Dashboard demo (MACHININGPRO_CUSTOMER_DEMO_RELEASE_01)
+  dbAlpha: string
+  dbValueProp: string
+  dbWorkflowTitle: string
+  dbWorkflowDesc: string
+  dbCapabilitiesTitle: string
+  dbStatusTitle: string
+  dbStep1: string
+  dbStep2: string
+  dbStep3: string
+  dbStep4: string
+  dbStep5: string
+
+  // Capability pending page
+  capPreviewBadge: string
+  capPreviewTitle: string
+  capPreviewDesc: string
+
+  // Navigation preview badge
+  navPreviewBadge: string
 }
