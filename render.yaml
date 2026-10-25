@@ -1,0 +1,47 @@
+# MachiningPro AI — Render Blueprint
+# Single web service: FastAPI serves both the API and the React SPA (same-origin).
+# No database, no persistent disk required.
+#
+# Setup steps:
+#   1. Connect this repo to Render.
+#   2. Render detects render.yaml and offers to create the service.
+#   3. Set the three secret env vars in the Render dashboard (marked sync: false below).
+#   4. Deploy.
+
+services:
+  - type: web
+    name: machiningpro-ai-demo
+    env: python
+    plan: starter
+    branch: main
+    buildCommand: cd frontend/app && npm ci && npm run build && cd ../.. && pip install .
+    startCommand: uvicorn backend.api.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+
+    envVars:
+      # --- Required secrets (set in Render dashboard — never commit real values) ---
+      - key: MACHININGPRO_DEV_JWT_SECRET
+        sync: false        # Minimum 32 characters; auth fails closed if absent
+
+      - key: MACHININGPRO_DEV_USERNAME
+        sync: false        # Demo login username
+
+      - key: MACHININGPRO_DEV_PASSWORD
+        sync: false        # Demo login password
+
+      # --- CORS (leave empty for same-origin/single-service deployment) ---
+      # Set to a comma-separated list of allowed origins only for split-service deployment.
+      # Example: https://machiningpro-ai-demo.onrender.com
+      - key: CORS_ORIGINS
+        value: ""
+
+      # --- Optional: Tool Life external dataset ---
+      # Leave unset on Render. The Tool Life Explorer operates safely without it,
+      # displaying in-catalog empirical data. Windows local paths must NOT be used.
+      # - key: MACHININGPRO_TOOLLIFE968_SOURCE_PATH
+      #   value: ""   # intentionally omitted — not required for demo deployment
+
+      # --- Optional: Cutting parameter reference path ---
+      # Leave unset unless a reference file is deployed alongside the service.
+      # - key: MACHININGPRO_CUTTING_PARAM_REF_PATH
+      #   value: ""   # intentionally omitted — graceful absent handling in API
