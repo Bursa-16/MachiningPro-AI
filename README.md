@@ -64,12 +64,51 @@ These components do not constitute a full production CAD kernel.
 
 These components are engineering planning foundations and are not presented as a production-qualified scheduling system.
 
+### NC Program Analysis
+
+The NC Program Analysis module parses NC / G-code program text as **data only** and produces deterministic engineering results. It does not execute NC programs or simulate machine motion.
+
+**Parser profile:** GENERIC_ISO_GCODE_SUBSET — targets common ISO 6983-compatible G-code
+**Release maturity:** CUSTOMER_DEMO_READY
+
+#### Supported
+G0, G1, G2/G3 (IJK arcs), G17/G18/G19, G20/G21, G80–G85, G90/G91, G94, G97, G98/G99, M3/M4/M5/M6
+
+#### Bounded (partial semantics)
+G41/G42 (cutter comp detected, offset path not computed), G86–G89 (detected, not expanded)
+
+#### Deferred (BLOCKED_BY_KNOWN_LIMIT)
+G96 CSS, G93 inverse-time, R-format arcs, G91 in canned cycles, L-repeat, machine feed-rate limit
+
+#### Not Supported (UNSUPPORTED_SEMANTICS)
+M98/M99 subprograms, `#` macro variables, WHILE/IF flow control
+
+#### Key Features
+- Feed and rapid motion distance extraction
+- RPM hard-limit validation against machine, tool, and holder catalog
+- Engineering review findings (BLOCKING / WARNING / ADVISORY / INFO)
+- Traceability: SHA-256 program + config + analysis fingerprints, audit log
+- Block-level NC change review between program revisions
+- Export: JSON, CSV (findings, segments, coverage, changes), Print/PDF
+- EN/TR internationalization
+- Responsive layout (390px mobile, 1024px tablet, 1440px desktop)
+
+See [`docs/nc/NC_MODULE_RELEASE.md`](docs/nc/NC_MODULE_RELEASE.md) for the full feature matrix, demo scenarios, customer limitations, and release notes.
+
+#### NC Analysis Safety
+
+`NC_FILE_EXECUTED=NO` — NC program text is parsed as data only, never executed.
+`NC_FEED_MOVE_EQUALS_CONFIRMED_CUTTING=NO`
+`NC_CHANGE_REVIEW_IS_NOT_APPROVAL=YES`
+`HASH_EQUALS_DIGITAL_SIGNATURE=NO`
+
 ### Frontend
 - application shell
 - login/auth client integration
 - engineering dashboard and workspace status
 - grouped navigation by engineering domain
 - capability pages that explicitly identify pending frontend integration
+- NC program analysis workflow (process planning page)
 
 Backend capability does not imply that a complete frontend workflow is already available.
 

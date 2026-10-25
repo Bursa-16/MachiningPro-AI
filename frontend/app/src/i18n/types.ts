@@ -1192,4 +1192,11 @@ export interface TranslationDictionary {
   ncCrAuditChangeJsonExported: string
   ncCrAuditChangeCsvExported: string
   ncCrAuditChangePrintOpened: string
+  // NC scope panel (NC_PROGRAM_RELEASE_READINESS_01)
+  ppNcScopeTitle: string
+  ppNcScopeNotice: string
+  ppNcScopeDeferredLabel: string
+  ppNcScopeDeferredItems: string
+  ppNcScopeUnsupportedLabel: string
+  ppNcScopeUnsupportedItems: string
 }
