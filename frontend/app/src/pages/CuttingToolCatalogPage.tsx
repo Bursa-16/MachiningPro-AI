@@ -91,8 +91,16 @@ function ToolDetail({
     return <>{val ? t('ctYes') : t('ctNo')}</>
   }
 
-  const isInsert = record.tool_category_code === 'TURNING_INSERT'
-  const isSolid = ['END_MILL', 'DRILL'].includes(record.tool_category_code)
+  const isInsert = ['TURNING_INSERT', 'GROOVING_INSERT', 'FACE_MILL_INSERT'].includes(
+    record.tool_category_code
+  )
+  const isSolid = ['END_MILL', 'DRILL', 'REAMER', 'BORING_BAR', 'TAP', 'THREAD_MILL'].includes(
+    record.tool_category_code
+  )
+  const hasSubstrate = !!(
+    record.substrate_grade || record.substrate_material_code ||
+    record.coating_brand || record.iso_insert_designation
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -161,6 +169,34 @@ function ToolDetail({
         <FieldRow label={t('ctCoatingType')} value={str(record.coating_type)} />
       </div>
 
+      {/* Substrate & Grade (EPIC-03) */}
+      {hasSubstrate && (
+        <div className="bg-[var(--tp-surface)] border border-[var(--tp-border)] rounded-lg p-4 flex flex-col gap-1">
+          <SectionLabel>{t('ctSubstrateSection')}</SectionLabel>
+          {record.substrate_grade && (
+            <FieldRow label={t('ctSubstrateGrade')} value={record.substrate_grade} />
+          )}
+          {record.substrate_material_code && (
+            <FieldRow label={t('ctSubstrateMaterialCode')} value={record.substrate_material_code} />
+          )}
+          {record.coating_brand && (
+            <FieldRow label={t('ctCoatingBrand')} value={record.coating_brand} />
+          )}
+          {record.iso_insert_designation && (
+            <FieldRow
+              label={t('ctIsoInsertDesignation')}
+              value={<span className="font-mono text-xs">{record.iso_insert_designation}</span>}
+            />
+          )}
+          {record.insert_tolerance_class && (
+            <FieldRow label={t('ctInsertToleranceClass')} value={record.insert_tolerance_class} />
+          )}
+          {record.insert_hand && (
+            <FieldRow label={t('ctInsertHand')} value={record.insert_hand} />
+          )}
+        </div>
+      )}
+
       {/* Insert Geometry */}
       {isInsert && (
         <div className="bg-[var(--tp-surface)] border border-[var(--tp-border)] rounded-lg p-4 flex flex-col gap-1">
@@ -215,6 +251,15 @@ function ToolDetail({
         <FieldRow label={t('ctMaxRpm')} value={num(record.max_rpm, t('ctUnitRpm'))} />
         {record.compatible_holder_interface && (
           <FieldRow label={t('ctCompatibleHolder')} value={record.compatible_holder_interface} />
+        )}
+        {record.arbor_interface && (
+          <FieldRow label={t('ctArborInterface')} value={record.arbor_interface} />
+        )}
+        {record.max_ap_mm !== null && (
+          <FieldRow label={t('ctMaxApMm')} value={num(record.max_ap_mm, t('ctUnitMm'))} />
+        )}
+        {record.max_ae_mm !== null && (
+          <FieldRow label={t('ctMaxAeMm')} value={num(record.max_ae_mm, t('ctUnitMm'))} />
         )}
       </div>
 
@@ -314,6 +359,8 @@ export default function CuttingToolCatalogPage() {
   const [filterOperation, setFilterOperation] = useState('')
   const [filterToolMaterial, setFilterToolMaterial] = useState('')
   const [filterIsoGroup, setFilterIsoGroup] = useState('')
+  const [filterSubstrate, setFilterSubstrate] = useState('')
+  const [filterCoatingType, setFilterCoatingType] = useState('')
 
   useEffect(() => {
     fetchCuttingToolSchema()
@@ -332,6 +379,8 @@ export default function CuttingToolCatalogPage() {
       if (filterOperation) params.operation = filterOperation
       if (filterToolMaterial) params.tool_material = filterToolMaterial
       if (filterIsoGroup) params.iso_group = filterIsoGroup
+      if (filterSubstrate) params.substrate_material_code = filterSubstrate
+      if (filterCoatingType) params.coating_type = filterCoatingType
       const list = await fetchCuttingTools(params)
       setTools(list)
     } catch {
@@ -339,7 +388,10 @@ export default function CuttingToolCatalogPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterManufacturer, filterCategory, filterOperation, filterToolMaterial, filterIsoGroup])
+  }, [
+    filterManufacturer, filterCategory, filterOperation,
+    filterToolMaterial, filterIsoGroup, filterSubstrate, filterCoatingType,
+  ])
 
   useEffect(() => { loadTools() }, [loadTools])
 
@@ -389,13 +441,15 @@ export default function CuttingToolCatalogPage() {
           <>
             {/* Filters */}
             {schema && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                 {[
                   { label: t('ctFilterManufacturer'), value: filterManufacturer, set: setFilterManufacturer, options: schema.manufacturers },
                   { label: t('ctFilterCategory'), value: filterCategory, set: setFilterCategory, options: schema.categories },
                   { label: t('ctFilterOperation'), value: filterOperation, set: setFilterOperation, options: schema.operations },
                   { label: t('ctFilterToolMaterial'), value: filterToolMaterial, set: setFilterToolMaterial, options: schema.tool_materials },
                   { label: t('ctFilterIsoGroup'), value: filterIsoGroup, set: setFilterIsoGroup, options: schema.iso_material_groups },
+                  { label: t('ctFilterSubstrate'), value: filterSubstrate, set: setFilterSubstrate, options: schema.substrate_codes ?? [] },
+                  { label: t('ctFilterCoatingType'), value: filterCoatingType, set: setFilterCoatingType, options: schema.coating_types ?? [] },
                 ].map(({ label, value, set, options }) => (
                   <div key={label} className="flex flex-col gap-1">
                     <label className="text-[10px] font-semibold uppercase tracking-wider text-[var(--tp-text-2)]">

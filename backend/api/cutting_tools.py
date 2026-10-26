@@ -17,9 +17,11 @@ from backend.cutting_tools.catalog_models import (
 from backend.cutting_tools.seed_catalog import (
     get_catalog,
     get_categories,
+    get_coating_types,
     get_iso_groups,
     get_manufacturers,
     get_operations,
+    get_substrate_codes,
     get_tool_materials,
 )
 
@@ -51,6 +53,8 @@ def cutting_tools_schema() -> dict:
         "operations": get_operations(),
         "tool_materials": get_tool_materials(),
         "iso_material_groups": get_iso_groups(),
+        "substrate_codes": get_substrate_codes(),
+        "coating_types": get_coating_types(),
         "tool_count": len(records),
         "evidence_status": "MANUFACTURER_CATALOG",
     }
@@ -93,6 +97,8 @@ def _filter_catalog(
     operation: str | None,
     tool_material: str | None,
     iso_group: str | None,
+    substrate_material_code: str | None = None,
+    coating_type: str | None = None,
 ) -> list[CuttingToolCatalogRecord]:
     results = list(_CATALOG.values())
     if manufacturer:
@@ -111,7 +117,33 @@ def _filter_catalog(
     if iso_group:
         ig = iso_group.upper()
         results = [r for r in results if ig in r.iso_material_groups]
+    if substrate_material_code:
+        sl = substrate_material_code.upper()
+        results = [r for r in results if r.substrate_material_code and
+                   r.substrate_material_code.upper() == sl]
+    if coating_type:
+        ctl = coating_type.upper()
+        results = [r for r in results if r.coating_type and r.coating_type.upper() == ctl]
     return results
+
+
+@router.get("/search", response_model=list[CuttingToolCatalogRecord])
+def cutting_tools_search(
+    q: str = Query(..., min_length=1, description="Keyword search in name, manufacturer, category"),
+) -> list[CuttingToolCatalogRecord]:
+    """
+    Full-text keyword search across product name, manufacturer,
+    catalog code, category, and subcategory.
+    """
+    ql = q.lower()
+    return [
+        r for r in _CATALOG.values()
+        if ql in r.product_name.lower()
+        or ql in r.manufacturer.lower()
+        or ql in r.tool_category.lower()
+        or (r.catalog_code and ql in r.catalog_code.lower())
+        or (r.tool_subcategory and ql in r.tool_subcategory.lower())
+    ]
 
 
 @router.get("", response_model=list[CuttingToolCatalogRecord])
@@ -121,12 +153,17 @@ def cutting_tools_list(
     operation: str | None = Query(None),
     tool_material: str | None = Query(None),
     iso_group: str | None = Query(None),
+    substrate_material_code: str | None = Query(None),
+    coating_type: str | None = Query(None),
 ) -> list[CuttingToolCatalogRecord]:
     """
     Return filtered list of cutting tools.
     All filters are optional and case-insensitive.
     """
-    return _filter_catalog(manufacturer, category, operation, tool_material, iso_group)
+    return _filter_catalog(
+        manufacturer, category, operation, tool_material, iso_group,
+        substrate_material_code, coating_type,
+    )
 
 
 @router.get("/{tool_id}", response_model=CuttingToolCatalogRecord)

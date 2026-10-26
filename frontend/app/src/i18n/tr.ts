@@ -641,6 +641,20 @@ export const trTranslations: TranslationDictionary = {
   ctUnitDeg: '°',
   ctUnitRpm: 'Devir/dak',
   ctUnitMmin: 'm/dak',
+  // EPIC-03 — extended tool fields
+  ctSubstrateSection: 'Substrat ve Kalite',
+  ctSubstrateGrade: 'Kalite Kodu',
+  ctSubstrateMaterialCode: 'Substrat Malzeme',
+  ctCoatingBrand: 'Kaplama Markası',
+  ctIsoInsertDesignation: 'ISO Tanımlaması',
+  ctInsertToleranceClass: 'Tolerans Sınıfı',
+  ctInsertHand: 'İnsert Eli',
+  ctMaxApMm: 'Maks ap (eksenel)',
+  ctMaxAeMm: 'Maks ae (radyal)',
+  ctArborInterface: 'Arbor Arayüzü',
+  ctToolTypeCode: 'Takım Tipi Kodu',
+  ctFilterSubstrate: 'Substrat',
+  ctFilterCoatingType: 'Kaplama Tipi',
 
   // Tool Holder Catalog (TOOL_HOLDER_CATALOG_DATA_INTEGRATION_01)
   thPageTitle: 'Takım Tutucu Kataloğu',

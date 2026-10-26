@@ -13,6 +13,7 @@ class CuttingToolCatalogRecord(BaseModel):
     tool_category: str
     tool_category_code: str
     tool_subcategory: str | None = None
+    tool_type_code: str | None = None  # DRILL, END_MILL, FACE_MILL_INSERT, TAP, THREAD_MILL, etc.
 
     # Application
     supported_operations: list[str]
@@ -20,16 +21,23 @@ class CuttingToolCatalogRecord(BaseModel):
 
     # Tool material
     tool_material: str | None = None
+    substrate_grade: str | None = None            # grade code: GC4325, IC8250, KC5525...
+    # CARBIDE / CERMET / CERAMIC / CBN / PCD / HSS / HSS_E / HSS_PM
+    substrate_material_code: str | None = None
     coating: str | None = None
     coating_type: str | None = None
+    coating_brand: str | None = None              # trade name: Inveio, Tiger·tec Gold...
 
     # Insert geometry (indexable tools)
+    iso_insert_designation: str | None = None     # full ISO 1832 code
     insert_shape: str | None = None
     insert_shape_code: str | None = None
     insert_ic_mm: float | None = None
     insert_thickness_mm: float | None = None
     nose_radius_mm: float | None = None
     clearance_angle_deg: float | None = None
+    insert_tolerance_class: str | None = None     # M, G, C, U
+    insert_hand: str | None = None                # R, L, N
 
     # Solid-tool / drill geometry
     cutting_diameter_mm: float | None = None
@@ -49,6 +57,11 @@ class CuttingToolCatalogRecord(BaseModel):
 
     # Holder compatibility hint (for future TOOL_HOLDER_CATALOG phase)
     compatible_holder_interface: str | None = None
+    arbor_interface: str | None = None            # for indexable milling bodies: Ø22 mm bore, etc.
+
+    # Milling engagement limits (EPIC-03 — tool-body physical limit, not cutting guidance)
+    max_ap_mm: float | None = None   # max axial depth of cut (milling body limit)
+    max_ae_mm: float | None = None   # max radial engagement (milling body limit)
 
     # Manufacturer-published cutting guidance (None when not explicitly stated)
     vc_min_mpm: float | None = None

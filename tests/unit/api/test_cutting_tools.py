@@ -6,9 +6,9 @@ from backend.api.app import app
 
 client = TestClient(app)
 
-EXPECTED_TOOL_COUNT = 18
-EXPECTED_MANUFACTURER_COUNT = 4
-EXPECTED_CATEGORY_COUNT = 5  # Turning Insert, End Mill, Solid Carbide Drill, Reamer, Boring Bar
+EXPECTED_TOOL_COUNT = 40
+EXPECTED_MANUFACTURER_COUNT = 5  # Sandvik, Kennametal, Iscar, Walter, OSG
+EXPECTED_CATEGORY_COUNT = 9  # prev 5 + Grooving Insert, Face Mill Insert, Tap, Thread Mill
 
 
 # ── Seed catalog data tests ──────────────────────────────────────────────────
@@ -409,7 +409,7 @@ class TestRegression:
         r = client.get("/api/machines/summary")
         assert r.status_code == 200
         data = r.json()
-        assert data["machine_count"] == 15
+        assert data["machine_count"] == 37
 
     def test_cutting_parameters_still_works(self):
         r = client.get("/api/cutting-parameters/schema")
@@ -423,3 +423,279 @@ class TestRegression:
         r = client.get("/api/health")
         assert r.status_code == 200
         assert r.json()["status"] == "ok"
+
+
+# ── EPIC-03 new category tests ────────────────────────────────────────────────
+
+class TestEpic03NewCategories:
+    def test_grooving_insert_count(self):
+        r = client.get("/api/cutting-tools?category=Grooving Insert")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 4
+
+    def test_face_mill_insert_count(self):
+        r = client.get("/api/cutting-tools?category=Face Mill Insert")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 3
+
+    def test_tap_count(self):
+        r = client.get("/api/cutting-tools?category=Tap")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 4
+
+    def test_thread_mill_count(self):
+        r = client.get("/api/cutting-tools?category=Thread Mill")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 2
+
+    def test_osg_manufacturer_present(self):
+        r = client.get("/api/cutting-tools?manufacturer=OSG")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 4
+        assert all(t["manufacturer"] == "OSG" for t in data)
+
+    def test_tapping_operation_returns_results(self):
+        r = client.get("/api/cutting-tools?operation=tapping")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 4
+        for t in data:
+            assert "tapping" in t["supported_operations"]
+
+    def test_grooving_operation_returns_results(self):
+        r = client.get("/api/cutting-tools?operation=grooving")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 4
+        for t in data:
+            assert "grooving" in t["supported_operations"]
+
+    def test_thread_milling_operation_returns_results(self):
+        r = client.get("/api/cutting-tools?operation=thread milling")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 2
+
+    def test_face_milling_operation_returns_results(self):
+        r = client.get("/api/cutting-tools?operation=face milling")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 3
+
+
+# ── EPIC-03 new fields tests ──────────────────────────────────────────────────
+
+class TestEpic03NewFields:
+    def test_substrate_grade_present_on_grooving_insert(self):
+        r = client.get("/api/cutting-tools/sandvik-n123g2-0300-0002-cr-1125")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["substrate_grade"] == "GC1125"
+        assert data["substrate_material_code"] == "CARBIDE"
+        assert data["coating_brand"] == "Inveio"
+
+    def test_iso_insert_designation_present(self):
+        r = client.get("/api/cutting-tools/sandvik-n123g2-0300-0002-cr-1125")
+        data = r.json()
+        assert data["iso_insert_designation"] == "N123G2-0300-0002-CR"
+        assert data["insert_tolerance_class"] == "M"
+
+    def test_tool_type_code_on_tap(self):
+        r = client.get("/api/cutting-tools/osg-a-tap-sft-m6x1p0")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["tool_type_code"] == "TAP"
+        assert data["substrate_material_code"] == "HSS_PM"
+        assert data["tool_material"] == "HSS-E-PM"
+
+    def test_tap_geometry_not_zero(self):
+        r = client.get("/api/cutting-tools/osg-a-tap-sft-m6x1p0")
+        data = r.json()
+        assert data["cutting_diameter_mm"] == 6.0
+        assert data["overall_length_mm"] == 66.0
+        assert data["number_of_flutes"] == 3
+        assert data["through_coolant"] is False
+
+    def test_face_mill_insert_substrate(self):
+        r = client.get("/api/cutting-tools/sandvik-r245-12t308m-ph-4325")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["substrate_grade"] == "GC4325"
+        assert data["substrate_material_code"] == "CARBIDE"
+        assert data["tool_type_code"] == "FACE_MILL_INSERT"
+
+    def test_filter_by_substrate_carbide(self):
+        r = client.get("/api/cutting-tools?substrate_material_code=CARBIDE")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) > 0
+        for t in data:
+            assert t["substrate_material_code"] == "CARBIDE"
+
+    def test_filter_by_substrate_hss_pm(self):
+        r = client.get("/api/cutting-tools?substrate_material_code=HSS_PM")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 4
+        for t in data:
+            assert t["substrate_material_code"] == "HSS_PM"
+
+    def test_filter_by_coating_type_pvd(self):
+        r = client.get("/api/cutting-tools?coating_type=PVD")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) > 0
+        for t in data:
+            assert t["coating_type"] == "PVD"
+
+    def test_filter_by_coating_type_cvd(self):
+        r = client.get("/api/cutting-tools?coating_type=CVD")
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) > 0
+        for t in data:
+            assert t["coating_type"] == "CVD"
+
+    def test_schema_includes_substrate_codes(self):
+        r = client.get("/api/cutting-tools/schema")
+        assert r.status_code == 200
+        data = r.json()
+        assert "substrate_codes" in data
+        assert "CARBIDE" in data["substrate_codes"]
+        assert "HSS_PM" in data["substrate_codes"]
+
+    def test_schema_includes_coating_types(self):
+        r = client.get("/api/cutting-tools/schema")
+        data = r.json()
+        assert "coating_types" in data
+        assert "PVD" in data["coating_types"]
+        assert "CVD" in data["coating_types"]
+
+    def test_no_fabricated_specs_hss_pm_taps(self):
+        """HSS-E-PM tap cutting guidance fields must be None (not fabricated)."""
+        r = client.get("/api/cutting-tools/osg-a-tap-sft-m6x1p0")
+        data = r.json()
+        assert data["vc_min_mpm"] is None
+        assert data["vc_max_mpm"] is None
+        assert data["fz_min_mm"] is None
+        assert data["fz_max_mm"] is None
+
+
+# ── EPIC-03 search endpoint tests ─────────────────────────────────────────────
+
+class TestEpic03Search:
+    def test_search_endpoint_exists(self):
+        r = client.get("/api/cutting-tools/search?q=sandvik")
+        assert r.status_code == 200
+
+    def test_search_by_manufacturer_keyword(self):
+        r = client.get("/api/cutting-tools/search?q=sandvik")
+        data = r.json()
+        assert len(data) > 0
+        assert all("sandvik" in t["manufacturer"].lower() for t in data)
+
+    def test_search_by_product_name(self):
+        r = client.get("/api/cutting-tools/search?q=CNMG")
+        data = r.json()
+        assert len(data) > 0
+        assert all("cnmg" in t["product_name"].lower() for t in data)
+
+    def test_search_no_match_returns_empty(self):
+        r = client.get("/api/cutting-tools/search?q=xyznomatch99999")
+        assert r.status_code == 200
+        assert r.json() == []
+
+    def test_search_missing_q_returns_422(self):
+        r = client.get("/api/cutting-tools/search")
+        assert r.status_code == 422
+
+
+# ── EPIC-03 import pipeline tests ────────────────────────────────────────────
+
+class TestEpic03ImportPipeline:
+    def test_import_pipeline_dry_run_valid_json(self):
+        from backend.cutting_tools.import_pipeline import (
+            parse_json_tools,
+            run_import_pipeline,
+        )
+        sample = [
+            {
+                "stable_id": "test-tool-xyz-001",
+                "manufacturer": "TestMfr",
+                "product_name": "Test Drill 8mm",
+                "tool_category": "Solid Carbide Drill",
+                "tool_category_code": "DRILL",
+                "supported_operations": "drilling",
+                "iso_material_groups": "P|M",
+                "source_title": "Test",
+                "source_authority": "TEST",
+                "evidence_status": "MANUFACTURER_CATALOG",
+            }
+        ]
+        import json
+        rows = parse_json_tools(json.dumps(sample))
+        result = run_import_pipeline(rows, dry_run=True)
+        assert result.dry_run is True
+        assert result.total_parsed == 1
+        assert result.valid == 1
+        assert result.invalid == 0
+        assert result.added == 0  # dry run — no records added
+
+    def test_import_pipeline_detects_duplicate(self):
+        from backend.cutting_tools.import_pipeline import (
+            parse_json_tools,
+            run_import_pipeline,
+        )
+        # Use a stable_id already in the catalog
+        sample = [
+            {
+                "stable_id": "sandvik-cnmg-120408-pm-4325",
+                "manufacturer": "Sandvik Coromant",
+                "product_name": "CNMG 12 04 08-PM 4325",
+                "tool_category": "Turning Insert",
+                "tool_category_code": "TURNING_INSERT",
+                "supported_operations": "turning",
+                "iso_material_groups": "P",
+                "source_title": "Test",
+                "source_authority": "TEST",
+                "evidence_status": "MANUFACTURER_CATALOG",
+            }
+        ]
+        import json
+        rows = parse_json_tools(json.dumps(sample))
+        result = run_import_pipeline(rows, dry_run=True)
+        assert result.duplicate == 1
+        assert "sandvik-cnmg-120408-pm-4325" in result.duplicate_ids
+
+    def test_import_pipeline_invalid_missing_required(self):
+        from backend.cutting_tools.import_pipeline import (
+            parse_json_tools,
+            run_import_pipeline,
+        )
+        sample = [{"product_name": "Missing stable_id"}]
+        import json
+        rows = parse_json_tools(json.dumps(sample))
+        result = run_import_pipeline(rows, dry_run=True)
+        assert result.invalid == 1
+        assert len(result.errors) == 1
+
+    def test_parse_csv_tools(self):
+        from backend.cutting_tools.import_pipeline import parse_csv_tools
+        csv_str = (
+            "stable_id,manufacturer,product_name\n"
+            "test-csv-001,TestMfr,Test Tool\n"
+        )
+        rows = parse_csv_tools(csv_str)
+        assert len(rows) == 1
+        assert rows[0]["stable_id"] == "test-csv-001"
+
+    def test_parse_json_tools_invalid_raises(self):
+        from backend.cutting_tools.import_pipeline import parse_json_tools
+        import pytest
+        with pytest.raises(Exception):
+            parse_json_tools('{"not": "an array"}')

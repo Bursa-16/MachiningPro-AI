@@ -641,6 +641,20 @@ export const enTranslations: TranslationDictionary = {
   ctUnitDeg: '°',
   ctUnitRpm: 'RPM',
   ctUnitMmin: 'm/min',
+  // EPIC-03 — extended tool fields
+  ctSubstrateSection: 'Substrate & Grade',
+  ctSubstrateGrade: 'Grade Code',
+  ctSubstrateMaterialCode: 'Substrate Material',
+  ctCoatingBrand: 'Coating Brand',
+  ctIsoInsertDesignation: 'ISO Designation',
+  ctInsertToleranceClass: 'Tolerance Class',
+  ctInsertHand: 'Insert Hand',
+  ctMaxApMm: 'Max ap (axial)',
+  ctMaxAeMm: 'Max ae (radial)',
+  ctArborInterface: 'Arbor Interface',
+  ctToolTypeCode: 'Tool Type Code',
+  ctFilterSubstrate: 'Substrate',
+  ctFilterCoatingType: 'Coating Type',
 
   // Tool Holder Catalog (TOOL_HOLDER_CATALOG_DATA_INTEGRATION_01)
   thPageTitle: 'Tool Holder Catalog',

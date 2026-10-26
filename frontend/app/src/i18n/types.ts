@@ -648,6 +648,20 @@ export interface TranslationDictionary {
   ctUnitDeg: string
   ctUnitRpm: string
   ctUnitMmin: string
+  // EPIC-03 — extended tool fields
+  ctSubstrateSection: string
+  ctSubstrateGrade: string
+  ctSubstrateMaterialCode: string
+  ctCoatingBrand: string
+  ctIsoInsertDesignation: string
+  ctInsertToleranceClass: string
+  ctInsertHand: string
+  ctMaxApMm: string
+  ctMaxAeMm: string
+  ctArborInterface: string
+  ctToolTypeCode: string
+  ctFilterSubstrate: string
+  ctFilterCoatingType: string
 
   // Tool Holder Catalog (TOOL_HOLDER_CATALOG_DATA_INTEGRATION_01)
   thPageTitle: string
