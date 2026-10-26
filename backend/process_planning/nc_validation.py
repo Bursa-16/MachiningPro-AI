@@ -156,6 +156,9 @@ class NCProgramValidationSummary(BaseModel):
     holder_rpm_limit_check: NCValidationFinding | None = None
     effective_rpm_limit_check: NCValidationFinding | None = None
 
+    # Machine feed axis limit (R-2606)
+    machine_feed_limit_check: NCValidationFinding | None = None
+
     # Engineering reference findings (ADVISORY)
     cutting_speed_check: NCValidationFinding | None = None
     feed_per_tooth_check: NCValidationFinding | None = None
@@ -177,7 +180,7 @@ class NCProgramValidationSummary(BaseModel):
     nc_commanded_feed_equals_recommended_feed: bool = False
     reference_range_validation_is_optimization: bool = False
     nc_program_automatic_operation_classification: bool = False
-    machine_feed_limit_validation_implemented: bool = False
+    machine_feed_limit_validation_implemented: bool = True
     g84_pitch_validation_implemented: bool = False
     generic_feed_without_spindle_warning_implemented: bool = False
     spindle_direction_compatibility_check_implemented: bool = False
@@ -330,6 +333,7 @@ def validate_nc_feed_spindle(
     motion_result: NcMotionResult,
     *,
     machine_spindle_max_rpm: int | None = None,
+    machine_max_cutting_feed_mm_min: float | None = None,
     machine_id: str | None = None,
     tool_max_rpm: int | None = None,
     tool_cutting_diameter_mm: float | None = None,
@@ -350,7 +354,7 @@ def validate_nc_feed_spindle(
     REFERENCE_RANGE_VALIDATION_IS_OPTIMIZATION=NO
     NC_PROGRAM_AUTOMATIC_OPERATION_CLASSIFICATION=NO
     MISSING_LIMIT_AS_ZERO=NO — missing limit ≠ zero or unlimited.
-    MACHINE_FEED_LIMIT_VALIDATION_IMPLEMENTED=NO — no feed-axis field in catalog.
+    MACHINE_FEED_LIMIT_VALIDATION_IMPLEMENTED=YES — R-2606 via machine_max_cutting_feed_mm_min.
     G84_PITCH_VALIDATION_IMPLEMENTED=NO — deferred.
     GENERIC_FEED_WITHOUT_SPINDLE_WARNING_IMPLEMENTED=NO
     SPINDLE_DIRECTION_COMPATIBILITY_CHECK_IMPLEMENTED=NO
@@ -702,11 +706,62 @@ def validate_nc_feed_spindle(
         )
 
     # -----------------------------------------------------------------------
+    # R-2606 — Machine feed axis limit (max_cutting_feed_mm_min)
+    # Fails closed when limit is unknown (None).
+    # -----------------------------------------------------------------------
+    machine_feed_check: NCValidationFinding | None = None
+    if feed_mm_min is None:
+        machine_feed_check = NCValidationFinding(
+            check_id="MACHINE_FEED_LIMIT",
+            severity=NCValidationSeverity.INSUFFICIENT_DATA,
+            status=NCValidationStatus.INSUFFICIENT_DATA,
+            message_key="ncValNoFeedCommand",
+            limitations=["F word not found in NC program"],
+        )
+    elif machine_max_cutting_feed_mm_min is None:
+        machine_feed_check = NCValidationFinding(
+            check_id="MACHINE_FEED_LIMIT",
+            severity=NCValidationSeverity.INSUFFICIENT_DATA,
+            status=NCValidationStatus.INSUFFICIENT_DATA,
+            observed_value=feed_mm_min,
+            observed_unit="mm/min",
+            message_key="ncValMachineFeedLimitUnknown",
+            limitations=[
+                f"machine:{machine_id or 'unknown'} max_cutting_feed_mm_min not available; "
+                "MISSING_LIMIT_AS_ZERO=NO"
+            ],
+        )
+    elif feed_mm_min > machine_max_cutting_feed_mm_min:
+        machine_feed_check = NCValidationFinding(
+            check_id="MACHINE_FEED_LIMIT",
+            severity=NCValidationSeverity.BLOCKING,
+            status=NCValidationStatus.EXCEEDS_LIMIT,
+            observed_value=feed_mm_min,
+            observed_unit="mm/min",
+            limit_or_reference=machine_max_cutting_feed_mm_min,
+            limit_unit="mm/min",
+            limit_source=f"machine:{machine_id or 'unknown'}",
+            message_key="ncValMachineFeedLimitExceeded",
+        )
+    else:
+        machine_feed_check = NCValidationFinding(
+            check_id="MACHINE_FEED_LIMIT",
+            severity=NCValidationSeverity.INFO,
+            status=NCValidationStatus.WITHIN_LIMIT,
+            observed_value=feed_mm_min,
+            observed_unit="mm/min",
+            limit_or_reference=machine_max_cutting_feed_mm_min,
+            limit_unit="mm/min",
+            limit_source=f"machine:{machine_id or 'unknown'}",
+            message_key="ncValMachineFeedLimitOk",
+        )
+
+    # -----------------------------------------------------------------------
     # Build summary
     # -----------------------------------------------------------------------
     all_findings: list[NCValidationFinding | None] = [
         machine_check, tool_check, holder_check, effective_check,
-        vc_check, fz_check, feed_rev_check,
+        machine_feed_check, vc_check, fz_check, feed_rev_check,
     ]
     blocking, warning, advisory, insuf = _count_severities(all_findings)
 
@@ -726,6 +781,7 @@ def validate_nc_feed_spindle(
         tool_rpm_limit_check=tool_check,
         holder_rpm_limit_check=holder_check,
         effective_rpm_limit_check=effective_check,
+        machine_feed_limit_check=machine_feed_check,
         cutting_speed_check=vc_check,
         feed_per_tooth_check=fz_check,
         feed_per_rev_check=feed_rev_check,
@@ -740,7 +796,7 @@ def validate_nc_feed_spindle(
         nc_commanded_feed_equals_recommended_feed=False,
         reference_range_validation_is_optimization=False,
         nc_program_automatic_operation_classification=False,
-        machine_feed_limit_validation_implemented=False,
+        machine_feed_limit_validation_implemented=True,
         g84_pitch_validation_implemented=False,
         generic_feed_without_spindle_warning_implemented=False,
         spindle_direction_compatibility_check_implemented=False,

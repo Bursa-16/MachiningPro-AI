@@ -25,8 +25,6 @@ from decimal import Decimal
 
 from backend.compatibility.models import (
     RC,
-    VALID_ISO_GROUPS,
-    VALID_OPERATIONS,
     CompatibilityRequest,
     CompatibilityResponse,
     RuleResult,
@@ -39,10 +37,10 @@ from backend.cutting_tools.catalog_models import CuttingToolCatalogRecord
 from backend.cutting_tools.seed_catalog import get_catalog as _tool_catalog
 from backend.domain.enums import IsoMaterialGroup, OperationType
 from backend.domain.units import Quantity, Unit
-from backend.machining.exceptions import MachiningMathError
-from backend.machining.formulas import spindle_speed_from_cutting_speed
 from backend.machines.catalog_models import MachineCatalogRecord
 from backend.machines.seed_catalog import seed_machine_catalog
+from backend.machining.exceptions import MachiningMathError
+from backend.machining.formulas import spindle_speed_from_cutting_speed
 from backend.tool_holders.catalog_models import ToolHolderCatalogRecord
 from backend.tool_holders.seed_catalog import get_catalog as _holder_catalog
 
@@ -118,7 +116,10 @@ def get_schema_holders() -> list[SchemaEntry]:
     for h in sorted(_HOLDERS.values(), key=lambda x: x.stable_id):
         entries.append(SchemaEntry(
             id=h.stable_id,
-            display=f"{h.manufacturer} {h.product_name} ({h.machine_interface_key} / {h.tool_interface_key})",
+            display=(
+                f"{h.manufacturer} {h.product_name}"
+                f" ({h.machine_interface_key} / {h.tool_interface_key})"
+            ),
         ))
     return entries
 
@@ -214,7 +215,14 @@ def _rule_machine_holder_interface(
     machine: MachineCatalogRecord,
     holder: ToolHolderCatalogRecord,
 ) -> RuleResult:
-    if machine.spindle_interface is None:
+    # Build the full set of interfaces this machine supports
+    machine_interfaces: list[str] = []
+    if machine.spindle_interface is not None:
+        machine_interfaces.append(machine.spindle_interface)
+    if machine.spindle_interfaces_supported:
+        machine_interfaces.extend(machine.spindle_interfaces_supported)
+
+    if not machine_interfaces:
         return RuleResult(
             rule_id="MACHINE_HOLDER_INTERFACE",
             status="UNKNOWN",
@@ -224,13 +232,13 @@ def _rule_machine_holder_interface(
                 "Cannot determine compatibility."
             ),
         )
-    if machine.spindle_interface != holder.machine_interface_key:
+    if holder.machine_interface_key not in machine_interfaces:
         return RuleResult(
             rule_id="MACHINE_HOLDER_INTERFACE",
             status="FAIL",
             reason_code=RC.MACHINE_INTERFACE_MISMATCH,
             detail=(
-                f"Machine spindle interface '{machine.spindle_interface}' does not match "
+                f"Machine spindle interfaces {machine_interfaces} do not include "
                 f"holder machine interface '{holder.machine_interface_key}'."
             ),
         )
@@ -238,7 +246,108 @@ def _rule_machine_holder_interface(
         rule_id="MACHINE_HOLDER_INTERFACE",
         status="PASS",
         reason_code=RC.MACHINE_INTERFACE_MATCH,
-        detail=f"Interfaces match: {machine.spindle_interface}.",
+        detail=(
+            f"Holder interface '{holder.machine_interface_key}' found in "
+            f"machine interfaces {machine_interfaces}."
+        ),
+    )
+
+
+def _rule_machine_tool_length(
+    machine: MachineCatalogRecord,
+    tool: CuttingToolCatalogRecord,
+) -> RuleResult:
+    """Check tool overall length against machine max_tool_length_mm.
+
+    Fails closed when max_tool_length_mm is unknown on the machine.
+    """
+    if tool.overall_length_mm is None:
+        return RuleResult(
+            rule_id="MACHINE_TOOL_LENGTH",
+            status="UNKNOWN",
+            reason_code=RC.SHANK_DIAMETER_UNKNOWN,
+            detail=(
+                f"Cutting tool '{tool.stable_id}' has no published overall length. "
+                "Cannot check machine tool length limit."
+            ),
+        )
+    if machine.max_tool_length_mm is None:
+        return RuleResult(
+            rule_id="MACHINE_TOOL_LENGTH",
+            status="UNKNOWN",
+            reason_code=RC.MACHINE_RPM_LIMIT_UNKNOWN,
+            detail=(
+                f"Machine '{machine.stable_id}' has no published max tool length. "
+                "MISSING_LIMIT_AS_ZERO=NO: absent limit is not treated as unlimited."
+            ),
+        )
+    if tool.overall_length_mm > machine.max_tool_length_mm:
+        return RuleResult(
+            rule_id="MACHINE_TOOL_LENGTH",
+            status="FAIL",
+            reason_code=RC.MACHINE_INTERFACE_MISMATCH,
+            detail=(
+                f"Tool overall length {tool.overall_length_mm} mm exceeds "
+                f"machine max tool length {machine.max_tool_length_mm} mm."
+            ),
+        )
+    return RuleResult(
+        rule_id="MACHINE_TOOL_LENGTH",
+        status="PASS",
+        reason_code=RC.MACHINE_INTERFACE_MATCH,
+        detail=(
+            f"Tool overall length {tool.overall_length_mm} mm within "
+            f"machine max tool length {machine.max_tool_length_mm} mm."
+        ),
+    )
+
+
+def _rule_machine_tool_diameter(
+    machine: MachineCatalogRecord,
+    tool: CuttingToolCatalogRecord,
+) -> RuleResult:
+    """Check tool diameter against machine max_tool_diameter_mm.
+
+    Fails closed when max_tool_diameter_mm is unknown on the machine.
+    """
+    if tool.cutting_diameter_mm is None:
+        return RuleResult(
+            rule_id="MACHINE_TOOL_DIAMETER",
+            status="UNKNOWN",
+            reason_code=RC.SHANK_DIAMETER_UNKNOWN,
+            detail=(
+                f"Cutting tool '{tool.stable_id}' has no published cutting diameter. "
+                "Cannot check machine tool diameter limit."
+            ),
+        )
+    if machine.max_tool_diameter_mm is None:
+        return RuleResult(
+            rule_id="MACHINE_TOOL_DIAMETER",
+            status="UNKNOWN",
+            reason_code=RC.MACHINE_RPM_LIMIT_UNKNOWN,
+            detail=(
+                f"Machine '{machine.stable_id}' has no published max tool diameter. "
+                "MISSING_LIMIT_AS_ZERO=NO: absent limit is not treated as unlimited."
+            ),
+        )
+    if tool.cutting_diameter_mm > machine.max_tool_diameter_mm:
+        return RuleResult(
+            rule_id="MACHINE_TOOL_DIAMETER",
+            status="FAIL",
+            reason_code=RC.MACHINE_INTERFACE_MISMATCH,
+            detail=(
+                f"Tool cutting diameter {tool.cutting_diameter_mm} mm exceeds "
+                f"machine max tool diameter {machine.max_tool_diameter_mm} mm."
+            ),
+        )
+    return RuleResult(
+        rule_id="MACHINE_TOOL_DIAMETER",
+        status="PASS",
+        reason_code=RC.MACHINE_INTERFACE_MATCH,
+        detail=(
+            f"Tool cutting diameter {tool.cutting_diameter_mm} mm within "
+            f"machine max tool diameter {machine.max_tool_diameter_mm} mm."
+        ),
     )
 
 
@@ -348,7 +457,7 @@ def _rule_holder_tool_shank(
             status="UNKNOWN",
             reason_code=RC.INTERFACE_UNRESOLVABLE,
             detail=(
-                f"Shell mill arbor compatibility requires a shell mill cutter body. "
+                "Shell mill arbor compatibility requires a shell mill cutter body. "
                 "The cutting tool catalog does not contain shell mill bodies; "
                 "compatibility cannot be determined from available data."
             ),
@@ -456,8 +565,17 @@ def evaluate(req: CompatibilityRequest) -> CompatibilityResponse:
     # 3 — HOLDER_TOOL_SHANK
     r = _rule_holder_tool_shank(holder, tool)
     rules.append(r)
+
+    # 3b — MACHINE_TOOL_LENGTH (advisory; fail-closed on absent limits)
+    rules.append(_rule_machine_tool_length(machine, tool))
+
+    # 3c — MACHINE_TOOL_DIAMETER (advisory; fail-closed on absent limits)
+    rules.append(_rule_machine_tool_diameter(machine, tool))
     if r.status == "UNKNOWN":
-        if tool.shank_diameter_mm is None and holder.tool_interface_key in _BORE_DIAMETER_INTERFACES:
+        if (
+            tool.shank_diameter_mm is None
+            and holder.tool_interface_key in _BORE_DIAMETER_INTERFACES
+        ):
             missing_fields.append(f"tool.shank_diameter_mm ({req.cutting_tool_id})")
         if (
             holder.clamping_range_min_mm is None or holder.clamping_range_max_mm is None

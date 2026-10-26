@@ -532,6 +532,52 @@ export interface TranslationDictionary {
   mcUnitMpm: string
   mcProductionNotValidated: string
   mcCatalogBrowseOnly: string
+  // EPIC_02 — extended machine detail fields
+  mcCountryOfOrigin: string
+  mcMachineTypeCode: string
+  mcFeaturesSection: string
+  mcFeatureSubspindle: string
+  mcFeatureYAxis: string
+  mcFeatureLiveTooling: string
+  mcFeatureBAxis: string
+  mcFeaturePalletChanger: string
+  mcCapable5Axis: string
+  mcCapable3Plus2: string
+  mcCapableTapping: string
+  mcCapableBoring: string
+  mcCapableThreading: string
+  mcCapableReaming: string
+  mcSpindleMinRpm: string
+  mcSpindlePowerContKw: string
+  mcSpindleInterfacesSupported: string
+  mcMaxCuttingFeed: string
+  mcMagazineType: string
+  mcAtcChipToChip: string
+  mcCoolantSection: string
+  mcFloodCoolant: string
+  mcThroughSpindleCoolant: string
+  mcCoolantPressure: string
+  mcMqlSupport: string
+  mcDynamicsSection: string
+  mcPositioningAccuracy: string
+  mcRepeatability: string
+  mcControlSection: string
+  mcControllerModel: string
+  mcNcDialect: string
+  mcUnitMmMin: string
+  mcUnitSec: string
+  mcUnitBar: string
+  // EPIC_02 — search & compare UI
+  mcSearchPlaceholder: string
+  mcSearchBtn: string
+  mcSearchClear: string
+  mcFilterSpindleInterface: string
+  mcFilter5Axis: string
+  mcCompareReady: string
+  mcMachinesSelected: string
+  mcCompareHide: string
+  mcCompareShow: string
+  mcCompareClear: string
 
   // Cutting Tool Catalog (CUTTING_TOOL_CATALOG_DATA_INTEGRATION_01)
   ctPageTitle: string

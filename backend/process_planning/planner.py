@@ -699,7 +699,9 @@ def generate_plan(
             mat_record = _get_mat_catalog().get(req.material_id)
             if mat_record is not None and mat_record.machinability is not None:
                 mac = mat_record.machinability
-                advisory_parts = [f"Material library: {mat_record.designation} (ISO {mat_record.iso_group})"]
+                advisory_parts = [
+                    f"Material library: {mat_record.designation} (ISO {mat_record.iso_group})"
+                ]
                 if mac.work_hardening and mac.work_hardening not in ("LOW", "UNKNOWN"):
                     advisory_parts.append(f"work_hardening={mac.work_hardening}")
                 if mac.thermal_load and mac.thermal_load not in ("LOW", "UNKNOWN"):
@@ -707,6 +709,27 @@ def generate_plan(
                 if mac.coolant_guidance:
                     advisory_parts.append(f"coolant: {mac.coolant_guidance}")
                 limitations.append(" — ".join(advisory_parts) + " (REFERENCE_ONLY)")
+                # Material + machine advisory when machine context is available
+                if machine_ids:
+                    try:
+                        from backend.machines.seed_catalog import seed_machine_catalog
+                        machine_map = {r["stable_id"]: r for r in seed_machine_catalog()}
+                        for mid in machine_ids[:2]:  # advisory for first two machines
+                            mrec = machine_map.get(mid)
+                            if (
+                                mrec and mrec.get("through_spindle_coolant") is True
+                                and mac.coolant_guidance
+                            ):
+                                limitations.append(
+                                    f"Machine {mrec['manufacturer']} {mrec['model']}: "
+                                    f"through-spindle coolant available — "
+                                    f"compatible with {mat_record.designation} coolant guidance. "
+                                    "(REFERENCE_ONLY)"
+                                )
+                            elif mrec and mrec.get("through_spindle_coolant") is None:
+                                pass  # unknown — no advisory
+                    except Exception:
+                        pass
         except Exception:
             pass  # Material enrichment is additive; never fail the plan on lookup error
 

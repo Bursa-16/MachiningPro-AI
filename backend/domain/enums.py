@@ -110,12 +110,24 @@ class ToolType(StrEnum):
 class MachineType(StrEnum):
     """Machine-tool classification (axis detail is a separate field)."""
 
+    # Legacy coarse types — kept for backward compatibility
     MILL = "mill"
     LATHE = "lathe"
     MILL_TURN = "mill_turn"
     GRINDER = "grinder"
     EDM = "edm"
     OTHER = "other"
+    # Expanded taxonomy (EPIC_02)
+    VMC_3AXIS = "VMC_3AXIS"
+    VMC_4AXIS = "VMC_4AXIS"
+    VMC_5AXIS = "VMC_5AXIS"
+    HMC = "HMC"
+    LATHE_Y = "LATHE_Y"
+    SWISS = "SWISS"
+    VTL = "VTL"
+    GANTRY = "GANTRY"
+    BORING_MILL = "BORING_MILL"
+    DRILL_TAP = "DRILL_TAP"
 
 
 class CoolantMode(StrEnum):

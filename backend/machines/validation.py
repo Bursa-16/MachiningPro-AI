@@ -34,6 +34,7 @@ Work-envelope (R-2605) and tool-envelope checks are limited to what the
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from decimal import Decimal
 
 from backend.domain.machine import Machine
@@ -52,6 +53,8 @@ __all__ = [
     "check_power",
     "check_torque",
     "check_work_envelope_dimension",
+    "validate_machine_record",
+    "MachineRecordValidationResult",
 ]
 
 _RULE_VERSION = "1.0.0"
@@ -547,4 +550,198 @@ def check_work_envelope_dimension(
             f"envelope {limit.value} {limit.unit.value} "
             f"for {machine.machine_id!r}"
         ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Catalog-level record validation (V-01 through V-26)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class MachineRecordValidationResult:
+    """Result of catalog-record validation for one MachineCatalogRecord dict."""
+
+    stable_id: str
+    is_valid: bool
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+    @property
+    def error_count(self) -> int:
+        return len(self.errors)
+
+    @property
+    def warning_count(self) -> int:
+        return len(self.warnings)
+
+
+def validate_machine_record(record: dict) -> MachineRecordValidationResult:
+    """Validate a machine catalog record dict against V-01 through V-26 rules.
+
+    Safety contract
+    ---------------
+    MISSING_VALUE_AS_ZERO=NO — None fields are never coerced to 0.
+    FABRICATED_MACHINE_SPEC=NO — no synthetic values injected.
+    UNKNOWN_LIMIT_TREATED_AS_UNLIMITED=NO — absent limits produce warnings,
+      not passes.
+
+    Returns :class:`MachineRecordValidationResult` with is_valid, errors,
+    and warnings.  Records with errors are not safe to import.
+    """
+    stable_id = record.get("stable_id", "<unknown>")
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # V-01: stable_id must be non-empty string, no whitespace
+    sid = record.get("stable_id")
+    if not sid or not isinstance(sid, str) or sid != sid.strip():
+        errors.append("V-01: stable_id is missing, empty, or contains whitespace")
+
+    # V-02: manufacturer must be non-empty
+    if not record.get("manufacturer"):
+        errors.append("V-02: manufacturer is required and must be non-empty")
+
+    # V-03: model must be non-empty
+    if not record.get("model"):
+        errors.append("V-03: model is required and must be non-empty")
+
+    # V-04: machine_type must be non-empty
+    if not record.get("machine_type"):
+        errors.append("V-04: machine_type is required and must be non-empty")
+
+    # V-05: machine_type_code must be non-empty
+    if not record.get("machine_type_code"):
+        errors.append("V-05: machine_type_code is required and must be non-empty")
+
+    # V-06: supported_processes must be a non-empty list
+    procs = record.get("supported_processes")
+    if not procs or not isinstance(procs, list):
+        errors.append("V-06: supported_processes must be a non-empty list")
+
+    # V-07: axis_count must be positive integer
+    axis_count = record.get("axis_count")
+    if axis_count is None or not isinstance(axis_count, int) or axis_count < 1:
+        errors.append("V-07: axis_count must be a positive integer")
+
+    # V-08: at least one of turning_capable / milling_capable / drilling_capable must be True
+    if not any([
+        record.get("turning_capable"),
+        record.get("milling_capable"),
+        record.get("drilling_capable"),
+    ]):
+        errors.append(
+            "V-08: at least one of turning_capable, milling_capable, "
+            "drilling_capable must be True"
+        )
+
+    # V-09: source_title must be non-empty
+    if not record.get("source_title"):
+        errors.append("V-09: source_title is required")
+
+    # V-10: evidence_status must be non-empty
+    if not record.get("evidence_status"):
+        errors.append("V-10: evidence_status is required")
+
+    # V-11: spindle_max_rpm must be positive when present
+    rpm_max = record.get("spindle_max_rpm")
+    if rpm_max is not None and (not isinstance(rpm_max, int) or rpm_max <= 0):
+        errors.append("V-11: spindle_max_rpm must be a positive integer when provided")
+
+    # V-12: spindle_min_rpm must be positive and < spindle_max_rpm when present
+    rpm_min = record.get("spindle_min_rpm")
+    if rpm_min is not None:
+        if not isinstance(rpm_min, int) or rpm_min <= 0:
+            errors.append("V-12: spindle_min_rpm must be a positive integer when provided")
+        elif rpm_max is not None and rpm_min >= rpm_max:
+            errors.append(
+                f"V-12: spindle_min_rpm ({rpm_min}) must be < spindle_max_rpm ({rpm_max})"
+            )
+
+    # V-13: spindle_power_kw must be positive when present
+    power = record.get("spindle_power_kw")
+    if power is not None and (not isinstance(power, (int, float)) or power <= 0):
+        errors.append("V-13: spindle_power_kw must be positive when provided")
+
+    # V-14: spindle_torque_nm must be positive when present
+    torque = record.get("spindle_torque_nm")
+    if torque is not None and (not isinstance(torque, (int, float)) or torque <= 0):
+        errors.append("V-14: spindle_torque_nm must be positive when provided")
+
+    # V-15: travel dimensions must be positive when present
+    for dim_key in ("travel_x_mm", "travel_y_mm", "travel_z_mm"):
+        dim = record.get(dim_key)
+        if dim is not None and (not isinstance(dim, (int, float)) or dim <= 0):
+            errors.append(f"V-15: {dim_key} must be positive when provided")
+
+    # V-16: table dimensions must be positive when present
+    for dim_key in ("table_length_mm", "table_width_mm"):
+        dim = record.get(dim_key)
+        if dim is not None and (not isinstance(dim, (int, float)) or dim <= 0):
+            errors.append(f"V-16: {dim_key} must be positive when provided")
+
+    # V-17: table_load_kg must be positive when present
+    tload = record.get("table_load_kg")
+    if tload is not None and (not isinstance(tload, (int, float)) or tload <= 0):
+        errors.append("V-17: table_load_kg must be positive when provided")
+
+    # V-18: turning-related fields only when turning_capable=True
+    if not record.get("turning_capable"):
+        for field_name in ("max_turning_diameter_mm", "max_turning_length_mm"):
+            if record.get(field_name) is not None:
+                warnings.append(
+                    f"V-18: {field_name} provided but turning_capable=False"
+                )
+
+    # V-19: bar_capacity_mm only when turning_capable=True
+    if record.get("bar_capacity_mm") is not None and not record.get("turning_capable"):
+        warnings.append("V-19: bar_capacity_mm provided but turning_capable=False")
+
+    # V-20: tool_magazine_capacity must be positive when present
+    mag_cap = record.get("tool_magazine_capacity")
+    if mag_cap is not None and (not isinstance(mag_cap, int) or mag_cap <= 0):
+        errors.append("V-20: tool_magazine_capacity must be a positive integer when provided")
+
+    # V-21: rapid_traverse_mpm must be positive when present
+    rapid = record.get("rapid_traverse_mpm")
+    if rapid is not None and (not isinstance(rapid, (int, float)) or rapid <= 0):
+        errors.append("V-21: rapid_traverse_mpm must be positive when provided")
+
+    # V-22: simultaneous_axis_count must be <= axis_count when present
+    sim = record.get("simultaneous_axis_count")
+    if sim is not None and axis_count is not None:
+        if not isinstance(sim, int) or sim < 1:
+            errors.append("V-22: simultaneous_axis_count must be a positive integer")
+        elif sim > axis_count:
+            errors.append(
+                f"V-22: simultaneous_axis_count ({sim}) cannot exceed axis_count ({axis_count})"
+            )
+
+    # V-23: capable_5axis_simultaneous requires simultaneous_axis_count == 5
+    if record.get("capable_5axis_simultaneous") is True and sim != 5:
+        warnings.append(
+            "V-23: capable_5axis_simultaneous=True but simultaneous_axis_count != 5"
+        )
+
+    # V-24: has_y_axis should be True for LATHE_Y type
+    mtc = record.get("machine_type_code", "")
+    if mtc == "LATHE_Y" and not record.get("has_y_axis"):
+        warnings.append("V-24: machine_type_code=LATHE_Y but has_y_axis=False")
+
+    # V-25: spindle_max_rpm missing — INSUFFICIENT_DATA warning
+    if rpm_max is None:
+        warnings.append(
+            "V-25: spindle_max_rpm is absent — INSUFFICIENT_DATA for spindle checks"
+        )
+
+    # V-26: spindle_power_kw missing — INSUFFICIENT_DATA warning
+    if power is None:
+        warnings.append(
+            "V-26: spindle_power_kw is absent — INSUFFICIENT_DATA for power checks"
+        )
+
+    return MachineRecordValidationResult(
+        stable_id=stable_id,
+        is_valid=len(errors) == 0,
+        errors=errors,
+        warnings=warnings,
     )

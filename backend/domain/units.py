@@ -65,6 +65,9 @@ class Unit(StrEnum):
     W_M_K = "W/(m·K)"
     J_KG_K = "J/(kg·K)"
     UM_M_K = "µm/(m·K)"
+    # Fluid pressure / angular measure
+    BAR = "bar"
+    DEG = "deg"
 
 
 @dataclass(frozen=True, slots=True)

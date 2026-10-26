@@ -148,6 +148,7 @@ class EquipmentSummary(BaseModel):
     holder_max_rpm: int | None = None
     effective_rpm_limit: int | None = None
     effective_rpm_limit_source: str | None = None
+    controller_family: str | None = None
 
     missing_fields: list[str] = []
 
@@ -836,6 +837,7 @@ def build_engineering_review(
     machine_id: str | None = None,
     machine_spindle_max_rpm: int | None = None,
     machine_display: str | None = None,
+    machine_controller_family: str | None = None,
     cutting_tool_id: str | None = None,
     tool_max_rpm: int | None = None,
     cutting_tool_display: str | None = None,
@@ -899,6 +901,7 @@ def build_engineering_review(
         holder_max_rpm=holder_max_rpm,
         effective_rpm_limit=eff_rpm,
         effective_rpm_limit_source=eff_source,
+        controller_family=machine_controller_family,
         missing_fields=missing,
     )
 
@@ -938,7 +941,10 @@ def build_engineering_review(
                 if rec.iso_group == material_iso_group.upper():
                     for cut_ref in rec.cutting_references:
                         if cut_ref.operation == op_key and cut_ref.tool_material == "carbide":
-                            if cut_ref.vc_min_m_min is not None and cut_ref.vc_max_m_min is not None:
+                            if (
+                                cut_ref.vc_min_m_min is not None
+                                and cut_ref.vc_max_m_min is not None
+                            ):
                                 limitations.append(
                                     f"Material Vc reference (ISO {material_iso_group}, "
                                     f"{op_key}, carbide): "
