@@ -1220,4 +1220,55 @@ export interface TranslationDictionary {
 
   // Navigation preview badge
   navPreviewBadge: string
+
+  // Material Library (EPIC_01_MATERIAL_INTELLIGENCE_FOUNDATION)
+  matPageTitle: string
+  matSearchPlaceholder: string
+  matIsoGroupFilter: string
+  matFamilyFilter: string
+  matColDesignation: string
+  matColIsoGroup: string
+  matColFamily: string
+  matColWorkstoff: string
+  matColAISI: string
+  matColHardness: string
+  matColCondition: string
+  matSectionIdentity: string
+  matSectionProperties: string
+  matSectionMachinability: string
+  matSectionToolCompat: string
+  matSectionCuttingContext: string
+  matSectionConditions: string
+  matSectionProvenance: string
+  matCompatRecommended: string
+  matCompatAcceptable: string
+  matCompatConditional: string
+  matCompatNotRecommended: string
+  matCompatInsufficient: string
+  matBadgeRefOnly: string
+  matBadgeUnknown: string
+  matBadgeVerified: string
+  matNoResults: string
+  matSelectOperation: string
+  matSelectToolMaterial: string
+  matCuttingContextTitle: string
+  matCuttingContextNote: string
+  matRecords: string
+  matDetailTitle: string
+  matAliasesLabel: string
+  matConditionsLabel: string
+  matHardnessLabel: string
+  matDensityLabel: string
+  matTensileLabel: string
+  matYieldLabel: string
+  matElongationLabel: string
+  matMachinabilityRating: string
+  matChipFormation: string
+  matWorkHardening: string
+  matBUETendency: string
+  matAbrasiveness: string
+  matThermalBehavior: string
+  matCuttingForce: string
+  matToolWear: string
+  matCoolantGuidance: string
 }

@@ -926,6 +926,29 @@ def build_engineering_review(
         limitations.append(
             f"Unsupported features detected: {', '.join(unsupported_detected[:4])}"
         )
+    # Material-aware Vc advisory (additive, REFERENCE_ONLY)
+    if material_iso_group:
+        try:
+            from backend.materials.catalog import get_catalog as _get_mat_catalog
+            op_key = (operation_association or "").lower() if operation_association else None
+            op_key = op_key if op_key in ("turning", "milling", "drilling") else "turning"
+            cat = _get_mat_catalog()
+            # Find any record in the catalog with matching iso_group to get cutting context
+            for rec in cat._records.values():
+                if rec.iso_group == material_iso_group.upper():
+                    for cut_ref in rec.cutting_references:
+                        if cut_ref.operation == op_key and cut_ref.tool_material == "carbide":
+                            if cut_ref.vc_min_m_min is not None and cut_ref.vc_max_m_min is not None:
+                                limitations.append(
+                                    f"Material Vc reference (ISO {material_iso_group}, "
+                                    f"{op_key}, carbide): "
+                                    f"{cut_ref.vc_min_m_min}–{cut_ref.vc_max_m_min} m/min "
+                                    f"(REFERENCE_ONLY general industry envelope)"
+                                )
+                            break
+                    break
+        except Exception:
+            pass  # Never fail the review on material advisory lookup error
 
     # --- O. Traceability ---
     prog_fp = _compute_nc_fingerprint(nc_text) if nc_text else None

@@ -14,6 +14,7 @@ import CompatibilityPage from './pages/CompatibilityPage'
 import SelectionPage from './pages/SelectionPage'
 import ToolHolderCatalogPage from './pages/ToolHolderCatalogPage'
 import ProcessPlanningPage from './pages/ProcessPlanningPage'
+import MaterialLibraryPage from './pages/MaterialLibraryPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   const { t } = useLocale()
@@ -67,7 +68,7 @@ function ProtectedRoutes() {
 
         {/* Resources */}
         <Route path="app/resources/machines" element={<MachineCatalogPage />} />
-        <Route path="app/resources/materials" element={capability('Materials')} />
+        <Route path="app/resources/materials" element={<MaterialLibraryPage />} />
         <Route path="app/resources/cutting-tools" element={<CuttingToolCatalogPage />} />
         <Route path="app/resources/tool-holders" element={<ToolHolderCatalogPage />} />
         <Route path="app/resources/libraries" element={capability('Libraries')} />

@@ -692,6 +692,24 @@ def generate_plan(
     if dep_violations:
         limitations.append(f"Dependency graph violations: {len(dep_violations)} issue(s).")
 
+    # Material library enrichment (additive — backward compatible)
+    if req.material_id:
+        try:
+            from backend.materials.catalog import get_catalog as _get_mat_catalog
+            mat_record = _get_mat_catalog().get(req.material_id)
+            if mat_record is not None and mat_record.machinability is not None:
+                mac = mat_record.machinability
+                advisory_parts = [f"Material library: {mat_record.designation} (ISO {mat_record.iso_group})"]
+                if mac.work_hardening and mac.work_hardening not in ("LOW", "UNKNOWN"):
+                    advisory_parts.append(f"work_hardening={mac.work_hardening}")
+                if mac.thermal_load and mac.thermal_load not in ("LOW", "UNKNOWN"):
+                    advisory_parts.append(f"thermal_load={mac.thermal_load}")
+                if mac.coolant_guidance:
+                    advisory_parts.append(f"coolant: {mac.coolant_guidance}")
+                limitations.append(" — ".join(advisory_parts) + " (REFERENCE_ONLY)")
+        except Exception:
+            pass  # Material enrichment is additive; never fail the plan on lookup error
+
     # -------------------------------------------------------------------
     # 7. Alternative sequence support
     # -------------------------------------------------------------------

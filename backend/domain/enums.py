@@ -85,6 +85,8 @@ class MaterialFamily(StrEnum):
     NICKEL_ALLOY = "nickel_alloy"
     PLASTIC = "plastic"
     COMPOSITE = "composite"
+    GRAPHITE = "graphite"
+    CERAMIC_MATERIAL = "ceramic_material"
     OTHER = "other"
 
 
@@ -147,6 +149,74 @@ class IsoMaterialGroup(StrEnum):
     N = "N"
     S = "S"
     H = "H"
+
+
+class IsoMaterialSubGroup(StrEnum):
+    """Fine-grain ISO 513 sub-group — S must split Ti vs Ni-HRSA.
+
+    ``UNSPECIFIED`` is used when sub-group is not applicable or unknown.
+    """
+
+    P_STEEL = "P_STEEL"
+    M_STAINLESS = "M_STAINLESS"
+    K_CAST_IRON = "K_CAST_IRON"
+    N_ALUMINUM = "N_ALUMINUM"
+    N_COPPER = "N_COPPER"
+    # S must never be left undifferentiated — machinability differs dramatically.
+    S_TITANIUM = "S_TITANIUM"
+    S_NICKEL_HRSA = "S_NICKEL_HRSA"
+    H_HARDENED = "H_HARDENED"
+    UNSPECIFIED = "UNSPECIFIED"
+
+
+class DataConfidence(StrEnum):
+    """Data confidence tier for material property values.
+
+    Values presented to users must carry explicit confidence levels.
+    ``GENERAL_INDUSTRY`` and ``ESTIMATED`` mandate a REFERENCE_ONLY badge in UI.
+    """
+
+    VERIFIED_STANDARD = "VERIFIED_STANDARD"
+    MANUFACTURER_REFERENCE = "MANUFACTURER_REFERENCE"
+    MANUFACTURER_LEGACY = "MANUFACTURER_LEGACY"
+    LITERATURE_REFERENCE = "LITERATURE_REFERENCE"
+    INTERNAL_VALIDATED = "INTERNAL_VALIDATED"
+    USER_PROVIDED = "USER_PROVIDED"
+    ESTIMATED = "ESTIMATED"
+    GENERAL_INDUSTRY = "GENERAL_INDUSTRY"
+    UNKNOWN = "UNKNOWN"
+
+
+class ToolCompatRating(StrEnum):
+    """Tool-material compatibility rating (from Programlar matrix, REFERENCE_ONLY)."""
+
+    RECOMMENDED = "RECOMMENDED"
+    ACCEPTABLE = "ACCEPTABLE"
+    CONDITIONAL = "CONDITIONAL"
+    NOT_RECOMMENDED = "NOT_RECOMMENDED"
+    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+
+
+class ChipFormationClass(StrEnum):
+    """Qualitative chip formation behaviour."""
+
+    CONTINUOUS = "CONTINUOUS"
+    SEGMENTED = "SEGMENTED"
+    POWDER = "POWDER"
+    MIXED = "MIXED"
+    UNKNOWN = "UNKNOWN"
+
+
+class MachinabilityLevel(StrEnum):
+    """Qualitative machinability descriptor (work hardening, BUE, abrasiveness, thermal)."""
+
+    VERY_LOW = "VERY_LOW"
+    LOW = "LOW"
+    MODERATE = "MODERATE"
+    HIGH = "HIGH"
+    VERY_HIGH = "VERY_HIGH"
+    EXTREME = "EXTREME"
+    UNKNOWN = "UNKNOWN"
 
 
 class ToolMaterial(StrEnum):

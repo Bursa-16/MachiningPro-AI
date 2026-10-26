@@ -55,6 +55,16 @@ class Unit(StrEnum):
     CM3 = "cm3"
     MIN = "min"
     RQ_UM = "Rq_um"
+    # Hardness scales — explicit, no silent cross-scale conversion
+    HB = "HB"
+    HRC = "HRC"
+    HRB = "HRB"
+    HV = "HV"
+    # Thermal / material properties
+    DEG_C = "degC"
+    W_M_K = "W/(m·K)"
+    J_KG_K = "J/(kg·K)"
+    UM_M_K = "µm/(m·K)"
 
 
 @dataclass(frozen=True, slots=True)

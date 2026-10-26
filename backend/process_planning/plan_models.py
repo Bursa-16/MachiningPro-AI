@@ -123,6 +123,9 @@ class ProcessPlanRequest(BaseModel):
     part_name: str
     material_iso_group: str
     operations: list[OperationStepRequest]
+    # Optional — enriches plan with material library data when provided.
+    # Backward compatible: existing requests without this field are unaffected.
+    material_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
