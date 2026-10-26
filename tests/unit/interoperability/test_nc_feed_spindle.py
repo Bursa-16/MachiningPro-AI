@@ -845,10 +845,12 @@ def test_no_g84_pitch_validation():
     assert summary.g84_pitch_validation_implemented is False
 
 
-def test_no_machine_feed_limit():
-    """Machine feed limit check NOT implemented.
+def test_machine_feed_limit_implemented():
+    """Machine feed limit check IS implemented (R-2606).
 
-    MACHINE_FEED_LIMIT_VALIDATION_IMPLEMENTED=NO
+    MACHINE_FEED_LIMIT_VALIDATION_IMPLEMENTED=YES
+    When machine_max_cutting_feed_mm_min is not supplied the check is
+    INSUFFICIENT_DATA — fail-closed, MISSING_LIMIT_AS_ZERO=NO.
     """
     result = _parse("G21 G94 G97 S3000 M3\nG1 X100 F5000")
     summary = validate_nc_feed_spindle(
@@ -856,7 +858,11 @@ def test_no_machine_feed_limit():
         machine_spindle_max_rpm=8000,
         machine_id="machine1",
     )
-    assert summary.machine_feed_limit_validation_implemented is False
+    assert summary.machine_feed_limit_validation_implemented is True
+    # No feed limit supplied → fail-closed INSUFFICIENT_DATA, not a false pass
+    assert summary.machine_feed_limit_check is not None
+    assert summary.machine_feed_limit_check.check_id == "MACHINE_FEED_LIMIT"
+    assert summary.machine_feed_limit_check.status.value == "INSUFFICIENT_DATA"
 
 
 def test_g96_no_fake_rpm():
@@ -956,7 +962,7 @@ def test_evidence_provenance():
 
 
 def test_safety_flags_immutable():
-    """All safety flags remain False in summary."""
+    """Prohibitory safety flags (claims the engine does NOT do) remain False."""
     result = _parse("G21 G97 S5000 M3\nG1 X10 F200")
     summary = validate_nc_feed_spindle(result)
     assert summary.nc_commanded_spindle_speed_equals_actual_rpm is False
@@ -964,7 +970,8 @@ def test_safety_flags_immutable():
     assert summary.nc_commanded_feed_equals_recommended_feed is False
     assert summary.reference_range_validation_is_optimization is False
     assert summary.nc_program_automatic_operation_classification is False
-    assert summary.machine_feed_limit_validation_implemented is False
+    # machine_feed_limit_validation_implemented is a capability flag (True since R-2606
+    # was implemented in EPIC_02); it is not a prohibitory safety flag.
     assert summary.g84_pitch_validation_implemented is False
     assert summary.generic_feed_without_spindle_warning_implemented is False
     assert summary.spindle_direction_compatibility_check_implemented is False
