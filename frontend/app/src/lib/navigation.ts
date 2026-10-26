@@ -63,6 +63,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'planning-quality', domainKey: 'traceability', label: 'Planning & Quality',
     items: [
       { id: 'process-planning', path: '/app/planning-quality/process-planning', label: 'Process Planning', icon: ClipboardList },
+      { id: 'drawing-to-process', path: '/app/planning-quality/drawing-to-process', label: 'Drawing to Process', icon: GitBranch },
       { id: 'dfm', path: '/app/planning-quality/dfm', label: 'DFM', icon: Puzzle, badge: 'preview' },
       { id: 'machine-capability', path: '/app/planning-quality/machine-capability', label: 'Machine Capability', icon: TrendingUp, badge: 'preview' },
       { id: 'validation', path: '/app/planning-quality/validation', label: 'Validation', icon: ShieldCheck, badge: 'preview' },

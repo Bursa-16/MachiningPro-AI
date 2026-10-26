@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from .auth import LoginRequest, authenticate, get_configured_credentials
 from .compatibility import router as compatibility_router
 from .cutting_parameters import router as cutting_parameters_router
+from .drawing_to_process import router as drawing_to_process_router
 from .materials import router as materials_router
 from .cutting_tools import router as cutting_tools_router
 from .drawing_analysis import router as drawing_analysis_router
@@ -54,6 +55,7 @@ if _cors_origins:
 
 app.include_router(compatibility_router)
 app.include_router(cutting_parameters_router)
+app.include_router(drawing_to_process_router)
 app.include_router(materials_router)
 app.include_router(cutting_tools_router)
 app.include_router(drawing_analysis_router)
