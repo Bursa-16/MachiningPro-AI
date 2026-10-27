@@ -20,12 +20,13 @@ from pydantic import BaseModel
 from .auth import LoginRequest, authenticate, get_configured_credentials
 from .compatibility import router as compatibility_router
 from .cutting_parameters import router as cutting_parameters_router
-from .drawing_to_process import router as drawing_to_process_router
-from .materials import router as materials_router
 from .cutting_tools import router as cutting_tools_router
 from .drawing_analysis import router as drawing_analysis_router
+from .drawing_to_process import router as drawing_to_process_router
 from .engineering_import import router as engineering_import_router
+from .gdt import router as gdt_router
 from .machines import router as machines_router
+from .materials import router as materials_router
 from .nc_path import router as nc_path_router
 from .process_planning import router as process_planning_router
 from .selection import router as selection_router
@@ -66,6 +67,7 @@ app.include_router(process_planning_router)
 app.include_router(selection_router)
 app.include_router(tool_holders_router)
 app.include_router(tool_life_router)
+app.include_router(gdt_router)
 
 
 @app.get("/api/health")
