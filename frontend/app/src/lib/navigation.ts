@@ -57,6 +57,13 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Technical Drawing Intelligence',
         icon: Search,
       },
+      {
+        id: 'cad-features',
+        path: '/app/cad-drawing/cad-features',
+        label: 'CAD Feature Recognition',
+        icon: SearchCode,
+        badge: 'preview' as const,
+      },
     ],
   },
   {

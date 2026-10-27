@@ -1418,4 +1418,39 @@ export interface TranslationDictionary {
   d2pRemove: string
   d2pHandoff: string
   d2pHandoffDesc: string
+
+  // CAD Feature Recognition (EPIC_04D_FEATURE_RECOGNITION_AND_CAD_FUSION)
+  cfPageTitle: string
+  cfPageSubtitle: string
+  cfPreviewBadge: string
+  cfDisclaimerTitle: string
+  cfDisclaimerText: string
+  cfUploadLabel: string
+  cfDropHint: string
+  cfSupportedFormats: string
+  cfAnalyzing: string
+  cfSessionLabel: string
+  cfNoSession: string
+  cfFeatureCount: string
+  cfFaceCount: string
+  cfBodyCount: string
+  cfClearSession: string
+  cfTabFeatures: string
+  cfTabPatterns: string
+  cfTabFusion: string
+  cfNoFeatures: string
+  cfNoPatterns: string
+  cfPattern: string
+  cfDepth: string
+  cfAxis: string
+  cfMethod: string
+  cfConfirm: string
+  cfReject: string
+  cfViewerLabel: string
+  cfViewerStubTitle: string
+  cfViewerStubDesc: string
+  cfCompleteness: string
+  cfUnresolved: string
+  cfAutoMatched: string
+  cfCadOnly: string
 }

@@ -18,6 +18,7 @@ import DrawingToProcessPage from './pages/DrawingToProcessPage'
 import MaterialLibraryPage from './pages/MaterialLibraryPage'
 import DrawingParserPage from './pages/DrawingParserPage'
 import GdtIntelligencePage from './pages/GdtIntelligencePage'
+import CadFeaturesPage from './pages/CadFeaturesPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   const { t } = useLocale()
@@ -82,6 +83,7 @@ function ProtectedRoutes() {
           path="app/cad-drawing/technical-drawing-intelligence"
           element={<TechnicalDrawingIntelligencePage reviewer={user} />}
         />
+        <Route path="app/cad-drawing/cad-features" element={<CadFeaturesPage />} />
 
         {/* Planning & Quality */}
         <Route path="app/planning-quality/process-planning" element={<ProcessPlanningPage />} />
