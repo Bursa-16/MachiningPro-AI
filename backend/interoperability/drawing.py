@@ -172,19 +172,40 @@ class DrawingGdtCellRole(StrEnum):
 
 @unique
 class DrawingGdtCharacteristic(StrEnum):
-    """Phase 1C v1 GD&T characteristic allowlist."""
+    """Phase 2 GD&T characteristic set — all 14 ASME Y14.5 / ISO 1101 types."""
 
+    # Form (no datum reference)
+    STRAIGHTNESS = "STRAIGHTNESS"
     FLATNESS = "FLATNESS"
     CIRCULARITY = "CIRCULARITY"
+    CYLINDRICITY = "CYLINDRICITY"
+    # Profile
+    PROFILE_OF_A_LINE = "PROFILE_OF_A_LINE"
+    PROFILE_OF_A_SURFACE = "PROFILE_OF_A_SURFACE"
+    # Orientation (require datum)
+    PERPENDICULARITY = "PERPENDICULARITY"
+    ANGULARITY = "ANGULARITY"
+    PARALLELISM = "PARALLELISM"
+    # Location (require datum)
     POSITION = "POSITION"
+    CONCENTRICITY = "CONCENTRICITY"
     SYMMETRY = "SYMMETRY"
+    # Runout (require datum)
+    CIRCULAR_RUNOUT = "CIRCULAR_RUNOUT"
+    TOTAL_RUNOUT = "TOTAL_RUNOUT"
 
 
 @unique
 class DrawingGdtModifier(StrEnum):
-    """Supported Phase 1C modifier representation."""
+    """Phase 2 GD&T modifier set — feature material condition modifiers."""
 
     NONE = "NONE"
+    MMC = "MMC"           # Maximum Material Condition
+    LMC = "LMC"           # Least Material Condition
+    RFS = "RFS"           # Regardless of Feature Size
+    PROJECTED = "PROJECTED"
+    FREE_STATE = "FREE_STATE"
+    TANGENT_PLANE = "TANGENT_PLANE"
 
 
 def _validate_finite_decimal(value: Decimal, field_name: str) -> None:
@@ -658,9 +679,10 @@ class DrawingFeatureControlFrame:
                     "DrawingFeatureControlFrame.datum_references must contain "
                     "DrawingDatumReference values"
                 )
-            if re.fullmatch(r"[A-Z]", datum.datum_label) is None:
+            if re.fullmatch(r"[A-Z](-[A-Z])?", datum.datum_label) is None:
                 raise ValueError(
-                    "DrawingFeatureControlFrame datum identifiers must be one uppercase letter"
+                    "DrawingFeatureControlFrame datum identifiers must be one uppercase letter "
+                    "or a compound form like 'A-B'"
                 )
         if not isinstance(self.source_location, DrawingSourceLocation):
             raise TypeError(

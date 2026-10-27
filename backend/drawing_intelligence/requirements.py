@@ -1,21 +1,25 @@
-"""Drawing Requirement domain models (EPIC_04 Phase 2).
+"""Drawing Requirement domain models (EPIC_04 Phase 2 / EPIC_04B).
 
 Wraps extracted CanonicalDrawing data into engineering requirements:
 dimensional, geometric (GD&T), surface finish, thread, and material.
 
-Expands the existing 4-characteristic GD&T model with the 10 additional
-characteristics required for machining process planning.
+Phase 2 (EPIC_04): 14 GD&T characteristics, 7 modifiers, DRF model.
+Phase 04B: Feature-of-size, derived features, advanced DRF, datum targets,
+compound datums, bonus tolerance, virtual condition, composite FCF,
+profile/runout/orientation/form models, tolerance zones, basic dimensions,
+feature patterns, ambiguity/confidence models, setup planning hints.
 
 FABRICATED_DRAWING_REQUIREMENT=NO
 FABRICATED_GDT_VALUE=NO
 FABRICATED_DATUM=NO
+FABRICATED_ACTUAL_SIZE=NO
 MISSING_VALUE_AS_ZERO=NO
 """
 
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 
@@ -23,9 +27,48 @@ __all__ = [
     # GD&T enumerations
     "GdtCharacteristic",
     "GdtModifier",
+    "FeatureModifier",
+    "DatumBoundaryModifier",
     # Datum model
     "DatumReference",
     "DatumReferenceFrame",
+    "DatumFeatureType",
+    "DatumFeatureRecord",
+    "DatumTargetKind",
+    "DatumTargetRecord",
+    "DatumCompositionKind",
+    "CompoundDatumDefinition",
+    "AdvancedDatumRef",
+    "AdvancedDatumReferenceFrame",
+    # Feature of size
+    "FeatureOfSizeKind",
+    "FeatureOfSize",
+    "DerivedFeatureKind",
+    "DerivedFeature",
+    # Tolerance zone
+    "ToleranceZoneGeometry",
+    # Basic dimensions
+    "BasicDimension",
+    # Feature patterns
+    "PatternKind",
+    "FeaturePattern",
+    # Composite FCF
+    "SegmentIntent",
+    "FCFSegment",
+    "CompositePositionFCF",
+    # Projected zone
+    "ProjectedToleranceZone",
+    # Bonus / virtual condition
+    "BonusToleranceResult",
+    "VirtualConditionResult",
+    # Ambiguity / confidence
+    "GdtConfidence",
+    "AmbiguityKind",
+    "GdtAmbiguity",
+    # Setup planning
+    "SetupPlanHint",
+    # Tolerance precedence
+    "TolerancePrecedence",
     # GD&T requirement
     "ExpandedFeatureControlFrame",
     # Drawing requirement types
@@ -37,6 +80,10 @@ __all__ = [
     "HeatTreatmentRequirement",
     "DrawingRequirementSet",
     "RequirementExtractionStatus",
+    # Convenience sets
+    "GDT_REQUIRES_DATUM",
+    "GDT_CYLINDRICAL_CONTEXT",
+    "GDT_FORM_ONLY",
 ]
 
 # ---------------------------------------------------------------------------
@@ -94,6 +141,14 @@ GDT_CYLINDRICAL_CONTEXT: frozenset[GdtCharacteristic] = frozenset({
     GdtCharacteristic.CONCENTRICITY,
 })
 
+# Form-only characteristics: must NOT reference a datum
+GDT_FORM_ONLY: frozenset[GdtCharacteristic] = frozenset({
+    GdtCharacteristic.FLATNESS,
+    GdtCharacteristic.CIRCULARITY,
+    GdtCharacteristic.CYLINDRICITY,
+    GdtCharacteristic.STRAIGHTNESS,
+})
+
 
 class GdtModifier(StrEnum):
     """GD&T material condition and other modifiers."""
@@ -109,7 +164,521 @@ class GdtModifier(StrEnum):
 
 
 # ---------------------------------------------------------------------------
-# Datum / DRF model
+# Phase 04B: Feature-side modifier (separate from datum-side modifier)
+# ---------------------------------------------------------------------------
+
+class FeatureModifier(StrEnum):
+    """Material condition modifier applied to the controlled feature (feature side)."""
+    NONE = "NONE"
+    MMC = "MMC"
+    LMC = "LMC"
+    RFS = "RFS"
+    PROJECTED = "PROJECTED"
+    FREE_STATE = "FREE_STATE"
+    TANGENT_PLANE = "TANGENT_PLANE"
+
+
+class DatumBoundaryModifier(StrEnum):
+    """Material boundary modifier applied to a datum reference (datum side).
+
+    Distinct from FeatureModifier. MMB/LMB permit datum shift; RMB does not.
+    """
+    RMB = "RMB"   # Regardless of Material Boundary (default, no shift)
+    MMB = "MMB"   # Maximum Material Boundary — datum shift permitted
+    LMB = "LMB"   # Least Material Boundary — datum shift permitted
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Feature of Size
+# ---------------------------------------------------------------------------
+
+class FeatureOfSizeKind(StrEnum):
+    INTERNAL_CYLINDRICAL = "INTERNAL_CYLINDRICAL"   # bore, hole
+    EXTERNAL_CYLINDRICAL = "EXTERNAL_CYLINDRICAL"   # shaft, pin, boss
+    WIDTH = "WIDTH"                                 # slot, tab, key
+    SPHERICAL = "SPHERICAL"                         # sphere (when SR noted)
+    NON_FEATURE_OF_SIZE = "NON_FEATURE_OF_SIZE"     # planar surface, profile surface
+    PATTERN = "PATTERN"                             # repeated FOS group
+    UNKNOWN = "UNKNOWN"
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureOfSize:
+    """Dimensional feature-of-size with size limits.
+
+    FABRICATED_ACTUAL_SIZE=NO — actual_size_mm is never populated by inference.
+    Bonus tolerance and virtual condition are gated on this field being non-None.
+    """
+    fos_id: str
+    kind: FeatureOfSizeKind
+    nominal_mm: Decimal | None
+    upper_limit_mm: Decimal | None    # MMC limit for external; LMC limit for internal
+    lower_limit_mm: Decimal | None    # LMC limit for external; MMC limit for internal
+    actual_size_mm: Decimal | None    # NEVER fabricated — None unless explicitly provided
+    source_req_id: str | None
+    feature_id: str | None
+
+    def __post_init__(self) -> None:
+        if not self.fos_id.strip():
+            raise ValueError("FeatureOfSize.fos_id must be non-empty")
+        if (self.upper_limit_mm is not None and self.lower_limit_mm is not None
+                and self.upper_limit_mm < self.lower_limit_mm):
+            raise ValueError("FeatureOfSize.upper_limit_mm must be >= lower_limit_mm")
+
+    @property
+    def mmc_size_mm(self) -> Decimal | None:
+        """Maximum material condition size."""
+        if self.upper_limit_mm is None or self.lower_limit_mm is None:
+            return None
+        if self.kind == FeatureOfSizeKind.INTERNAL_CYLINDRICAL:
+            return self.lower_limit_mm   # MMC hole = smallest hole
+        if self.kind == FeatureOfSizeKind.EXTERNAL_CYLINDRICAL:
+            return self.upper_limit_mm   # MMC shaft = largest shaft
+        return self.upper_limit_mm
+
+    @property
+    def lmc_size_mm(self) -> Decimal | None:
+        """Least material condition size."""
+        if self.upper_limit_mm is None or self.lower_limit_mm is None:
+            return None
+        if self.kind == FeatureOfSizeKind.INTERNAL_CYLINDRICAL:
+            return self.upper_limit_mm   # LMC hole = largest hole
+        if self.kind == FeatureOfSizeKind.EXTERNAL_CYLINDRICAL:
+            return self.lower_limit_mm   # LMC shaft = smallest shaft
+        return self.lower_limit_mm
+
+    @property
+    def is_true_fos(self) -> bool:
+        return self.kind not in (FeatureOfSizeKind.NON_FEATURE_OF_SIZE, FeatureOfSizeKind.UNKNOWN)
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Derived features
+# ---------------------------------------------------------------------------
+
+class DerivedFeatureKind(StrEnum):
+    AXIS = "AXIS"               # derived axis of cylindrical FOS
+    MEDIAN_PLANE = "MEDIAN_PLANE"  # derived median plane of width FOS
+    CENTER_POINT = "CENTER_POINT"  # center of spherical FOS
+    MEDIAN_LINE = "MEDIAN_LINE"    # derived median line (non-ideal axis)
+
+
+@dataclass(frozen=True, slots=True)
+class DerivedFeature:
+    derived_id: str
+    kind: DerivedFeatureKind
+    parent_fos_id: str
+    description: str | None
+
+    def __post_init__(self) -> None:
+        if not self.derived_id.strip():
+            raise ValueError("DerivedFeature.derived_id must be non-empty")
+        if not self.parent_fos_id.strip():
+            raise ValueError("DerivedFeature.parent_fos_id must be non-empty")
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Datum models
+# ---------------------------------------------------------------------------
+
+class DatumFeatureType(StrEnum):
+    PLANE = "PLANE"
+    CYLINDER = "CYLINDER"
+    CONE = "CONE"
+    POINT = "POINT"
+    LINE = "LINE"
+    COMPLEX = "COMPLEX"
+    UNKNOWN = "UNKNOWN"
+
+
+@dataclass(frozen=True, slots=True)
+class DatumFeatureRecord:
+    datum_id: str
+    datum_label: str
+    datum_feature_type: DatumFeatureType
+    feature_id: str | None
+    simulator_description: str | None
+    is_target_based: bool = False
+    targets: tuple[DatumTargetRecord, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.datum_id.strip():
+            raise ValueError("DatumFeatureRecord.datum_id must be non-empty")
+        if not self.datum_label.strip():
+            raise ValueError("DatumFeatureRecord.datum_label must be non-empty")
+
+
+class DatumTargetKind(StrEnum):
+    POINT = "POINT"
+    LINE = "LINE"
+    AREA = "AREA"
+
+
+@dataclass(frozen=True, slots=True)
+class DatumTargetRecord:
+    target_id: str
+    associated_datum: str
+    kind: DatumTargetKind
+    location_description: str | None
+    extent_mm: Decimal | None
+    area_shape: str | None      # "CIRCLE", "RECTANGLE"
+    source_note: str | None
+
+    def __post_init__(self) -> None:
+        if not self.target_id.strip():
+            raise ValueError("DatumTargetRecord.target_id must be non-empty")
+        if not self.associated_datum.strip():
+            raise ValueError("DatumTargetRecord.associated_datum must be non-empty")
+
+
+class DatumCompositionKind(StrEnum):
+    SINGLE = "SINGLE"       # one feature, one label
+    COMMON = "COMMON"       # "A-B" — two coaxial/coplanar features as one datum
+    COMPOUND = "COMPOUND"   # two separate features in same precedence slot
+
+
+@dataclass(frozen=True, slots=True)
+class CompoundDatumDefinition:
+    composition: DatumCompositionKind
+    members: tuple[str, ...]    # ("A",) or ("A","B")
+    combined_label: str         # "A" or "A-B"
+
+    def __post_init__(self) -> None:
+        if not self.combined_label.strip():
+            raise ValueError("CompoundDatumDefinition.combined_label must be non-empty")
+
+
+@dataclass(frozen=True, slots=True)
+class AdvancedDatumRef:
+    """Datum reference with boundary modifier (Phase 04B)."""
+    label: str
+    precedence: int
+    boundary_modifier: DatumBoundaryModifier = DatumBoundaryModifier.RMB
+    allows_shift: bool = False
+    compound_members: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.label.strip():
+            raise ValueError("AdvancedDatumRef.label must be non-empty")
+        if self.precedence not in (1, 2, 3):
+            raise ValueError("AdvancedDatumRef.precedence must be 1, 2, or 3")
+
+
+@dataclass(frozen=True, slots=True)
+class AdvancedDatumReferenceFrame:
+    """DRF with boundary modifiers and a deterministic fingerprint."""
+    drf_id: str
+    primary: AdvancedDatumRef
+    secondary: AdvancedDatumRef | None = None
+    tertiary: AdvancedDatumRef | None = None
+    is_simultaneous: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.drf_id.strip():
+            raise ValueError("AdvancedDatumReferenceFrame.drf_id must be non-empty")
+        if self.tertiary is not None and self.secondary is None:
+            raise ValueError("AdvancedDatumReferenceFrame: tertiary requires secondary")
+
+    @property
+    def drf_fingerprint(self) -> str:
+        parts = [self.primary.label, self.primary.boundary_modifier.value]
+        if self.secondary:
+            parts += [self.secondary.label, self.secondary.boundary_modifier.value]
+        if self.tertiary:
+            parts += [self.tertiary.label, self.tertiary.boundary_modifier.value]
+        return hashlib.sha256("|".join(parts).encode()).hexdigest()[:16]
+
+    @property
+    def labels(self) -> tuple[str, ...]:
+        result = [self.primary.label]
+        if self.secondary:
+            result.append(self.secondary.label)
+        if self.tertiary:
+            result.append(self.tertiary.label)
+        return tuple(result)
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Tolerance zone geometry
+# ---------------------------------------------------------------------------
+
+class ToleranceZoneGeometry(StrEnum):
+    TWO_PARALLEL_LINES = "TWO_PARALLEL_LINES"
+    TWO_PARALLEL_PLANES = "TWO_PARALLEL_PLANES"
+    CYLINDRICAL = "CYLINDRICAL"
+    TWO_CONCENTRIC_CIRCLES = "TWO_CONCENTRIC_CIRCLES"
+    TWO_COAXIAL_CYLINDERS = "TWO_COAXIAL_CYLINDERS"
+    SPHERICAL = "SPHERICAL"
+    PROFILE_ENVELOPE = "PROFILE_ENVELOPE"
+    ANGULAR_SECTOR = "ANGULAR_SECTOR"
+    UNKNOWN = "UNKNOWN"
+
+
+def zone_geometry_for(
+    characteristic: GdtCharacteristic,
+    diameter_zone: bool = False,
+) -> ToleranceZoneGeometry:
+    """Deterministic zone geometry mapping per ASME Y14.5-2018 / ISO 1101:2017."""
+    if characteristic == GdtCharacteristic.FLATNESS:
+        return ToleranceZoneGeometry.TWO_PARALLEL_PLANES
+    if characteristic == GdtCharacteristic.CIRCULARITY:
+        return ToleranceZoneGeometry.TWO_CONCENTRIC_CIRCLES
+    if characteristic == GdtCharacteristic.CYLINDRICITY:
+        return ToleranceZoneGeometry.TWO_COAXIAL_CYLINDERS
+    if characteristic == GdtCharacteristic.STRAIGHTNESS:
+        if diameter_zone:
+            return ToleranceZoneGeometry.CYLINDRICAL
+        return ToleranceZoneGeometry.TWO_PARALLEL_LINES
+    if characteristic == GdtCharacteristic.POSITION:
+        if diameter_zone:
+            return ToleranceZoneGeometry.CYLINDRICAL
+        return ToleranceZoneGeometry.TWO_PARALLEL_PLANES
+    if characteristic in (GdtCharacteristic.PERPENDICULARITY, GdtCharacteristic.PARALLELISM):
+        if diameter_zone:
+            return ToleranceZoneGeometry.CYLINDRICAL
+        return ToleranceZoneGeometry.TWO_PARALLEL_PLANES
+    if characteristic == GdtCharacteristic.ANGULARITY:
+        return ToleranceZoneGeometry.ANGULAR_SECTOR
+    if characteristic == GdtCharacteristic.CIRCULAR_RUNOUT:
+        return ToleranceZoneGeometry.TWO_CONCENTRIC_CIRCLES
+    if characteristic == GdtCharacteristic.TOTAL_RUNOUT:
+        return ToleranceZoneGeometry.TWO_COAXIAL_CYLINDERS
+    if characteristic == GdtCharacteristic.PROFILE_OF_A_LINE:
+        return ToleranceZoneGeometry.TWO_PARALLEL_LINES
+    if characteristic == GdtCharacteristic.PROFILE_OF_A_SURFACE:
+        return ToleranceZoneGeometry.PROFILE_ENVELOPE
+    return ToleranceZoneGeometry.UNKNOWN
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Basic dimensions
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class BasicDimension:
+    """Exact theoretical dimension linking to feature control frames."""
+    basic_id: str
+    value: Decimal
+    unit: str
+    direction: str | None           # "X", "Y", "Z", "ANGULAR", "RADIAL"
+    source_dimension_id: str | None
+    linked_fcf_ids: tuple[str, ...] = ()
+    linked_feature_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.basic_id.strip():
+            raise ValueError("BasicDimension.basic_id must be non-empty")
+        if self.value <= Decimal(0):
+            raise ValueError("BasicDimension.value must be > 0")
+
+    @property
+    def is_orphan(self) -> bool:
+        return len(self.linked_fcf_ids) == 0
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Feature patterns
+# ---------------------------------------------------------------------------
+
+class PatternKind(StrEnum):
+    LINEAR = "LINEAR"
+    CIRCULAR = "CIRCULAR"       # bolt circle / PCD pattern
+    RECTANGULAR = "RECTANGULAR"
+    IRREGULAR = "IRREGULAR"
+
+
+@dataclass(frozen=True, slots=True)
+class FeaturePattern:
+    pattern_id: str
+    kind: PatternKind
+    member_feature_ids: tuple[str, ...]
+    count: int
+    pattern_fcf_id: str | None
+    individual_fcf_ids: tuple[str, ...] = ()
+    basic_spacing_mm: Decimal | None = None
+    basic_pcd_mm: Decimal | None = None
+
+    def __post_init__(self) -> None:
+        if not self.pattern_id.strip():
+            raise ValueError("FeaturePattern.pattern_id must be non-empty")
+        if self.count < 1:
+            raise ValueError("FeaturePattern.count must be >= 1")
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Projected tolerance zone
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class ProjectedToleranceZone:
+    """Projected tolerance zone for threaded/press-fit holes."""
+    projected_height_mm: Decimal
+    direction: str = "ABOVE"    # "ABOVE" | "BELOW" | "BOTH"
+    applicability_note: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.projected_height_mm <= Decimal(0):
+            raise ValueError("ProjectedToleranceZone.projected_height_mm must be > 0")
+        if self.direction not in ("ABOVE", "BELOW", "BOTH"):
+            raise ValueError("ProjectedToleranceZone.direction must be ABOVE, BELOW, or BOTH")
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Composite FCF
+# ---------------------------------------------------------------------------
+
+class SegmentIntent(StrEnum):
+    PATTERN_LOCATING_TOLERANCE_ZONE = "PLTZF"   # upper — locates pattern to datums
+    FEATURE_RELATING_TOLERANCE_ZONE = "FRTZF"   # lower — inter-feature relationship
+
+
+@dataclass(frozen=True, slots=True)
+class FCFSegment:
+    segment_index: int
+    characteristic: GdtCharacteristic
+    tolerance_value: Decimal
+    tolerance_unit: str
+    diameter_zone: bool
+    modifier: FeatureModifier
+    datum_frame: DatumReferenceFrame | None
+    intent: SegmentIntent
+
+    def __post_init__(self) -> None:
+        if self.segment_index < 0:
+            raise ValueError("FCFSegment.segment_index must be >= 0")
+        if self.tolerance_value <= Decimal(0):
+            raise ValueError("FCFSegment.tolerance_value must be > 0")
+
+
+@dataclass(frozen=True, slots=True)
+class CompositePositionFCF:
+    """Two-segment composite position FCF (PLTZF + FRTZF)."""
+    fcf_id: str
+    segments: tuple[FCFSegment, ...]
+
+    def __post_init__(self) -> None:
+        if not self.fcf_id.strip():
+            raise ValueError("CompositePositionFCF.fcf_id must be non-empty")
+        if len(self.segments) < 2:
+            raise ValueError("CompositePositionFCF requires at least 2 segments")
+        if (self.segments[1].tolerance_value > self.segments[0].tolerance_value):
+            raise ValueError(
+                "CompositePositionFCF: lower segment tolerance must be <= upper segment "
+                "(GDT_COMPOSITE_TOLERANCE_INVERTED)"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Bonus tolerance and virtual condition
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class BonusToleranceResult:
+    """Bonus tolerance calculation result.
+
+    FABRICATED_ACTUAL_SIZE=NO — computed=False whenever actual_size_mm is None.
+    """
+    computed: bool
+    stated_tolerance: Decimal
+    bonus_amount: Decimal | None      # None when computed=False
+    total_tolerance: Decimal | None   # None when computed=False
+    actual_size_mm: Decimal | None
+    mmc_or_lmc_size_mm: Decimal | None
+    reason_not_computed: str | None
+
+    @property
+    def safe_total(self) -> Decimal:
+        return self.total_tolerance if self.total_tolerance is not None else self.stated_tolerance
+
+
+@dataclass(frozen=True, slots=True)
+class VirtualConditionResult:
+    """Virtual condition (worst-case boundary) calculation result."""
+    computed: bool
+    virtual_condition_mm: Decimal | None
+    description: str
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Ambiguity and confidence
+# ---------------------------------------------------------------------------
+
+class AmbiguityKind(StrEnum):
+    MISSING_DATUM = "MISSING_DATUM"
+    UNRESOLVED_FCF = "UNRESOLVED_FCF"
+    MULTIPLE_CANDIDATE_FEATURES = "MULTIPLE_CANDIDATE_FEATURES"
+    INVALID_MODIFIER_COMBO = "INVALID_MODIFIER_COMBO"
+    AMBIGUOUS_FOS = "AMBIGUOUS_FOS"
+    ORPHAN_BASIC_DIMENSION = "ORPHAN_BASIC_DIMENSION"
+    COMPOUND_DATUM_UNRESOLVED = "COMPOUND_DATUM_UNRESOLVED"
+    LEGACY_CHARACTERISTIC = "LEGACY_CHARACTERISTIC"
+    COMPOSITE_TOLERANCE_INVERTED = "COMPOSITE_TOLERANCE_INVERTED"
+    PATTERN_COUNT_MISMATCH = "PATTERN_COUNT_MISMATCH"
+
+
+@dataclass(frozen=True, slots=True)
+class GdtAmbiguity:
+    ambiguity_id: str
+    kind: AmbiguityKind
+    affected_ids: tuple[str, ...]
+    description: str
+    severity: str               # "ERROR" | "WARNING" | "INFO"
+    suggested_resolution: str | None
+
+    def __post_init__(self) -> None:
+        if not self.ambiguity_id.strip():
+            raise ValueError("GdtAmbiguity.ambiguity_id must be non-empty")
+        if self.severity not in ("ERROR", "WARNING", "INFO"):
+            raise ValueError("GdtAmbiguity.severity must be ERROR, WARNING, or INFO")
+
+
+class GdtConfidence(StrEnum):
+    EXACT_STRUCTURED = "EXACT_STRUCTURED"   # parsed from well-formed vector FCF
+    RULE_PARSED = "RULE_PARSED"             # structured OCR, high confidence
+    GEOMETRY_MATCHED = "GEOMETRY_MATCHED"   # spatial/geometry association
+    PATTERN_MATCHED = "PATTERN_MATCHED"     # inferred via pattern rule
+    INFERRED = "INFERRED"                   # heuristic — low confidence
+    USER_CONFIRMED = "USER_CONFIRMED"       # user resolved in review UI
+    AMBIGUOUS = "AMBIGUOUS"                 # multiple interpretations, not resolved
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Setup planning hints
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class SetupPlanHint:
+    """Datum-driven setup planning hints derived from the DRF."""
+    source_id: str
+    primary_datum_label: str
+    primary_setup_note: str
+    secondary_datum_label: str | None
+    secondary_setup_note: str | None
+    tertiary_datum_label: str | None
+    tertiary_setup_note: str | None
+    same_setup_requirements: tuple[str, ...] = ()   # FCF IDs that must share same setup
+    access_warnings: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.source_id.strip():
+            raise ValueError("SetupPlanHint.source_id must be non-empty")
+
+
+# ---------------------------------------------------------------------------
+# Phase 04B: Tolerance precedence
+# ---------------------------------------------------------------------------
+
+class TolerancePrecedence(StrEnum):
+    SPECIFIC_GDT = "SPECIFIC_GDT"
+    SPECIFIC_DIMENSION = "SPECIFIC_DIMENSION"
+    SPECIFIC_NOTE = "SPECIFIC_NOTE"
+    TITLE_BLOCK_TOLERANCE = "TITLE_BLOCK_TOLERANCE"
+    GENERAL_STANDARD = "GENERAL_STANDARD"
+    DEFAULT_UNKNOWN = "DEFAULT_UNKNOWN"
+
+
+# ---------------------------------------------------------------------------
+# Datum / DRF model (Phase 04 original — kept for backward compatibility)
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True, slots=True)
@@ -396,11 +965,24 @@ class DrawingRequirementSet:
 
     @property
     def fingerprint(self) -> str:
-        """Stable hex digest for traceability."""
+        """Stable hex digest for traceability (includes GD&T modifiers and DRF labels)."""
+        modifier_hash = hashlib.sha256(
+            "|".join(
+                f"{g.req_id}:{g.fcf.modifier.value}:{g.fcf.characteristic.value}"
+                for g in self.geometric
+            ).encode()
+        ).hexdigest()[:8]
+        drf_hash = hashlib.sha256(
+            "|".join(
+                ":".join(g.fcf.datum_frame.labels) if g.fcf.datum_frame else "NONE"
+                for g in self.geometric
+            ).encode()
+        ).hexdigest()[:8]
         payload = (
             f"{self.source_id}|{self.drawing_number}|{self.revision}"
             f"|D{len(self.dimensional)}|G{len(self.geometric)}"
             f"|S{len(self.surface_finish)}|T{len(self.threads)}"
+            f"|GDT_MODIFIERS:{modifier_hash}|DRF_SEQUENCE:{drf_hash}"
         )
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
 

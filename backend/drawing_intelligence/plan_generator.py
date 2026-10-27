@@ -14,19 +14,16 @@ LLM_ALLOWED_TO_OVERRIDE_ENGINEERING_FACTS=NO
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Sequence
 
 from backend.domain.enums import OperationType
 from backend.drawing_intelligence.feature_recognition import (
     FeatureRecognitionResult,
-    RecognizedFeature,
 )
 from backend.drawing_intelligence.inspection_foundation import InspectionPlan
 from backend.drawing_intelligence.requirements import DrawingRequirementSet
 from backend.drawing_intelligence.route_generator import (
-    AlternativeRoute,
     RouteGenerationResult,
     RouteGenerator,
 )

@@ -24,20 +24,16 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from decimal import Decimal
-from typing import Sequence
 
 from backend.domain.base import Provenance
 from backend.domain.enums import FeatureType, ProvenanceType
 from backend.domain.feature import Feature
 from backend.domain.units import Quantity, Unit
 from backend.drawing_intelligence.requirements import (
+    GDT_CYLINDRICAL_CONTEXT,
     DimensionalRequirement,
     DrawingRequirementSet,
     GdtCharacteristic,
-    GDT_CYLINDRICAL_CONTEXT,
-    GeometricRequirement,
-    ThreadRequirement,
 )
 
 __all__ = [

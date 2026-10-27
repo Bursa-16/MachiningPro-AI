@@ -315,13 +315,16 @@ def _build_frame(
     diameter = False
     datum_tokens: list[GdtTokenEvidence] = []
     cells: list[DrawingGdtCell] = []
+    frame_modifier: DrawingGdtModifier = DrawingGdtModifier.NONE
     for index, token in enumerate(ordered):
         text = _normalize(token.text)
         role = DrawingGdtCellRole.UNKNOWN
         if index == 0:
             role = DrawingGdtCellRole.CHARACTERISTIC
-        elif _is_unsupported_modifier(text):
-            return None, "GDT_UNSUPPORTED_MODIFIER"
+        elif (modifier_match := _is_modifier(text)) is not None:
+            if frame_modifier is DrawingGdtModifier.NONE:
+                frame_modifier = modifier_match
+            role = DrawingGdtCellRole.MODIFIER
         elif _parse_tolerance(text) is not None:
             if tolerance_value is not None:
                 return None, "GDT_EVIDENCE_CONFLICT"
@@ -330,7 +333,7 @@ def _build_frame(
                 return None, "GDT_MALFORMED_TOLERANCE"
             tolerance_value, tolerance_unit, diameter = parsed_tolerance
             role = DrawingGdtCellRole.TOLERANCE
-        elif re.fullmatch(r"[A-Z]", text):
+        elif re.fullmatch(r"[A-Z](-[A-Z])?", text):
             datum_tokens.append(token)
             role = DrawingGdtCellRole.DATUM
         else:
@@ -386,7 +389,7 @@ def _build_frame(
             source_location=source_location,
             parser_identity=ordered[0].parser_identity,
             confidence=min(token.confidence for token in ordered),
-            modifier=DrawingGdtModifier.NONE,
+            modifier=frame_modifier,
         ),
         None,
     )
@@ -454,7 +457,7 @@ def _merge_frames(
         source_location=location,
         parser_identity=first.parser_identity,
         confidence=min(first.confidence, second.confidence),
-        modifier=DrawingGdtModifier.NONE,
+        modifier=first.modifier,
     )
 
 
@@ -542,8 +545,19 @@ def _parse_tolerance(text: str) -> tuple[Decimal, str, bool] | None:
     return value, unit, bool(match.group("diameter"))
 
 
-def _is_unsupported_modifier(text: str) -> bool:
-    return text in {"MMC", "LMC", "RFS"}
+_MODIFIER_MAP: dict[str, DrawingGdtModifier] = {
+    "MMC": DrawingGdtModifier.MMC,
+    "LMC": DrawingGdtModifier.LMC,
+    "RFS": DrawingGdtModifier.RFS,
+    "PROJECTED": DrawingGdtModifier.PROJECTED,
+    "FREE STATE": DrawingGdtModifier.FREE_STATE,
+    "TANGENT PLANE": DrawingGdtModifier.TANGENT_PLANE,
+}
+
+
+def _is_modifier(text: str) -> DrawingGdtModifier | None:
+    """Return the matching modifier, or None if text is not a modifier token."""
+    return _MODIFIER_MAP.get(text)
 
 
 def _normalize(text: str) -> str:

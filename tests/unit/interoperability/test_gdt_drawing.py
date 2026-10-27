@@ -74,15 +74,27 @@ def test_diameter_and_multiple_datums_are_typed_and_ordered():
 
 
 def test_malformed_unsupported_or_low_confidence_evidence_is_omitted():
+    # POSITION + "0.1" (no unit) → omitted (no unit token)
+    # POSITION + low confidence → omitted
+    # UNKNOWN characteristic → omitted
     for tokens in (
         (_token("POSITION", 0), _token("0.1", 25), _token("A", 50)),
-        (_token("POSITION", 0), _token("0.1 mm", 25), _token("MMC", 50)),
         (_token("POSITION", 0, confidence="0.89"), _token("0.1 mm", 25), _token("A", 50)),
         (_token("UNKNOWN", 0), _token("0.1 mm", 25), _token("A", 50)),
     ):
         result = recognize_feature_control_frames(tokens)
         assert result.frames == ()
         assert result.status is DrawingIngestionStatus.INSUFFICIENT_DATA
+
+
+def test_mmc_modifier_with_no_datum_produces_frame():
+    # POSITION + MMC modifier (no datum) → valid frame; semantic datum check is
+    # downstream (VAL-GDT-002), not the parser's job.
+    from backend.interoperability.drawing import DrawingGdtModifier
+    tokens = (_token("POSITION", 0), _token("0.1 mm", 25), _token("MMC", 50))
+    result = recognize_feature_control_frames(tokens)
+    assert len(result.frames) == 1
+    assert result.frames[0].modifier == DrawingGdtModifier.MMC
 
 
 def test_vector_ocr_duplicates_merge_and_conflicts_are_omitted():

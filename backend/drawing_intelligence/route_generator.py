@@ -28,9 +28,15 @@ from backend.drawing_intelligence.operation_capability import (
 )
 from backend.drawing_intelligence.requirements import (
     DrawingRequirementSet,
-    SurfaceFinishRequirement,
+    GdtCharacteristic,
+    GdtModifier,
 )
 from backend.drawing_intelligence.sequence_rules import insert_mandatory_predecessors
+
+# R-RT-GDT thresholds
+_TIGHT_POSITION_MM = Decimal("0.1")
+_VERY_TIGHT_POSITION_MM = Decimal("0.05")
+_TIGHT_PERPENDICULARITY_MM = Decimal("0.05")
 
 __all__ = [
     "AlternativeRoute",
@@ -175,6 +181,10 @@ class RouteGenerator:
             ))
             route_idx += 1
 
+        # Apply GD&T-aware route warnings (R-RT-GDT-001 through R-RT-GDT-007)
+        gdt_warnings = self._gdt_route_warnings(rf, req_set)
+        warnings.extend(gdt_warnings)
+
         return RouteGenerationResult(
             feature_id=feature.feature_id,
             feature_type=ft,
@@ -182,6 +192,76 @@ class RouteGenerator:
             rejections=tuple(rejections),
             warnings=tuple(warnings),
         )
+
+    # ------------------------------------------------------------------ #
+    # GD&T routing rules (R-RT-GDT-001 through R-RT-GDT-007)
+    # ------------------------------------------------------------------ #
+
+    def _gdt_route_warnings(
+        self,
+        rf: RecognizedFeature,
+        req_set: DrawingRequirementSet,
+    ) -> list[str]:
+        """Return route-level GD&T warnings for R-RT-GDT-001 through R-RT-GDT-007."""
+        warnings: list[str] = []
+        feature_id = rf.feature.feature_id
+
+        for geom in req_set.geometric:
+            if geom.feature_ref is not None and geom.feature_ref != feature_id:
+                continue
+            fcf = geom.fcf
+            char = fcf.characteristic
+            tol = fcf.tolerance_value
+
+            # R-RT-GDT-001: Tight position — prefer boring/reaming over drilling
+            if char == GdtCharacteristic.POSITION and tol <= _TIGHT_POSITION_MM:
+                if tol <= _VERY_TIGHT_POSITION_MM:
+                    warnings.append(
+                        f"R-RT-GDT-001 [{geom.req_id}]: POSITION ⌀{tol} mm — "
+                        "very tight; prefer boring + reaming; jig boring may be required"
+                    )
+                else:
+                    warnings.append(
+                        f"R-RT-GDT-001 [{geom.req_id}]: POSITION ⌀{tol} mm — "
+                        "tight; prefer boring over drilling for final pass"
+                    )
+
+            # R-RT-GDT-002: Tight perpendicularity — add finish grinding/honing
+            elif char == GdtCharacteristic.PERPENDICULARITY and tol <= _TIGHT_PERPENDICULARITY_MM:
+                warnings.append(
+                    f"R-RT-GDT-002 [{geom.req_id}]: PERPENDICULARITY {tol} mm — "
+                    "add surface grinding or precision boring in final setup"
+                )
+
+            # R-RT-GDT-003: Cylindricity — add grinding to cylindrical routes
+            elif char == GdtCharacteristic.CYLINDRICITY:
+                warnings.append(
+                    f"R-RT-GDT-003 [{geom.req_id}]: CYLINDRICITY {tol} mm — "
+                    "route should include cylindrical grinding (OD or ID)"
+                )
+
+            # R-RT-GDT-004: Runout — same-setup constraint
+            elif char in (GdtCharacteristic.CIRCULAR_RUNOUT, GdtCharacteristic.TOTAL_RUNOUT):
+                warnings.append(
+                    f"R-RT-GDT-004 [{geom.req_id}]: {char.value} {tol} mm — "
+                    "all runout-controlled surfaces must be machined in one chucking"
+                )
+
+            # R-RT-GDT-005: Profile of a surface — finishing step
+            elif char == GdtCharacteristic.PROFILE_OF_A_SURFACE:
+                warnings.append(
+                    f"R-RT-GDT-005 [{geom.req_id}]: PROFILE_OF_A_SURFACE {tol} mm — "
+                    "include surface finishing (grinding or lapping) in final route step"
+                )
+
+            # R-RT-GDT-006: MMC/LMC modifier — inspection note
+            if fcf.modifier in (GdtModifier.MMC, GdtModifier.LMC):
+                warnings.append(
+                    f"R-RT-GDT-006 [{geom.req_id}]: {fcf.modifier.value} modifier — "
+                    "100% size inspection required before GD&T conformance check"
+                )
+
+        return warnings
 
     # ------------------------------------------------------------------ #
     # Feature-specific route templates
