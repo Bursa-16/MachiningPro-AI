@@ -27,6 +27,7 @@ from .drawing_to_process import router as drawing_to_process_router
 from .engineering_import import router as engineering_import_router
 from .gdt import router as gdt_router
 from .cad_features import router as cad_features_router
+from .process_routes import router as process_routes_router
 from .machines import router as machines_router
 from .materials import router as materials_router
 from .nc_path import router as nc_path_router
@@ -72,6 +73,7 @@ app.include_router(tool_life_router)
 app.include_router(drawing_parser_router)
 app.include_router(gdt_router)
 app.include_router(cad_features_router)
+app.include_router(process_routes_router)
 
 
 @app.get("/api/health")

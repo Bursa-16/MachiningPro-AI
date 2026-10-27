@@ -73,6 +73,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: 'drawing-to-process', path: '/app/planning-quality/drawing-to-process', label: 'Drawing to Process', icon: GitBranch },
       { id: 'drawing-parser', path: '/app/planning-quality/drawing-parser', label: 'Drawing Parser', icon: Search },
       { id: 'gdt-intelligence', path: '/app/planning-quality/gdt-intelligence', label: 'GD&T Intelligence', icon: Ruler },
+      { id: 'process-routes', path: '/app/planning-quality/process-routes', label: 'Route Optimization', icon: GitBranch },
       { id: 'dfm', path: '/app/planning-quality/dfm', label: 'DFM', icon: Puzzle, badge: 'preview' },
       { id: 'machine-capability', path: '/app/planning-quality/machine-capability', label: 'Machine Capability', icon: TrendingUp, badge: 'preview' },
       { id: 'validation', path: '/app/planning-quality/validation', label: 'Validation', icon: ShieldCheck, badge: 'preview' },

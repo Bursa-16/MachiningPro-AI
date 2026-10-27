@@ -19,6 +19,7 @@ import MaterialLibraryPage from './pages/MaterialLibraryPage'
 import DrawingParserPage from './pages/DrawingParserPage'
 import GdtIntelligencePage from './pages/GdtIntelligencePage'
 import CadFeaturesPage from './pages/CadFeaturesPage'
+import ProcessRoutesPage from './pages/ProcessRoutesPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   const { t } = useLocale()
@@ -90,6 +91,7 @@ function ProtectedRoutes() {
         <Route path="app/planning-quality/drawing-to-process" element={<DrawingToProcessPage />} />
         <Route path="app/planning-quality/drawing-parser" element={<DrawingParserPage />} />
         <Route path="app/planning-quality/gdt-intelligence" element={<GdtIntelligencePage />} />
+        <Route path="app/planning-quality/process-routes" element={<ProcessRoutesPage />} />
         <Route path="app/planning-quality/dfm" element={capability('DFM')} />
         <Route path="app/planning-quality/machine-capability" element={capability('Machine Capability')} />
         <Route path="app/planning-quality/validation" element={capability('Validation')} />

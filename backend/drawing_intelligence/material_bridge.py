@@ -69,7 +69,10 @@ class MaterialBridge:
                     raw_designation=raw_designation,
                     matched_material_id=item.material_id,
                     matched_designation=item.designation,
-                    iso_group=item.iso_group if isinstance(item.iso_group, str) else (item.iso_group.value if item.iso_group else None),
+                    iso_group=(
+                        item.iso_group if isinstance(item.iso_group, str)
+                        else (item.iso_group.value if item.iso_group else None)
+                    ),
                     confidence="EXACT",
                     search_query_used=query,
                     catalog_size=len(items),
@@ -83,7 +86,10 @@ class MaterialBridge:
                 raw_designation=raw_designation,
                 matched_material_id=best.material_id,
                 matched_designation=best.designation,
-                iso_group=best.iso_group if isinstance(best.iso_group, str) else (best.iso_group.value if best.iso_group else None),
+                iso_group=(
+                    best.iso_group if isinstance(best.iso_group, str)
+                    else (best.iso_group.value if best.iso_group else None)
+                ),
                 confidence="PARTIAL",
                 search_query_used=query,
                 catalog_size=len(items),
