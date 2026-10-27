@@ -22,6 +22,7 @@ from .compatibility import router as compatibility_router
 from .cutting_parameters import router as cutting_parameters_router
 from .cutting_tools import router as cutting_tools_router
 from .drawing_analysis import router as drawing_analysis_router
+from .drawing_parser import router as drawing_parser_router
 from .drawing_to_process import router as drawing_to_process_router
 from .engineering_import import router as engineering_import_router
 from .gdt import router as gdt_router
@@ -67,6 +68,7 @@ app.include_router(process_planning_router)
 app.include_router(selection_router)
 app.include_router(tool_holders_router)
 app.include_router(tool_life_router)
+app.include_router(drawing_parser_router)
 app.include_router(gdt_router)
 
 

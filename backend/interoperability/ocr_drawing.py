@@ -12,7 +12,6 @@ import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
 from typing import Any
 
 import pytesseract
@@ -396,12 +395,15 @@ def _normalize_confidence(value: Any) -> Decimal:
 
 
 def _resolve_tesseract_command() -> str:
+    import os
+    # 1. Honour explicit configuration — HARDCODED_TESSERACT_PATH=NO
+    env_cmd = os.environ.get("TESSERACT_CMD", "").strip()
+    if env_cmd:
+        return env_cmd
+    # 2. PATH discovery (works on all platforms without hardcoding)
     command = shutil.which("tesseract")
     if command:
         return command
-    default = Path("C:/Program Files/Tesseract-OCR/tesseract.exe")
-    if default.is_file():
-        return str(default)
     raise _OcrEngineUnavailable
 
 

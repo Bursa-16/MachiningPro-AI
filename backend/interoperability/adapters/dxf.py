@@ -76,6 +76,14 @@ _GEOMETRY_ENTITY_TYPES = frozenset(
     }
 )
 
+# DXF entity types that carry annotation/drawing semantics (Level 2)
+_ANNOTATION_ENTITY_TYPES = frozenset(
+    {
+        "TEXT", "MTEXT", "DIMENSION", "LEADER", "MLEADER",
+        "INSERT", "ATTDEF", "ATTRIB",
+    }
+)
+
 
 def _parse_dxf_text(text: str) -> dict[str, object]:
     """Tokenize a text DXF file into section/entity metadata."""
@@ -286,6 +294,8 @@ class DxfTokenAdapter(FormatAdapter):
             msp = doc.modelspace()
 
             geometry_entities = []
+            annotation_tokens: list[str] = []
+
             for entity in msp:
                 dxftype = entity.dxftype()
                 entity_ref = CanonicalEntityRef(
@@ -297,21 +307,52 @@ class DxfTokenAdapter(FormatAdapter):
                     metadata={"dxftype": dxftype},
                 )
                 session.add_entity_ref(entity_ref)
+
                 if dxftype in _GEOMETRY_ENTITY_TYPES:
                     geometry_entities.append(entity_ref)
+
+                # Extract annotation text for semantic pipeline
+                if dxftype in _ANNOTATION_ENTITY_TYPES:
+                    try:
+                        text_content: str | None = None
+                        if dxftype == "TEXT":
+                            text_content = getattr(entity.dxf, "text", None)
+                        elif dxftype == "MTEXT":
+                            text_content = getattr(entity, "plain_mtext", lambda: None)()
+                        elif dxftype == "DIMENSION":
+                            text_content = getattr(entity.dxf, "text", None)
+                        elif dxftype in ("ATTDEF", "ATTRIB"):
+                            text_content = getattr(entity.dxf, "text", None)
+                        if text_content and isinstance(text_content, str):
+                            annotation_tokens.append(text_content.strip())
+                    except Exception:  # noqa: BLE001
+                        pass
 
             if not geometry_entities:
                 session.record_unsupported(
                     "DXF modelspace contains no recognized geometry entities"
                 )
             else:
-                # Full CanonicalGeometry mapping is Stage 4C-c (DXFGeometryBridge).
-                # This stub confirms entities were read.
                 session.record_partial(
                     f"ezdxf read {len(geometry_entities)} geometry entity(ies); "
                     "entity → CER mapping deferred to Stage 4C-c DXFGeometryBridge"
                 )
 
+            if annotation_tokens:
+                session.record_partial(
+                    f"DXF Level 2: extracted {len(annotation_tokens)} annotation token(s) "
+                    "from TEXT/MTEXT/DIMENSION/LEADER entities"
+                )
+
         except Exception as exc:  # noqa: BLE001
             session.mark_partial()
             session.record_lost(f"ezdxf geometry normalization failed: {exc}")
+
+    @staticmethod
+    def dxf_level2_available() -> bool:
+        """Return True if ezdxf is installed (DXF Level 2 available)."""
+        try:
+            import ezdxf  # noqa: F401
+            return True
+        except ImportError:
+            return False

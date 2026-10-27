@@ -16,6 +16,7 @@ import ToolHolderCatalogPage from './pages/ToolHolderCatalogPage'
 import ProcessPlanningPage from './pages/ProcessPlanningPage'
 import DrawingToProcessPage from './pages/DrawingToProcessPage'
 import MaterialLibraryPage from './pages/MaterialLibraryPage'
+import DrawingParserPage from './pages/DrawingParserPage'
 import GdtIntelligencePage from './pages/GdtIntelligencePage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
@@ -85,6 +86,7 @@ function ProtectedRoutes() {
         {/* Planning & Quality */}
         <Route path="app/planning-quality/process-planning" element={<ProcessPlanningPage />} />
         <Route path="app/planning-quality/drawing-to-process" element={<DrawingToProcessPage />} />
+        <Route path="app/planning-quality/drawing-parser" element={<DrawingParserPage />} />
         <Route path="app/planning-quality/gdt-intelligence" element={<GdtIntelligencePage />} />
         <Route path="app/planning-quality/dfm" element={capability('DFM')} />
         <Route path="app/planning-quality/machine-capability" element={capability('Machine Capability')} />
