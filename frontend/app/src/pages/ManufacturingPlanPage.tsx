@@ -9,6 +9,7 @@ import {
   approvePlan,
   rejectPlan,
   exportPlan,
+  getNcHandoff,
 } from '../services/manufacturingPlan'
 import type {
   ManufacturingPlanSummary,
@@ -16,6 +17,8 @@ import type {
   ValidationResult,
   GeneratePlanRequest,
 } from '../types/manufacturingPlan'
+import { usePipeline } from '../context/PipelineContext'
+import { DEMO_SPOOL_REQ_SET, DEMO_SPOOL_META } from '../data/demoSpool'
 
 const DISCLAIMER =
   'REFERENCE ONLY — Advisory manufacturing plan. Engineer review required. AUTO_GENERATED_PLAN_MARKED_APPROVED=NO'
@@ -124,7 +127,9 @@ function GeneratePanel({ onGenerated }: { onGenerated: (s: ManufacturingPlanSumm
   const [drawingNumber, setDrawingNumber] = useState('')
   const [revision, setRevision] = useState('')
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [demoMode, setDemoMode] = useState(false)
 
   const handleGenerate = async () => {
     if (!sourceId.trim()) return
@@ -145,11 +150,37 @@ function GeneratePanel({ onGenerated }: { onGenerated: (s: ManufacturingPlanSumm
     }
   }
 
+  const handleLoadDemo = async () => {
+    setDemoLoading(true)
+    setError(null)
+    setDemoMode(false)
+    try {
+      const req: GeneratePlanRequest = {
+        source_id: 'DEMO-SPOOL-001',
+        drawing_number: DEMO_SPOOL_META.part_number,
+        revision: DEMO_SPOOL_META.revision,
+        req_set: DEMO_SPOOL_REQ_SET,
+      }
+      const summary = await generatePlan(req)
+      setDemoMode(true)
+      onGenerated(summary)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setDemoLoading(false)
+    }
+  }
+
   return (
     <div className="bg-[var(--tp-bg-2,#f8f9fa)] dark:bg-[#1e2530] rounded-lg p-4 mb-6 border border-[var(--tp-border)]">
       <h3 className="text-sm font-semibold text-[var(--tp-text-1)] mb-3">
         {t('mfpGenerateFromRoute')}
       </h3>
+      {demoMode && (
+        <div className="mb-3 p-2 rounded bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-800 dark:text-yellow-200 text-xs font-semibold">
+          {t('pipeline_demoModeBanner')}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
         <div>
           <label className="block text-xs text-[var(--tp-text-3)] mb-1">{t('mfpSourceId')} *</label>
@@ -180,13 +211,22 @@ function GeneratePanel({ onGenerated }: { onGenerated: (s: ManufacturingPlanSumm
         </div>
       </div>
       {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
-      <button
-        onClick={handleGenerate}
-        disabled={loading || !sourceId.trim()}
-        className="px-4 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 transition-colors"
-      >
-        {loading ? '...' : t('mfpGenerate')}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={handleGenerate}
+          disabled={loading || demoLoading || !sourceId.trim()}
+          className="px-4 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 transition-colors"
+        >
+          {loading ? '...' : t('mfpGenerate')}
+        </button>
+        <button
+          onClick={handleLoadDemo}
+          disabled={demoLoading || loading}
+          className="px-4 py-1.5 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded disabled:opacity-50 transition-colors"
+        >
+          {demoLoading ? '...' : t('pipeline_loadDemoPart')}
+        </button>
+      </div>
     </div>
   )
 }
@@ -608,6 +648,7 @@ function ExportTab({ planId }: { planId: string }) {
   const { t } = useLocale()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [ncHandoffData, setNcHandoffData] = useState<unknown>(null)
 
   const doExport = async (fmt: 'json' | 'csv_operations' | 'csv_inspection' | 'html') => {
     setLoading(fmt)
@@ -627,6 +668,20 @@ function ExportTab({ planId }: { planId: string }) {
       a.download = `manufacturing-plan-${planId.slice(0, 8)}.${ext}`
       a.click()
       URL.revokeObjectURL(url)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const doNcHandoff = async () => {
+    setLoading('nc_handoff')
+    setError(null)
+    setNcHandoffData(null)
+    try {
+      const data = await getNcHandoff(planId)
+      setNcHandoffData(data)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -661,7 +716,22 @@ function ExportTab({ planId }: { planId: string }) {
         <div className="px-3 py-2 text-sm border border-[var(--tp-border)] rounded opacity-40 text-[var(--tp-text-3)]">
           {t('mfpExportXlsxDeferred')}
         </div>
+        <button
+          onClick={doNcHandoff}
+          disabled={loading !== null}
+          className="px-3 py-2 text-sm border border-[var(--tp-border)] rounded hover:bg-blue-50 dark:hover:bg-blue-950 disabled:opacity-50 text-[var(--tp-text-1)] transition-colors col-span-2 md:col-span-1"
+        >
+          {loading === 'nc_handoff' ? '...' : t('pipeline_ncHandoffExport')}
+        </button>
       </div>
+      {ncHandoffData && (
+        <div className="mt-3">
+          <div className="text-xs font-semibold text-[var(--tp-text-2)] mb-1">{t('pipeline_ncHandoffExport')}</div>
+          <pre className="text-[10px] bg-[var(--tp-bg-2,#f8f9fa)] dark:bg-[#1e2530] rounded p-3 border border-[var(--tp-border)] overflow-x-auto max-h-60">
+            {JSON.stringify(ncHandoffData, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }
@@ -669,6 +739,7 @@ function ExportTab({ planId }: { planId: string }) {
 // ────────────────────────── Main Page ────────────────────────────────────────
 export default function ManufacturingPlanPage() {
   const { t } = useLocale()
+  const { manufacturingPlanId } = usePipeline()
   const [plans, setPlans] = useState<ManufacturingPlanSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ManufacturingPlanDetail | null>(null)
@@ -676,6 +747,7 @@ export default function ManufacturingPlanPage() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [listError, setListError] = useState<string | null>(null)
+  const [pipelineBanner, setPipelineBanner] = useState<string | null>(null)
 
   const fetchList = useCallback(async () => {
     setLoadingList(true)
@@ -693,6 +765,19 @@ export default function ManufacturingPlanPage() {
   useEffect(() => {
     fetchList()
   }, [fetchList])
+
+  // Pipeline prefill: if manufacturingPlanId is in context, auto-load it
+  useEffect(() => {
+    if (!manufacturingPlanId) return
+    setPipelineBanner(manufacturingPlanId)
+    setSelectedId(manufacturingPlanId)
+    setActiveTab('overview')
+    setLoadingDetail(true)
+    getPlan(manufacturingPlanId)
+      .then(d => setDetail(d))
+      .catch(() => setDetail(null))
+      .finally(() => setLoadingDetail(false))
+  }, [manufacturingPlanId])
 
   const fetchDetail = useCallback(async (id: string) => {
     setLoadingDetail(true)
@@ -737,6 +822,12 @@ export default function ManufacturingPlanPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <h1 className="text-xl font-bold text-[var(--tp-text-1)] mb-1">{t('mfpTitle')}</h1>
       <p className="text-xs text-[var(--tp-text-3)] mb-4">{DISCLAIMER}</p>
+
+      {pipelineBanner && (
+        <div className="mb-4 p-2 rounded bg-blue-100 dark:bg-blue-900 border border-blue-400 text-blue-800 dark:text-blue-200 text-xs">
+          {t('pipeline_planGeneratedFrom')}: <span className="font-mono">{pipelineBanner}</span>
+        </div>
+      )}
 
       <GeneratePanel onGenerated={handleGenerated} />
 

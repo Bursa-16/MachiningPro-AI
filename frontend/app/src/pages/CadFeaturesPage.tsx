@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLocale } from '../i18n/index'
 import {
   analyzeCad,
@@ -12,6 +13,7 @@ import {
   type FusionStatusResponse,
   type FeaturesResponse,
 } from '../services/cadFeatures'
+import { usePipeline } from '../context/PipelineContext'
 
 // ---------------------------------------------------------------------------
 // Small UI helpers
@@ -231,6 +233,8 @@ function FusionPanel({ fusion, t }: { fusion: FusionStatusResponse; t: (k: strin
 
 export default function CadFeaturesPage() {
   const { t } = useLocale()
+  const navigate = useNavigate()
+  const { drawingParserSessionId, setCadSessionId } = usePipeline()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -334,6 +338,13 @@ export default function CadFeaturesPage() {
           <h1 className="text-xl font-semibold text-[var(--tp-text)]">{t('cfPageTitle')}</h1>
           <p className="text-sm text-[var(--tp-text-2)] mt-1">{t('cfPageSubtitle')}</p>
         </div>
+
+        {/* Pipeline requirements banner */}
+        {drawingParserSessionId && (
+          <div className="p-2 rounded bg-blue-100 dark:bg-blue-900 border border-blue-400 text-blue-800 dark:text-blue-200 text-xs">
+            {t('pipeline_requirementsLoadedFrom')}: <span className="font-mono">{drawingParserSessionId}</span>
+          </div>
+        )}
 
         {/* Disclaimer */}
         <Card className="border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-900/10">
@@ -477,6 +488,21 @@ export default function CadFeaturesPage() {
               <SectionLabel>{t('cfViewerLabel')}</SectionLabel>
               <ViewerStub faceCount={faceCount} bodyCount={bodyCount} t={t} />
             </Card>
+          </div>
+        )}
+
+        {/* Pipeline handoff: Continue to Route Generation */}
+        {sessionId && (
+          <div className="flex items-center gap-3 pt-2 border-t border-[var(--tp-border)]">
+            <button
+              onClick={() => {
+                setCadSessionId(sessionId)
+                navigate('/app/planning-quality/process-routes')
+              }}
+              className="px-3 py-1.5 text-xs font-semibold rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+            >
+              {t('pipeline_continueToRouteGeneration')} →
+            </button>
           </div>
         )}
 

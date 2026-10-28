@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { useLocale } from './i18n'
+import { PipelineProvider } from './context/PipelineContext'
 import AppShell from './layouts/AppShell'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -52,6 +53,7 @@ function ProtectedRoutes() {
   if (!isAuthenticated) return <LoginPage onLogin={login} />
 
   return (
+    <PipelineProvider>
     <Routes>
       <Route element={<AppShell user={user} role={role} onLogout={logout} />}>
         <Route path="app" element={<DashboardPage />} />
@@ -104,6 +106,7 @@ function ProtectedRoutes() {
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Route>
     </Routes>
+    </PipelineProvider>
   )
 }
 

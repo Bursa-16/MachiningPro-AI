@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   processRoutesApi,
   type FeatureRouteRequestBody,
@@ -16,6 +17,8 @@ import {
   type RouteScoreBreakdown,
   type RiskFlag,
 } from '../services/processRoutes'
+import { generatePlan } from '../services/manufacturingPlan'
+import { usePipeline } from '../context/PipelineContext'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -457,12 +460,16 @@ function FeatureRow({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ProcessRoutesPage() {
+  const navigate = useNavigate()
+  const { confirmedRequirements, setManufacturingPlanId } = usePipeline()
   const [strategy, setStrategy] = useState('BALANCED')
   const [features, setFeatures] = useState<FeatureFormState[]>([newFeatureRow(0)])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<OptimizePartRoutesResponse | null>(null)
   const [activeTab, setActiveTab] = useState<'routes' | 'pareto' | 'benchmark'>('routes')
+  const [genPlanLoading, setGenPlanLoading] = useState(false)
+  const [genPlanError, setGenPlanError] = useState<string | null>(null)
 
   const addFeature = useCallback(() => {
     setFeatures((prev) => [...prev, newFeatureRow(prev.length)])
@@ -504,6 +511,25 @@ export default function ProcessRoutesPage() {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGenerateManufacturingPlan = async () => {
+    if (!result) return
+    setGenPlanError(null)
+    setGenPlanLoading(true)
+    try {
+      const summary = await generatePlan({
+        source_id: result.plan.plan_id,
+        req_set: confirmedRequirements ?? undefined,
+        optimized_plan: result as unknown,
+      })
+      setManufacturingPlanId(summary.plan_id)
+      navigate('/app/planning-quality/manufacturing-plan')
+    } catch (e: unknown) {
+      setGenPlanError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setGenPlanLoading(false)
     }
   }
 
@@ -744,6 +770,20 @@ export default function ProcessRoutesPage() {
             {/* Disclaimer */}
             <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
               <p className="text-xs text-orange-700 dark:text-orange-400">{DISCLAIMER}</p>
+            </div>
+
+            {/* Pipeline: Generate Manufacturing Plan */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleGenerateManufacturingPlan}
+                disabled={genPlanLoading}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium text-sm disabled:opacity-50 transition-colors"
+              >
+                {genPlanLoading ? '...' : 'Generate Manufacturing Plan →'}
+              </button>
+              {genPlanError && (
+                <span className="text-xs text-red-600 dark:text-red-400">{genPlanError}</span>
+              )}
             </div>
           </div>
         )}

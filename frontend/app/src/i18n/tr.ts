@@ -1742,4 +1742,15 @@ export const trTranslations: TranslationDictionary = {
   mfpGenerateFromRoute: 'Rotadan Oluştur',
   mfpSourceId: 'Kaynak Kimliği',
   mfpCalibrationProfiles: 'Kalibrasyon Profilleri',
+
+  // Pipeline handoff keys (EPIC_04H Phase 2)
+  pipeline_loadDemoPart: 'Demo Parçası Yükle (Hidrolik Makara)',
+  pipeline_continueToFeatureRecognition: 'Özellik Tanıma\'ya Devam Et',
+  pipeline_continueToRouteGeneration: 'Rota Oluşturma\'ya Devam Et',
+  pipeline_generateManufacturingPlan: 'Üretim Planı Oluştur',
+  pipeline_planGeneratedFrom: 'Hat bağlantısından plan oluşturuldu',
+  pipeline_demoModeBanner: 'Demo modu — YALNIZCA REFERANS — üretim için kullanılamaz',
+  pipeline_ncHandoffExport: 'NC Geçiş Paketi',
+  pipeline_requirementsLoadedFrom: 'Gereksinimler çizim çıkarımından yüklendi',
+  pipeline_stepLevel2Missing: 'STEP Seviye 2 özellik tanıma isteğe bağlı pythonocc-core bağımlılığı gerektirir',
 }

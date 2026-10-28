@@ -1742,4 +1742,15 @@ export const enTranslations: TranslationDictionary = {
   mfpGenerateFromRoute: 'Generate from Route',
   mfpSourceId: 'Source ID',
   mfpCalibrationProfiles: 'Calibration Profiles',
+
+  // Pipeline handoff keys (EPIC_04H Phase 2)
+  pipeline_loadDemoPart: 'Load Demo Part (Hydraulic Spool)',
+  pipeline_continueToFeatureRecognition: 'Continue to Feature Recognition',
+  pipeline_continueToRouteGeneration: 'Continue to Route Generation',
+  pipeline_generateManufacturingPlan: 'Generate Manufacturing Plan',
+  pipeline_planGeneratedFrom: 'Plan generated from pipeline',
+  pipeline_demoModeBanner: 'Demo mode — REFERENCE_ONLY — not for production use',
+  pipeline_ncHandoffExport: 'NC Handoff Package',
+  pipeline_requirementsLoadedFrom: 'Requirements loaded from drawing extraction',
+  pipeline_stepLevel2Missing: 'STEP Level 2 feature recognition requires optional pythonocc-core dependency',
 }

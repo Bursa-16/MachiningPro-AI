@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLocale } from '../i18n/index'
 import {
   analyzeDrawing,
@@ -11,6 +12,7 @@ import {
   type DetectionsResponse,
   type AnalyzeResponse,
 } from '../services/drawingParser'
+import { usePipeline } from '../context/PipelineContext'
 
 // ---------------------------------------------------------------------------
 // Small reusable UI helpers
@@ -171,6 +173,8 @@ const FILTER_TYPES = [
 
 export default function DrawingParserPage() {
   const { t } = useLocale()
+  const navigate = useNavigate()
+  const { setDrawingParserSessionId, setConfirmedRequirements } = usePipeline()
 
   // Upload state
   const fileRef = useRef<HTMLInputElement>(null)
@@ -432,6 +436,32 @@ export default function DrawingParserPage() {
               <span>{t('dpReviewPending')}: <strong>{detections.review_required_count}</strong></span>
             </div>
             <div className="mt-1 text-[10px] text-tp-text-3 italic">{detections.disclaimer}</div>
+
+            {/* Pipeline handoff buttons */}
+            {analyzeResult && (
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-tp-border pt-3">
+                <button
+                  onClick={() => {
+                    setDrawingParserSessionId(analyzeResult.session_id)
+                    setConfirmedRequirements({ session_id: analyzeResult.session_id } as Record<string, unknown>)
+                    navigate('/app/cad-drawing/cad-features')
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  {t('pipeline_continueToFeatureRecognition')} →
+                </button>
+                <button
+                  onClick={() => {
+                    setDrawingParserSessionId(analyzeResult.session_id)
+                    setConfirmedRequirements({ session_id: analyzeResult.session_id } as Record<string, unknown>)
+                    navigate('/app/planning-quality/process-routes')
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+                >
+                  {t('pipeline_continueToRouteGeneration')} →
+                </button>
+              </div>
+            )}
           </Card>
         )}
       </div>
