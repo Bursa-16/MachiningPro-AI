@@ -21,6 +21,7 @@ import GdtIntelligencePage from './pages/GdtIntelligencePage'
 import CadFeaturesPage from './pages/CadFeaturesPage'
 import ProcessRoutesPage from './pages/ProcessRoutesPage'
 import ProcessCapabilityPage from './pages/ProcessCapabilityPage'
+import ManufacturingPlanPage from './pages/ManufacturingPlanPage'
 
 function CapabilityPendingPage({ title }: { title: string }) {
   const { t } = useLocale()
@@ -96,6 +97,7 @@ function ProtectedRoutes() {
         <Route path="app/planning-quality/dfm" element={capability('DFM')} />
         <Route path="app/planning-quality/machine-capability" element={capability('Machine Capability')} />
         <Route path="app/planning-quality/process-capability" element={<ProcessCapabilityPage />} />
+        <Route path="app/planning-quality/manufacturing-plan" element={<ManufacturingPlanPage />} />
         <Route path="app/planning-quality/validation" element={capability('Validation')} />
 
         <Route index element={<Navigate to="/app" replace />} />

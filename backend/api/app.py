@@ -36,6 +36,7 @@ from .selection import router as selection_router
 from .tool_holders import router as tool_holders_router
 from .tool_life import router as tool_life_router
 from .calibration import router as calibration_router
+from .manufacturing_plan import router as manufacturing_plan_router
 
 
 class ChangePasswordRequest(BaseModel):
@@ -76,6 +77,7 @@ app.include_router(gdt_router)
 app.include_router(cad_features_router)
 app.include_router(process_routes_router)
 app.include_router(calibration_router)
+app.include_router(manufacturing_plan_router)
 
 
 @app.get("/api/health")
