@@ -26,6 +26,12 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 
+from backend.calibration.cycle_components import (
+    assemble_cycle_time_estimate,
+    make_cutting_component,
+    make_tool_change_component,
+)
+from backend.calibration.models import CycleTimeCompleteness
 from backend.domain.enums import OperationType
 from backend.drawing_intelligence.holder_resolver import HolderCandidateResolver
 from backend.drawing_intelligence.machine_resolver import MachineCandidateResolver
@@ -418,6 +424,24 @@ class RouteOptimizer:
             has_inspection=req.has_inspection,
         )
 
+        # Cycle time availability — CYCLE_TIME_SCORE_BASED_ON_CALIBRATED_DATA=YES
+        _atc_time = next(
+            (
+                m.atc_chip_to_chip_sec
+                for m in machine_cands
+                if getattr(m, "atc_chip_to_chip_sec", None)
+            ),
+            None,
+        )
+        _ct_estimate = assemble_cycle_time_estimate([
+            make_cutting_component(None, None),
+            make_tool_change_component(_atc_time, tool_changes=len(tmpl.operations)),
+        ])
+        has_cycle_time = _ct_estimate.completeness in (
+            CycleTimeCompleteness.FULLY_CALCULATED,
+            CycleTimeCompleteness.PARTIALLY_CALCULATED,
+        )
+
         # Score
         score = self._compute_score(
             tmpl,
@@ -426,7 +450,7 @@ class RouteOptimizer:
             tool_count=len(tool_cands),
             setup_count=1,
             risk=risk,
-            has_cycle_time=False,
+            has_cycle_time=has_cycle_time,
             has_params=param_ctx is not None,
             strategy=strategy,
         )

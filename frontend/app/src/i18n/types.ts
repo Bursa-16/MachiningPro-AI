@@ -1453,4 +1453,46 @@ export interface TranslationDictionary {
   cfUnresolved: string
   cfAutoMatched: string
   cfCadOnly: string
+
+  // Process Capability & Calibration (EPIC_04F)
+  calPageTitle: string
+  calPageSubtitle: string
+  calDisclaimer: string
+  calTabTolerance: string
+  calTabSurface: string
+  calTabCycleTime: string
+  calTabProfiles: string
+  calOperation: string
+  calRequiredTolerance: string
+  calNominalSize: string
+  calRequiredRa: string
+  calCapabilityStatus: string
+  calMarginRatio: string
+  calReferenceCapability: string
+  calAchievableRa: string
+  calStatus_ROBUST: string
+  calStatus_ACCEPTABLE: string
+  calStatus_MARGINAL: string
+  calStatus_NOT_CAPABLE: string
+  calStatus_INSUFFICIENT_DATA: string
+  calEvaluate: string
+  calCuttingTime: string
+  calRapidTime: string
+  calToolChanges: string
+  calAtcTime: string
+  calSetupTime: string
+  calBatchQty: string
+  calEstimate: string
+  calKnownTotal: string
+  calFullTotal: string
+  calCompleteness: string
+  calUnknownComponents: string
+  calProfileLabel: string
+  calSiteId: string
+  calMachineId: string
+  calCreateProfile: string
+  calNoProfiles: string
+  calSource: string
+  calConfidence: string
+  calRevision: string
 }
