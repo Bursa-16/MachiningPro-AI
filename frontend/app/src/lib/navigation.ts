@@ -3,6 +3,7 @@ import {
   CheckSquare, TrendingUp, Settings2,
   Search, ClipboardList, Puzzle, SearchCode,
   Archive, FileText, Ruler, ShieldCheck, GitBranch,
+  BarChart2, ClipboardCheck,
 } from 'lucide-react'
 import type { NavGroup } from '../types/navigation'
 
@@ -70,10 +71,11 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'planning-quality', domainKey: 'traceability', label: 'Planning & Quality',
     items: [
       { id: 'process-planning', path: '/app/planning-quality/process-planning', label: 'Process Planning', icon: ClipboardList },
-      { id: 'drawing-to-process', path: '/app/planning-quality/drawing-to-process', label: 'Drawing to Process', icon: GitBranch },
       { id: 'drawing-parser', path: '/app/planning-quality/drawing-parser', label: 'Drawing Parser', icon: Search },
       { id: 'gdt-intelligence', path: '/app/planning-quality/gdt-intelligence', label: 'GD&T Intelligence', icon: Ruler },
       { id: 'process-routes', path: '/app/planning-quality/process-routes', label: 'Route Optimization', icon: GitBranch },
+      { id: 'process-capability', path: '/app/planning-quality/process-capability', label: 'Process Capability', icon: BarChart2 },
+      { id: 'manufacturing-plan', path: '/app/planning-quality/manufacturing-plan', label: 'Manufacturing Plan', icon: ClipboardCheck },
       { id: 'dfm', path: '/app/planning-quality/dfm', label: 'DFM', icon: Puzzle, badge: 'preview' },
       { id: 'machine-capability', path: '/app/planning-quality/machine-capability', label: 'Machine Capability', icon: TrendingUp, badge: 'preview' },
       { id: 'validation', path: '/app/planning-quality/validation', label: 'Validation', icon: ShieldCheck, badge: 'preview' },

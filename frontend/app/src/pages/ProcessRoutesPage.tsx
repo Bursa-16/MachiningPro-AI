@@ -8,6 +8,7 @@
 
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PipelineBreadcrumb } from '../components/PipelineBreadcrumb'
 import {
   processRoutesApi,
   type FeatureRouteRequestBody,
@@ -536,6 +537,9 @@ export default function ProcessRoutesPage() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-5xl mx-auto space-y-6">
+
+        {/* Pipeline navigation */}
+        <PipelineBreadcrumb />
 
         {/* Header */}
         <div>

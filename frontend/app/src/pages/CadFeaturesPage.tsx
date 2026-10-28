@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLocale } from '../i18n/index'
+import { PipelineBreadcrumb } from '../components/PipelineBreadcrumb'
 import {
   analyzeCad,
   getCadFeatures,
@@ -329,6 +330,9 @@ export default function CadFeaturesPage() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-6xl mx-auto space-y-4">
+
+        {/* Pipeline navigation */}
+        <PipelineBreadcrumb />
 
         {/* Header */}
         <div>

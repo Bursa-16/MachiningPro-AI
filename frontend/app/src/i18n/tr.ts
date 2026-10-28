@@ -1260,11 +1260,14 @@ export const trTranslations: TranslationDictionary = {
   dbWorkflowDesc: 'Uçtan uca mühendislik demosu için buradan başlayın',
   dbCapabilitiesTitle: 'Mevcut Yetenekler',
   dbStatusTitle: 'Sistem Durumu',
-  dbStep1: 'Katalog — Makine, Kesici Takım ve Tutucu katalogları',
-  dbStep2: 'Uyumluluk — Makine · takım · tutucu üçlüsünü doğrula',
-  dbStep3: 'Proses Planlama — Operasyon planı oluştur',
-  dbStep4: 'NC İncelemesi — NC programını çözümle, mühendislik incelemesi al',
-  dbStep5: 'Dışa Aktarma & İzlenebilirlik — JSON/CSV dışa aktarma + SHA-256 parmak izleri',
+  dbStep1: 'Çizim Ayrıştırıcı — Çizim / DXF yükle, tespit edilen gereksinimleri onayla',
+  dbStep2: 'GD&T Zekâsı — Geometrik toleransları ve datum referans çerçevelerini incele',
+  dbStep3: 'CAD Özellik Tanıma — Çizim gereksinimlerini CAD özellikleriyle birleştir',
+  dbStep4: 'Rota Optimizasyonu — Proses rotaları oluştur ve karşılaştır (BALANCED, LOWEST_RISK, …)',
+  dbStep5: 'Üretim Planı — Makine + takım + tutucu seçimi, kurulumlar, operasyonlar',
+  dbStep6: 'Muayene ve Kontrol Planı — Kapsam kontrolü, kontrol planı satırları, örnekleme',
+  dbStep7: 'İnceleme ve Onay — Mühendis doğrulama kapısı (TASLAK → İNCELENDİ → ONAYLANDI)',
+  dbStep8: 'Dışa Aktarma — SHA-256 izlenebilirlik parmak iziyle JSON / CSV / HTML',
 
   // Yetenek bekleme sayfası
   capPreviewBadge: 'Mühendislik Önizlemesi',
@@ -1753,4 +1756,15 @@ export const trTranslations: TranslationDictionary = {
   pipeline_ncHandoffExport: 'NC Geçiş Paketi',
   pipeline_requirementsLoadedFrom: 'Gereksinimler çizim çıkarımından yüklendi',
   pipeline_stepLevel2Missing: 'STEP Seviye 2 özellik tanıma isteğe bağlı pythonocc-core bağımlılığı gerektirir',
+
+  // Demo & productization keys (EPIC_05_CUSTOMER_DEMO_AND_PRODUCTIZATION)
+  demo_startDemo: 'Demoya Başla',
+  demo_credentialsBtn: 'Demo Kimlik Bilgilerini Kullan',
+  demo_engineeringDisclaimerFooter: 'Yalnızca referans amaçlı mühendislik analizi. Sonuçlar üretimde kullanılmadan önce yetkili bir mühendis tarafından doğrulanmalıdır.',
+  demo_pipelineStep_drawing: 'Çizim',
+  demo_pipelineStep_features: 'Özellikler',
+  demo_pipelineStep_routes: 'Rotalar',
+  demo_pipelineStep_plan: 'Plan',
+  nav_processCapability: 'Süreç Yeterliliği',
+  nav_manufacturingPlan: 'Üretim Planı',
 }

@@ -210,6 +210,13 @@ def export_html(plan: ManufacturingPlan) -> str:
 </style>
 </head>
 <body>
+<div style="border-bottom:2px solid #E65C00;padding:12px 0;margin-bottom:16px;">
+  <div style="font-size:18px;font-weight:700;color:#E65C00;">MachiningPro AI</div>
+  <div style="font-size:12px;color:#666;">Manufacturing Plan &mdash; v0.5.0-demo</div>
+  <div style="font-size:11px;color:#888;margin-top:4px;">
+    REFERENCE_ONLY &mdash; Results require validation by a qualified engineer before manufacturing use.
+  </div>
+</div>
 <h1>Manufacturing Plan — Drawing {dn} Rev {rev}</h1>
 <p>Plan ID: {_html_escape(plan.plan_id)} &nbsp;|&nbsp;
    Status: <span class="status-{_html_escape(status)}">{_html_escape(status)}</span> &nbsp;|&nbsp;

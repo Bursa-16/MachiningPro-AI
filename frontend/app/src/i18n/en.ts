@@ -1260,11 +1260,14 @@ export const enTranslations: TranslationDictionary = {
   dbWorkflowDesc: 'Start here for the full end-to-end engineering demonstration',
   dbCapabilitiesTitle: 'Available Capabilities',
   dbStatusTitle: 'System Status',
-  dbStep1: 'Catalog — Machine, Cutting Tool & Holder catalogs',
-  dbStep2: 'Compatibility — Verify machine · tool · holder triplet',
-  dbStep3: 'Process Planning — Generate operation plan',
-  dbStep4: 'NC Review — Parse NC program, get engineering review',
-  dbStep5: 'Export & Traceability — JSON/CSV export + SHA-256 fingerprints',
+  dbStep1: 'Drawing Parser — Upload drawing / DXF, confirm detected requirements',
+  dbStep2: 'GD&T Intelligence — Review geometric tolerances and datum reference frames',
+  dbStep3: 'CAD Feature Recognition — Fuse drawing requirements with CAD features',
+  dbStep4: 'Route Optimization — Generate and compare process routes (BALANCED, LOWEST_RISK, …)',
+  dbStep5: 'Manufacturing Plan — Machine + tool + holder selection, setups, operations',
+  dbStep6: 'Inspection & Control Plan — Coverage check, control plan rows, sampling',
+  dbStep7: 'Review & Approve — Engineer validation gate (DRAFT → REVIEWED → APPROVED)',
+  dbStep8: 'Export — JSON / CSV / HTML with SHA-256 traceability fingerprint',
 
   // Capability pending page
   capPreviewBadge: 'Engineering Preview',
@@ -1753,4 +1756,15 @@ export const enTranslations: TranslationDictionary = {
   pipeline_ncHandoffExport: 'NC Handoff Package',
   pipeline_requirementsLoadedFrom: 'Requirements loaded from drawing extraction',
   pipeline_stepLevel2Missing: 'STEP Level 2 feature recognition requires optional pythonocc-core dependency',
+
+  // Demo & productization keys (EPIC_05_CUSTOMER_DEMO_AND_PRODUCTIZATION)
+  demo_startDemo: 'Start Demo',
+  demo_credentialsBtn: 'Use Demo Credentials',
+  demo_engineeringDisclaimerFooter: 'Reference-only engineering analysis. Results require validation by a qualified engineer before manufacturing use.',
+  demo_pipelineStep_drawing: 'Drawing',
+  demo_pipelineStep_features: 'Features',
+  demo_pipelineStep_routes: 'Routes',
+  demo_pipelineStep_plan: 'Plan',
+  nav_processCapability: 'Process Capability',
+  nav_manufacturingPlan: 'Manufacturing Plan',
 }

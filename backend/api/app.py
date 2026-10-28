@@ -45,7 +45,7 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 # Create FastAPI application
-app = FastAPI(title="MachiningPro AI", version="0.1.0-alpha.10")
+app = FastAPI(title="MachiningPro AI", version="0.5.0-demo")
 
 # Optional CORS — activated only when CORS_ORIGINS env var is set (split-deployment mode).
 # Same-origin deployment (recommended): leave CORS_ORIGINS unset; middleware is not added.

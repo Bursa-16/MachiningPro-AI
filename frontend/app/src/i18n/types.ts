@@ -1272,6 +1272,9 @@ export interface TranslationDictionary {
   dbStep3: string
   dbStep4: string
   dbStep5: string
+  dbStep6: string
+  dbStep7: string
+  dbStep8: string
 
   // Capability pending page
   capPreviewBadge: string
@@ -1495,4 +1498,26 @@ export interface TranslationDictionary {
   calSource: string
   calConfidence: string
   calRevision: string
+
+  // Pipeline handoff keys (EPIC_04H Phase 2)
+  pipeline_loadDemoPart: string
+  pipeline_continueToFeatureRecognition: string
+  pipeline_continueToRouteGeneration: string
+  pipeline_generateManufacturingPlan: string
+  pipeline_planGeneratedFrom: string
+  pipeline_demoModeBanner: string
+  pipeline_ncHandoffExport: string
+  pipeline_requirementsLoadedFrom: string
+  pipeline_stepLevel2Missing: string
+
+  // Demo & productization keys (EPIC_05_CUSTOMER_DEMO_AND_PRODUCTIZATION)
+  demo_startDemo: string
+  demo_credentialsBtn: string
+  demo_engineeringDisclaimerFooter: string
+  demo_pipelineStep_drawing: string
+  demo_pipelineStep_features: string
+  demo_pipelineStep_routes: string
+  demo_pipelineStep_plan: string
+  nav_processCapability: string
+  nav_manufacturingPlan: string
 }

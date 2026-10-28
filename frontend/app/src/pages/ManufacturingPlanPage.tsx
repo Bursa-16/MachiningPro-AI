@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '../i18n'
+import { PipelineBreadcrumb } from '../components/PipelineBreadcrumb'
 import {
   generatePlan,
   listPlans,
@@ -820,6 +821,7 @@ export default function ManufacturingPlanPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <PipelineBreadcrumb />
       <h1 className="text-xl font-bold text-[var(--tp-text-1)] mb-1">{t('mfpTitle')}</h1>
       <p className="text-xs text-[var(--tp-text-3)] mb-4">{DISCLAIMER}</p>
 

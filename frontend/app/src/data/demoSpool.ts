@@ -7,9 +7,9 @@ export const DEMO_SPOOL_REQ_SET = {
   revision: 'A',
   dimensional_requirements: [
     { requirement_id: 'D1', feature_id: 'OD_MAIN', nominal_value: 40.0,
-      upper_deviation: 0.0, lower_deviation: -0.016, unit: 'mm', label: 'Main OD ⍀40 f7' },
+      upper_deviation: 0.0, lower_deviation: -0.016, unit: 'mm', label: 'Main OD ⌀40 f7' },
     { requirement_id: 'D2', feature_id: 'OD_LAND', nominal_value: 38.0,
-      upper_deviation: 0.0, lower_deviation: -0.011, unit: 'mm', label: 'Land OD ⍀38 h6' },
+      upper_deviation: 0.0, lower_deviation: -0.011, unit: 'mm', label: 'Land OD ⌀38 h6' },
     { requirement_id: 'D3', feature_id: 'GROOVE_W', nominal_value: 6.0,
       upper_deviation: 0.015, lower_deviation: -0.015, unit: 'mm', label: 'Groove width 6 \xb10.015' },
     { requirement_id: 'D4', feature_id: 'LENGTH', nominal_value: 120.0,

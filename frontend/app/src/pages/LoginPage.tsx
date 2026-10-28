@@ -689,6 +689,31 @@ export default function LoginPage({
               />
             </div>
 
+            {/* Demo credentials button — only renders when VITE_DEMO_USERNAME is set in build env */}
+            {import.meta.env.VITE_DEMO_USERNAME && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername(import.meta.env.VITE_DEMO_USERNAME || '')
+                  // Password intentionally NOT pre-filled — DEMO_PASSWORD_HARDCODED=NO
+                }}
+                style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  color: '#6F8FA3',
+                  textDecoration: 'underline',
+                  padding: '0',
+                  fontFamily: 'monospace',
+                }}
+              >
+                {t('demo_credentialsBtn')}
+              </button>
+            )}
+
             {/* Submit */}
             <button
               className="mp-login-btn"
@@ -714,6 +739,18 @@ export default function LoginPage({
               ? 'mühendislik araştırma önizlemesi'
               : 'engineering research preview'}
           </div>
+
+          {/* Engineering disclaimer */}
+          <p style={{
+            marginTop: '16px',
+            fontSize: '9px',
+            color: 'var(--color-mp-text-3, #4E5F6A)',
+            textAlign: 'center',
+            fontFamily: 'monospace',
+            lineHeight: '1.4',
+          }}>
+            {t('demo_engineeringDisclaimerFooter')}
+          </p>
         </div>
       </div>
     </>

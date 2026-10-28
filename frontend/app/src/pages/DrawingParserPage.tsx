@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLocale } from '../i18n/index'
+import { PipelineBreadcrumb } from '../components/PipelineBreadcrumb'
 import {
   analyzeDrawing,
   getDetections,
@@ -263,6 +264,9 @@ export default function DrawingParserPage() {
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6">
       <div className="max-w-5xl mx-auto">
+        {/* Pipeline navigation */}
+        <PipelineBreadcrumb />
+
         {/* Header */}
         <div className="mb-5">
           <div className="text-[10px] font-semibold uppercase tracking-widest text-tp-accent-light mb-1">
