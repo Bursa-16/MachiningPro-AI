@@ -143,7 +143,7 @@ function FeatureTreePanel({ features, patterns, onConfirm, onReject, busy, t }: 
                 <div className="text-xs text-[var(--tp-text-2)]">
                   <span className="text-[var(--tp-text-3)]">{t('cfMethod')}:</span> {feat.method}
                 </div>
-                {feat.warnings.length > 0 && (
+                {feat.warnings?.length > 0 && (
                   <div className="text-xs text-yellow-700 dark:text-yellow-400">
                     {feat.warnings.join(' · ')}
                   </div>
