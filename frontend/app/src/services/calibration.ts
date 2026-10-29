@@ -2,7 +2,7 @@
  * Calibration API service — EPIC_04F.
  */
 
-import {
+import type {
   CalibrationSchema,
   CapabilityMargin,
   CycleTimeEstimate,
