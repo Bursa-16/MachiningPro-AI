@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useLocale } from '../i18n/index'
+import type { TranslationDictionary } from '../i18n/types'
 import {
   fetchGdtSchema,
   validateGdt,
@@ -218,7 +219,7 @@ function FcfForm({
   setFcf: React.Dispatch<React.SetStateAction<FcfFormState>>
   fos: FosFormState
   setFos: React.Dispatch<React.SetStateAction<FosFormState>>
-  t: Record<string, string>
+  t: (key: keyof TranslationDictionary) => string
 }) {
   const toggle = <K extends keyof FcfFormState>(k: K, v: FcfFormState[K]) =>
     setFcf(prev => ({ ...prev, [k]: v }))
@@ -228,10 +229,10 @@ function FcfForm({
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <FormField label={t.gdtCharacteristicLabel}>
+        <FormField label={t('gdtCharacteristicLabel')}>
           <Select value={fcf.characteristic} onChange={v => toggle('characteristic', v)} options={GDT_CHARACTERISTICS} />
         </FormField>
-        <FormField label={t.gdtModifierLabel}>
+        <FormField label={t('gdtModifierLabel')}>
           <Select value={fcf.modifier} onChange={v => toggle('modifier', v)} options={GDT_MODIFIERS} />
         </FormField>
       </div>
@@ -261,7 +262,7 @@ function FcfForm({
       <div className="border-t border-[var(--tp-border)] pt-3">
         <label className="flex items-center gap-2 mb-3">
           <input type="checkbox" checked={fos.enabled} onChange={e => tfos('enabled', e.target.checked)} className="accent-[var(--tp-accent)]" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--tp-text-2)]">{t.gdtFosTitle}</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--tp-text-2)]">{t('gdtFosTitle')}</span>
         </label>
         {fos.enabled && (
           <div className="space-y-2 pl-2">
@@ -274,17 +275,17 @@ function FcfForm({
               </FormField>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <FormField label={t.gdtNominalLabel + ' (mm)'}>
+              <FormField label={t('gdtNominalLabel') + ' (mm)'}>
                 <Input value={fos.nominal_mm} onChange={v => tfos('nominal_mm', v)} type="number" />
               </FormField>
-              <FormField label={t.gdtUpperLimitLabel + ' (mm)'}>
+              <FormField label={t('gdtUpperLimitLabel') + ' (mm)'}>
                 <Input value={fos.upper_limit_mm} onChange={v => tfos('upper_limit_mm', v)} type="number" />
               </FormField>
-              <FormField label={t.gdtLowerLimitLabel + ' (mm)'}>
+              <FormField label={t('gdtLowerLimitLabel') + ' (mm)'}>
                 <Input value={fos.lower_limit_mm} onChange={v => tfos('lower_limit_mm', v)} type="number" />
               </FormField>
             </div>
-            <FormField label={t.gdtFosActualSizeHint}>
+            <FormField label={t('gdtFosActualSizeHint')}>
               <Input value={fos.actual_size_mm} onChange={v => tfos('actual_size_mm', v)} type="number" placeholder="leave blank if unknown" />
             </FormField>
           </div>
@@ -298,11 +299,11 @@ function FcfForm({
 // Result panels
 // ---------------------------------------------------------------------------
 
-function ValidationPanel({ result, t }: { result: ValidationResult; t: Record<string, string> }) {
+function ValidationPanel({ result, t }: { result: ValidationResult; t: (key: keyof TranslationDictionary) => string }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <SectionLabel>{t.gdtValidationTitle}</SectionLabel>
+        <SectionLabel>{t('gdtValidationTitle')}</SectionLabel>
         <StatusBadge status={result.overall} />
       </div>
       <div className="space-y-2">
@@ -310,14 +311,14 @@ function ValidationPanel({ result, t }: { result: ValidationResult; t: Record<st
           <FindingRow key={f.rule_id} finding={f} t={t} />
         ))}
         {result.findings.every(f => f.passed) && (
-          <p className="text-xs text-[var(--tp-text-2)]">{t.gdtValidationPassed}</p>
+          <p className="text-xs text-[var(--tp-text-2)]">{t('gdtValidationPassed')}</p>
         )}
       </div>
     </div>
   )
 }
 
-function FindingRow({ finding, t: _t }: { finding: ValidationFinding; t: Record<string, string> }) {
+function FindingRow({ finding, t: _t }: { finding: ValidationFinding; t: (key: keyof TranslationDictionary) => string }) {
   return (
     <div className="rounded border border-[var(--tp-border)] p-2 space-y-1">
       <div className="flex items-center gap-2">
@@ -335,58 +336,58 @@ function FindingRow({ finding, t: _t }: { finding: ValidationFinding; t: Record<
 
 function DatumFramePanel({ frame, t }: {
   frame: InterpretResult['datum_frame']
-  t: Record<string, string>
+  t: (key: keyof TranslationDictionary) => string
 }) {
   if (!frame) return null
   return (
     <Card>
-      <SectionLabel>{t.gdtDatumFrameTitle}</SectionLabel>
-      <FieldRow label={t.gdtDatumPrimary} value={`${frame.primary.label} (${frame.primary.modifier})`} />
+      <SectionLabel>{t('gdtDatumFrameTitle')}</SectionLabel>
+      <FieldRow label={t('gdtDatumPrimary')} value={`${frame.primary.label} (${frame.primary.modifier})`} />
       {frame.secondary && (
-        <FieldRow label={t.gdtDatumSecondary} value={`${frame.secondary.label} (${frame.secondary.modifier})`} />
+        <FieldRow label={t('gdtDatumSecondary')} value={`${frame.secondary.label} (${frame.secondary.modifier})`} />
       )}
       {frame.tertiary && (
-        <FieldRow label={t.gdtDatumTertiary} value={`${frame.tertiary.label} (${frame.tertiary.modifier})`} />
+        <FieldRow label={t('gdtDatumTertiary')} value={`${frame.tertiary.label} (${frame.tertiary.modifier})`} />
       )}
     </Card>
   )
 }
 
-function FosPanel({ fos, t }: { fos: InterpretResult['fos_context']; t: Record<string, string> }) {
+function FosPanel({ fos, t }: { fos: InterpretResult['fos_context']; t: (key: keyof TranslationDictionary) => string }) {
   if (!fos) return null
   const fmt = (v: number | null) => v != null ? `${v} mm` : '—'
   return (
     <Card>
-      <SectionLabel>{t.gdtFosTitle}</SectionLabel>
-      <FieldRow label={t.gdtCharacteristicLabel} value={fos.kind} />
-      <FieldRow label={t.gdtNominalLabel} value={fmt(fos.nominal_mm)} />
-      <FieldRow label={t.gdtUpperLimitLabel} value={fmt(fos.upper_limit_mm)} />
-      <FieldRow label={t.gdtLowerLimitLabel} value={fmt(fos.lower_limit_mm)} />
-      <FieldRow label={t.gdtMmcSize} value={fmt(fos.mmc_size_mm)} />
-      <FieldRow label={t.gdtLmcSize} value={fmt(fos.lmc_size_mm)} />
+      <SectionLabel>{t('gdtFosTitle')}</SectionLabel>
+      <FieldRow label={t('gdtCharacteristicLabel')} value={fos.kind} />
+      <FieldRow label={t('gdtNominalLabel')} value={fmt(fos.nominal_mm)} />
+      <FieldRow label={t('gdtUpperLimitLabel')} value={fmt(fos.upper_limit_mm)} />
+      <FieldRow label={t('gdtLowerLimitLabel')} value={fmt(fos.lower_limit_mm)} />
+      <FieldRow label={t('gdtMmcSize')} value={fmt(fos.mmc_size_mm)} />
+      <FieldRow label={t('gdtLmcSize')} value={fmt(fos.lmc_size_mm)} />
       {fos.actual_size_mm != null && (
-        <FieldRow label={t.gdtBonusToleranceActualSize} value={fmt(fos.actual_size_mm)} />
+        <FieldRow label={t('gdtBonusToleranceActualSize')} value={fmt(fos.actual_size_mm)} />
       )}
     </Card>
   )
 }
 
-function ToleranceZonePanel({ tz, t }: { tz: InterpretResult['tolerance_zone']; t: Record<string, string> }) {
+function ToleranceZonePanel({ tz, t }: { tz: InterpretResult['tolerance_zone']; t: (key: keyof TranslationDictionary) => string }) {
   return (
     <Card>
-      <SectionLabel>{t.gdtToleranceZoneLabel}</SectionLabel>
+      <SectionLabel>{t('gdtToleranceZoneLabel')}</SectionLabel>
       <FieldRow label="Geometry" value={tz.geometry.replace(/_/g, ' ')} />
       <FieldRow label="Value" value={`${tz.diameter_zone ? '⌀' : ''}${tz.value_mm} ${tz.unit}`} />
     </Card>
   )
 }
 
-function AmbiguityPanel({ ambiguities, t }: { ambiguities: AmbiguityItem[]; t: Record<string, string> }) {
+function AmbiguityPanel({ ambiguities, t }: { ambiguities: AmbiguityItem[]; t: (key: keyof TranslationDictionary) => string }) {
   return (
     <Card>
-      <SectionLabel>{t.gdtAmbiguityDashboard}</SectionLabel>
+      <SectionLabel>{t('gdtAmbiguityDashboard')}</SectionLabel>
       {ambiguities.length === 0 ? (
-        <p className="text-xs text-[var(--tp-text-2)]">{t.gdtNoAmbiguities}</p>
+        <p className="text-xs text-[var(--tp-text-2)]">{t('gdtNoAmbiguities')}</p>
       ) : (
         <div className="space-y-2">
           {ambiguities.map(a => (
@@ -407,11 +408,11 @@ function AmbiguityPanel({ ambiguities, t }: { ambiguities: AmbiguityItem[]; t: R
   )
 }
 
-function ProcessImplicationsPanel({ items, t }: { items: ProcessImplication[]; t: Record<string, string> }) {
+function ProcessImplicationsPanel({ items, t }: { items: ProcessImplication[]; t: (key: keyof TranslationDictionary) => string }) {
   if (items.length === 0) return null
   return (
     <Card>
-      <SectionLabel>{t.gdtProcessImplications}</SectionLabel>
+      <SectionLabel>{t('gdtProcessImplications')}</SectionLabel>
       <div className="space-y-2">
         {items.map(item => (
           <div key={item.rule_id} className="flex items-start gap-2">
@@ -427,11 +428,11 @@ function ProcessImplicationsPanel({ items, t }: { items: ProcessImplication[]; t
   )
 }
 
-function InspectionImplicationsPanel({ items, t }: { items: InspectionImplication[]; t: Record<string, string> }) {
+function InspectionImplicationsPanel({ items, t }: { items: InspectionImplication[]; t: (key: keyof TranslationDictionary) => string }) {
   if (items.length === 0) return null
   return (
     <Card>
-      <SectionLabel>{t.gdtInspectionImplications}</SectionLabel>
+      <SectionLabel>{t('gdtInspectionImplications')}</SectionLabel>
       <div className="space-y-2">
         {items.map((item, i) => (
           <div key={i} className="flex items-start gap-2">
@@ -455,13 +456,13 @@ function EngineerReviewPanel({
   onConfirm: () => void
   onEdit: () => void
   onReject: () => void
-  t: Record<string, string>
+  t: (key: keyof TranslationDictionary) => string
 }) {
   return (
     <Card>
-      <SectionLabel>{t.gdtEngineerReview}</SectionLabel>
+      <SectionLabel>{t('gdtEngineerReview')}</SectionLabel>
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs text-[var(--tp-text-2)]">{t.gdtApprovalStatus}:</span>
+        <span className="text-xs text-[var(--tp-text-2)]">{t('gdtApprovalStatus')}:</span>
         <StatusBadge status={approvalStatus} />
       </div>
       {approvalStatus === 'PENDING_REVIEW' && (
@@ -470,25 +471,25 @@ function EngineerReviewPanel({
             onClick={onConfirm}
             className="rounded bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5"
           >
-            {t.gdtConfirmBtn}
+            {t('gdtConfirmBtn')}
           </button>
           <button
             onClick={onEdit}
             className="rounded bg-[var(--tp-accent)] hover:opacity-80 text-white text-xs font-semibold px-3 py-1.5"
           >
-            {t.gdtEditBtn}
+            {t('gdtEditBtn')}
           </button>
           <button
             onClick={onReject}
             className="rounded bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5"
           >
-            {t.gdtRejectBtn}
+            {t('gdtRejectBtn')}
           </button>
         </div>
       )}
       {approvalStatus !== 'PENDING_REVIEW' && (
         <p className="text-xs text-[var(--tp-text-2)]">
-          {approvalStatus === 'CONFIRMED' ? t.gdtConfirmNote : t.gdtRejectNote}
+          {approvalStatus === 'CONFIRMED' ? t('gdtConfirmNote') : t('gdtRejectNote')}
         </p>
       )}
     </Card>
@@ -499,11 +500,11 @@ function EngineerReviewPanel({
 // Bonus Tolerance result panel
 // ---------------------------------------------------------------------------
 
-function BonusTolerancePanel({ result, t }: { result: BonusToleranceResult; t: Record<string, string> }) {
+function BonusTolerancePanel({ result, t }: { result: BonusToleranceResult; t: (key: keyof TranslationDictionary) => string }) {
   const fmt = (v: number | null) => v != null ? `${v} mm` : '—'
   return (
     <Card>
-      <SectionLabel>{t.gdtBonusToleranceTitle}</SectionLabel>
+      <SectionLabel>{t('gdtBonusToleranceTitle')}</SectionLabel>
       {!result.computed ? (
         <div className="text-xs text-[var(--tp-text-2)]">
           <StatusBadge status="INSUFFICIENT_DATA" />
@@ -511,11 +512,11 @@ function BonusTolerancePanel({ result, t }: { result: BonusToleranceResult; t: R
         </div>
       ) : (
         <>
-          <FieldRow label={t.gdtBonusToleranceStated} value={fmt(result.stated_tolerance_mm)} />
-          <FieldRow label={t.gdtBonusToleranceActualSize} value={fmt(result.actual_size_mm)} />
+          <FieldRow label={t('gdtBonusToleranceStated')} value={fmt(result.stated_tolerance_mm)} />
+          <FieldRow label={t('gdtBonusToleranceActualSize')} value={fmt(result.actual_size_mm)} />
           <FieldRow label="MMC/LMC size" value={fmt(result.mmc_or_lmc_size_mm)} />
-          <FieldRow label={t.gdtBonusToleranceBonus} value={fmt(result.bonus_amount_mm)} />
-          <FieldRow label={t.gdtBonusToleranceTotal} value={
+          <FieldRow label={t('gdtBonusToleranceBonus')} value={fmt(result.bonus_amount_mm)} />
+          <FieldRow label={t('gdtBonusToleranceTotal')} value={
             <span className="text-green-600 dark:text-green-400 font-bold">{fmt(result.total_tolerance_mm)}</span>
           } />
         </>
@@ -528,11 +529,11 @@ function BonusTolerancePanel({ result, t }: { result: BonusToleranceResult; t: R
 // Virtual Condition result panel
 // ---------------------------------------------------------------------------
 
-function VirtualConditionPanel({ result, t }: { result: VirtualConditionResult; t: Record<string, string> }) {
+function VirtualConditionPanel({ result, t }: { result: VirtualConditionResult; t: (key: keyof TranslationDictionary) => string }) {
   const fmt = (v: number | null) => v != null ? `${v} mm` : '—'
   return (
     <Card>
-      <SectionLabel>{t.gdtVirtualConditionTitle}</SectionLabel>
+      <SectionLabel>{t('gdtVirtualConditionTitle')}</SectionLabel>
       {!result.computed ? (
         <div className="text-xs text-[var(--tp-text-2)]">
           <StatusBadge status="INSUFFICIENT_DATA" />
@@ -540,7 +541,7 @@ function VirtualConditionPanel({ result, t }: { result: VirtualConditionResult; 
         </div>
       ) : (
         <>
-          <FieldRow label={t.gdtVirtualConditionValue} value={
+          <FieldRow label={t('gdtVirtualConditionValue')} value={
             <span className="font-bold">{fmt(result.virtual_condition_mm)}</span>
           } />
           <p className="text-xs text-[var(--tp-text-2)] pt-2">{result.description}</p>
@@ -554,11 +555,11 @@ function VirtualConditionPanel({ result, t }: { result: VirtualConditionResult; 
 // Schema panel
 // ---------------------------------------------------------------------------
 
-function SchemaPanel({ schema, t }: { schema: GdtSchema; t: Record<string, string> }) {
+function SchemaPanel({ schema, t }: { schema: GdtSchema; t: (key: keyof TranslationDictionary) => string }) {
   return (
     <div className="space-y-4">
       <Card>
-        <SectionLabel>{t.gdtCharacteristicsLabel}</SectionLabel>
+        <SectionLabel>{t('gdtCharacteristicsLabel')}</SectionLabel>
         <div className="flex flex-wrap gap-1">
           {schema.characteristics.map(c => (
             <span key={c} className="text-[10px] font-mono bg-[var(--tp-surface-2)] text-[var(--tp-text)] rounded px-1.5 py-0.5 border border-[var(--tp-border)]">{c}</span>
@@ -566,7 +567,7 @@ function SchemaPanel({ schema, t }: { schema: GdtSchema; t: Record<string, strin
         </div>
       </Card>
       <Card>
-        <SectionLabel>{t.gdtModifiersLabel}</SectionLabel>
+        <SectionLabel>{t('gdtModifiersLabel')}</SectionLabel>
         <div className="flex flex-wrap gap-1">
           {schema.feature_modifiers.map(m => (
             <span key={m} className="text-[10px] font-mono bg-[var(--tp-surface-2)] text-[var(--tp-text)] rounded px-1.5 py-0.5 border border-[var(--tp-border)]">{m}</span>
@@ -574,7 +575,7 @@ function SchemaPanel({ schema, t }: { schema: GdtSchema; t: Record<string, strin
         </div>
       </Card>
       <Card>
-        <SectionLabel>{t.gdtZoneGeometriesLabel}</SectionLabel>
+        <SectionLabel>{t('gdtZoneGeometriesLabel')}</SectionLabel>
         <div className="flex flex-wrap gap-1">
           {schema.tolerance_zone_geometries.map(g => (
             <span key={g} className="text-[10px] font-mono bg-[var(--tp-surface-2)] text-[var(--tp-text)] rounded px-1.5 py-0.5 border border-[var(--tp-border)]">{g}</span>
@@ -663,11 +664,11 @@ export default function GdtIntelligencePage() {
   }, [activeTab, fcf, fos, reqId])
 
   const tabs: { id: ActiveTab; label: string }[] = [
-    { id: 'interpret', label: t.gdtInterpretInput },
-    { id: 'validate', label: t.gdtValidateInput },
-    { id: 'bonus', label: t.gdtBonusCalcInput },
-    { id: 'virtualcond', label: t.gdtVcCalcInput },
-    { id: 'schema', label: t.gdtSchemaTitle },
+    { id: 'interpret', label: t('gdtInterpretInput') },
+    { id: 'validate', label: t('gdtValidateInput') },
+    { id: 'bonus', label: t('gdtBonusCalcInput') },
+    { id: 'virtualcond', label: t('gdtVcCalcInput') },
+    { id: 'schema', label: t('gdtSchemaTitle') },
   ]
 
   return (
@@ -675,8 +676,8 @@ export default function GdtIntelligencePage() {
       {/* Header */}
       <div className="border-b border-[var(--tp-border)] bg-[var(--tp-surface)] px-4 py-4">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-lg font-bold text-[var(--tp-text)]">{t.gdtIntelligencePanelTitle}</h1>
-          <p className="text-xs text-[var(--tp-text-2)] mt-0.5">{t.gdtIntelligencePanelSubtitle}</p>
+          <h1 className="text-lg font-bold text-[var(--tp-text)]">{t('gdtIntelligencePanelTitle')}</h1>
+          <p className="text-xs text-[var(--tp-text-2)] mt-0.5">{t('gdtIntelligencePanelSubtitle')}</p>
         </div>
       </div>
 
@@ -703,12 +704,12 @@ export default function GdtIntelligencePage() {
           {activeTab !== 'schema' && (
             <div className="space-y-4">
               <Card>
-                <SectionLabel>{t.gdtReqIdLabel}</SectionLabel>
+                <SectionLabel>{t('gdtReqIdLabel')}</SectionLabel>
                 <Input value={reqId} onChange={setReqId} placeholder="GDT-001" />
               </Card>
               <Card>
-                <SectionLabel>{t.gdtFcfSection}</SectionLabel>
-                <FcfForm fcf={fcf} setFcf={setFcf} fos={fos} setFos={setFos} t={t as Record<string, string>} />
+                <SectionLabel>{t('gdtFcfSection')}</SectionLabel>
+                <FcfForm fcf={fcf} setFcf={setFcf} fos={fos} setFos={setFos} t={t} />
               </Card>
               <div className="flex gap-2">
                 <button
@@ -716,13 +717,13 @@ export default function GdtIntelligencePage() {
                   disabled={loading}
                   className="flex-1 rounded bg-[var(--tp-accent)] text-white text-sm font-semibold py-2 hover:opacity-80 disabled:opacity-50"
                 >
-                  {loading ? '…' : t.gdtSubmitBtn}
+                  {loading ? '…' : t('gdtSubmitBtn')}
                 </button>
                 <button
                   onClick={() => { setFcf(defaultFcf()); setFos(defaultFos()); clearError() }}
                   className="rounded border border-[var(--tp-border)] text-[var(--tp-text-2)] text-sm px-3 py-2 hover:bg-[var(--tp-surface-2)]"
                 >
-                  {t.gdtClearBtn}
+                  {t('gdtClearBtn')}
                 </button>
               </div>
               {error && (
@@ -743,10 +744,10 @@ export default function GdtIntelligencePage() {
                     disabled={loading}
                     className="rounded bg-[var(--tp-accent)] text-white text-sm font-semibold px-4 py-2 hover:opacity-80 disabled:opacity-50"
                   >
-                    {loading ? '…' : t.gdtSubmitBtn}
+                    {loading ? '…' : t('gdtSubmitBtn')}
                   </button>
                 </div>
-                {schema && <SchemaPanel schema={schema} t={t as Record<string, string>} />}
+                {schema && <SchemaPanel schema={schema} t={t} />}
               </>
             )}
 
@@ -754,26 +755,26 @@ export default function GdtIntelligencePage() {
               <>
                 {/* Overview */}
                 <Card>
-                  <SectionLabel>{t.gdtOverviewSection}</SectionLabel>
-                  <FieldRow label={t.gdtCharacteristicLabel} value={interpretResult.characteristic} />
+                  <SectionLabel>{t('gdtOverviewSection')}</SectionLabel>
+                  <FieldRow label={t('gdtCharacteristicLabel')} value={interpretResult.characteristic} />
                   <FieldRow label="Tolerance" value={`${interpretResult.diameter_zone ? '⌀' : ''}${interpretResult.tolerance_value} ${interpretResult.tolerance_unit}`} />
-                  <FieldRow label={t.gdtModifierLabel} value={interpretResult.modifier_description} mono={false} />
+                  <FieldRow label={t('gdtModifierLabel')} value={interpretResult.modifier_description} mono={false} />
                   <FieldRow label="Confidence" value={interpretResult.confidence} />
-                  <FieldRow label={t.gdtApprovalStatus} value={<StatusBadge status={interpretResult.approval_status} />} mono={false} />
+                  <FieldRow label={t('gdtApprovalStatus')} value={<StatusBadge status={interpretResult.approval_status} />} mono={false} />
                 </Card>
 
-                <ToleranceZonePanel tz={interpretResult.tolerance_zone} t={t as Record<string, string>} />
-                <DatumFramePanel frame={interpretResult.datum_frame} t={t as Record<string, string>} />
-                <FosPanel fos={interpretResult.fos_context} t={t as Record<string, string>} />
-                <AmbiguityPanel ambiguities={interpretResult.ambiguities} t={t as Record<string, string>} />
-                <ProcessImplicationsPanel items={interpretResult.process_implications} t={t as Record<string, string>} />
-                <InspectionImplicationsPanel items={interpretResult.inspection_implications} t={t as Record<string, string>} />
+                <ToleranceZonePanel tz={interpretResult.tolerance_zone} t={t} />
+                <DatumFramePanel frame={interpretResult.datum_frame} t={t} />
+                <FosPanel fos={interpretResult.fos_context} t={t} />
+                <AmbiguityPanel ambiguities={interpretResult.ambiguities} t={t} />
+                <ProcessImplicationsPanel items={interpretResult.process_implications} t={t} />
+                <InspectionImplicationsPanel items={interpretResult.inspection_implications} t={t} />
 
                 {/* Route impact */}
                 {interpretResult.process_implications.length > 0 && (
                   <Card>
-                    <SectionLabel>{t.gdtRouteImpact}</SectionLabel>
-                    <p className="text-xs text-[var(--tp-text-2)]">{t.gdtRouteImpactDesc}</p>
+                    <SectionLabel>{t('gdtRouteImpact')}</SectionLabel>
+                    <p className="text-xs text-[var(--tp-text-2)]">{t('gdtRouteImpactDesc')}</p>
                     <ul className="mt-2 space-y-1">
                       {interpretResult.process_implications.map(p => (
                         <li key={p.rule_id} className="text-xs text-[var(--tp-text)] flex gap-1">
@@ -790,7 +791,7 @@ export default function GdtIntelligencePage() {
                   onConfirm={() => setApprovalStatus('CONFIRMED')}
                   onEdit={() => setApprovalStatus('PENDING_REVIEW')}
                   onReject={() => setApprovalStatus('REJECTED')}
-                  t={t as Record<string, string>}
+                  t={t}
                 />
 
                 <p className="text-[10px] text-[var(--tp-text-3)]">{interpretResult.disclaimer}</p>
@@ -799,21 +800,21 @@ export default function GdtIntelligencePage() {
 
             {activeTab === 'validate' && validateResult && (
               <Card>
-                <ValidationPanel result={validateResult} t={t as Record<string, string>} />
+                <ValidationPanel result={validateResult} t={t} />
                 <p className="text-[10px] text-[var(--tp-text-3)] mt-3">{validateResult.disclaimer}</p>
               </Card>
             )}
 
             {activeTab === 'bonus' && bonusResult && (
               <>
-                <BonusTolerancePanel result={bonusResult} t={t as Record<string, string>} />
+                <BonusTolerancePanel result={bonusResult} t={t} />
                 <p className="text-[10px] text-[var(--tp-text-3)]">{bonusResult.disclaimer}</p>
               </>
             )}
 
             {activeTab === 'virtualcond' && vcResult && (
               <>
-                <VirtualConditionPanel result={vcResult} t={t as Record<string, string>} />
+                <VirtualConditionPanel result={vcResult} t={t} />
                 <p className="text-[10px] text-[var(--tp-text-3)]">{vcResult.disclaimer}</p>
               </>
             )}

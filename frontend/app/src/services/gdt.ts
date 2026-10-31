@@ -190,26 +190,21 @@ export interface GdtSchema {
 // ---------------------------------------------------------------------------
 
 export async function fetchGdtSchema(): Promise<GdtSchema> {
-  const res = await api.get('/api/gdt/schema')
-  return res.data
+  return api<GdtSchema>('/api/gdt/schema')
 }
 
 export async function validateGdt(req: ValidateRequest): Promise<ValidationResult> {
-  const res = await api.post('/api/gdt/validate', req)
-  return res.data
+  return api<ValidationResult>('/api/gdt/validate', { method: 'POST', body: JSON.stringify(req) })
 }
 
 export async function interpretGdt(req: InterpretRequest): Promise<InterpretResult> {
-  const res = await api.post('/api/gdt/interpret', req)
-  return res.data
+  return api<InterpretResult>('/api/gdt/interpret', { method: 'POST', body: JSON.stringify(req) })
 }
 
 export async function calcBonusTolerance(req: BonusToleranceRequest): Promise<BonusToleranceResult> {
-  const res = await api.post('/api/gdt/bonus-tolerance', req)
-  return res.data
+  return api<BonusToleranceResult>('/api/gdt/bonus-tolerance', { method: 'POST', body: JSON.stringify(req) })
 }
 
 export async function calcVirtualCondition(req: VirtualConditionRequest): Promise<VirtualConditionResult> {
-  const res = await api.post('/api/gdt/virtual-condition', req)
-  return res.data
+  return api<VirtualConditionResult>('/api/gdt/virtual-condition', { method: 'POST', body: JSON.stringify(req) })
 }

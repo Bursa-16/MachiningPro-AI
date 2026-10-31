@@ -333,7 +333,6 @@ function ProcessFlowTab({ plan }: { plan: ManufacturingPlanDetail }) {
   if (!flow || !flow.nodes?.length) {
     return <p className="text-sm text-[var(--tp-text-3)] py-4">No process flow data.</p>
   }
-  const nodeMap = Object.fromEntries(flow.nodes.map((n: any) => [n.node_id, n]))
   return (
     <div>
       <div className="flex flex-wrap gap-2">
@@ -725,7 +724,7 @@ function ExportTab({ planId }: { planId: string }) {
           {loading === 'nc_handoff' ? '...' : t('pipeline_ncHandoffExport')}
         </button>
       </div>
-      {ncHandoffData && (
+      {!!ncHandoffData && (
         <div className="mt-3">
           <div className="text-xs font-semibold text-[var(--tp-text-2)] mb-1">{t('pipeline_ncHandoffExport')}</div>
           <pre className="text-[10px] bg-[var(--tp-bg-2,#f8f9fa)] dark:bg-[#1e2530] rounded p-3 border border-[var(--tp-border)] overflow-x-auto max-h-60">

@@ -11,12 +11,10 @@ import { useNavigate } from 'react-router-dom'
 import { PipelineBreadcrumb } from '../components/PipelineBreadcrumb'
 import {
   processRoutesApi,
-  type FeatureRouteRequestBody,
   type ProcessRouteCandidate,
   type RouteAlternativeSet,
   type OptimizePartRoutesResponse,
   type RouteScoreBreakdown,
-  type RiskFlag,
 } from '../services/processRoutes'
 import { generatePlan } from '../services/manufacturingPlan'
 import { usePipeline } from '../context/PipelineContext'

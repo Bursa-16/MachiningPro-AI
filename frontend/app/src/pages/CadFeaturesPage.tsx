@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLocale } from '../i18n/index'
+import type { TranslationDictionary } from '../i18n/types'
 import { PipelineBreadcrumb } from '../components/PipelineBreadcrumb'
 import {
   analyzeCad,
@@ -91,7 +92,7 @@ interface FeatureTreePanelProps {
   onConfirm: (featureId: string) => void
   onReject: (featureId: string) => void
   busy: boolean
-  t: (key: string) => string
+  t: (key: keyof TranslationDictionary) => string
 }
 
 function FeatureTreePanel({ features, patterns, onConfirm, onReject, busy, t }: FeatureTreePanelProps) {
@@ -177,7 +178,7 @@ function FeatureTreePanel({ features, patterns, onConfirm, onReject, busy, t }: 
 // 3D viewer stub
 // ---------------------------------------------------------------------------
 
-function ViewerStub({ faceCount, bodyCount, t }: { faceCount: number; bodyCount: number; t: (k: string) => string }) {
+function ViewerStub({ faceCount, bodyCount, t }: { faceCount: number; bodyCount: number; t: (k: keyof TranslationDictionary) => string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[200px] border-2 border-dashed border-[var(--tp-border)] rounded-lg text-center p-6 gap-3">
       <div className="text-4xl text-[var(--tp-text-3)]">⬡</div>
@@ -195,7 +196,7 @@ function ViewerStub({ faceCount, bodyCount, t }: { faceCount: number; bodyCount:
 // Fusion status panel
 // ---------------------------------------------------------------------------
 
-function FusionPanel({ fusion, t }: { fusion: FusionStatusResponse; t: (k: string) => string }) {
+function FusionPanel({ fusion, t }: { fusion: FusionStatusResponse; t: (k: keyof TranslationDictionary) => string }) {
   if (!fusion.fusion_available) {
     return (
       <div className="text-sm text-[var(--tp-text-3)] py-2">{fusion.message}</div>

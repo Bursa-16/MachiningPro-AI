@@ -8,7 +8,6 @@ import {
   confirmDetection,
   editDetection,
   rejectDetection,
-  associateDetection,
   type DetectionOut,
   type DetectionsResponse,
   type AnalyzeResponse,
