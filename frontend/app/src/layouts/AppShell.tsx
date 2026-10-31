@@ -44,11 +44,18 @@ export default function AppShell({ user, role, onLogout }: {
                          flex items-center px-4 gap-4">
         <Link
           to="/app"
-          className="text-base font-bold text-tp-accent-light tracking-tight shrink-0
-                     hover:text-tp-accent transition-colors"
+          className="flex items-center gap-2 shrink-0 hover:opacity-90 transition-opacity"
         >
-          MachiningPro AI
-          <span className="text-tp-text-3 font-normal text-[10px] ml-1.5">alpha</span>
+          <img
+            src="/favicon.svg"
+            alt=""
+            aria-hidden="true"
+            className="h-[20px] w-auto shrink-0"
+          />
+          <span className="text-base font-bold text-tp-accent-light tracking-tight">
+            MachiningPro AI
+          </span>
+          <span className="text-tp-text-3 font-normal text-[10px]">alpha</span>
         </Link>
 
         <div className="flex-1 min-w-0 truncate">
