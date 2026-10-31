@@ -47,10 +47,10 @@ export default function AppShell({ user, role, onLogout }: {
           className="flex items-center gap-2 shrink-0 hover:opacity-90 transition-opacity"
         >
           <img
-            src="/favicon.svg"
+            src="/branding/machiningpro-ai-symbol.png"
             alt=""
             aria-hidden="true"
-            className="h-[20px] w-auto shrink-0"
+            className="h-[28px] w-auto shrink-0"
           />
           <span className="text-base font-bold text-tp-accent-light tracking-tight">
             MachiningPro AI
