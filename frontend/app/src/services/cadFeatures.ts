@@ -86,26 +86,26 @@ export interface RejectFeatureResponse {
 // ---------------------------------------------------------------------------
 
 export async function analyzeCad(req: AnalyzeCadRequest): Promise<AnalyzeCadResponse> {
-  return api<AnalyzeCadResponse>('/api/cad-features/analyze', {
+  return api<AnalyzeCadResponse>('/cad-features/analyze', {
     method: 'POST',
     body: JSON.stringify(req),
   })
 }
 
 export async function getCadSession(sessionId: string): Promise<AnalyzeCadResponse> {
-  return api<AnalyzeCadResponse>(`/api/cad-features/${encodeURIComponent(sessionId)}`)
+  return api<AnalyzeCadResponse>(`/cad-features/${encodeURIComponent(sessionId)}`)
 }
 
 export async function getCadFeatures(sessionId: string): Promise<FeaturesResponse> {
-  return api<FeaturesResponse>(`/api/cad-features/${encodeURIComponent(sessionId)}/features`)
+  return api<FeaturesResponse>(`/cad-features/${encodeURIComponent(sessionId)}/features`)
 }
 
 export async function getCadPatterns(sessionId: string): Promise<PatternsResponse> {
-  return api<PatternsResponse>(`/api/cad-features/${encodeURIComponent(sessionId)}/patterns`)
+  return api<PatternsResponse>(`/cad-features/${encodeURIComponent(sessionId)}/patterns`)
 }
 
 export async function getFusionStatus(sessionId: string): Promise<FusionStatusResponse> {
-  return api<FusionStatusResponse>(`/api/cad-features/${encodeURIComponent(sessionId)}/fusion`)
+  return api<FusionStatusResponse>(`/cad-features/${encodeURIComponent(sessionId)}/fusion`)
 }
 
 export async function confirmFeature(
@@ -114,7 +114,7 @@ export async function confirmFeature(
   userId: string,
 ): Promise<ConfirmFeatureResponse> {
   return api<ConfirmFeatureResponse>(
-    `/api/cad-features/${encodeURIComponent(sessionId)}/features/${encodeURIComponent(featureId)}/confirm`,
+    `/cad-features/${encodeURIComponent(sessionId)}/features/${encodeURIComponent(featureId)}/confirm`,
     {
       method: 'POST',
       body: JSON.stringify({ user_id: userId }),
@@ -127,7 +127,7 @@ export async function rejectFeature(
   featureId: string,
 ): Promise<RejectFeatureResponse> {
   return api<RejectFeatureResponse>(
-    `/api/cad-features/${encodeURIComponent(sessionId)}/features/${encodeURIComponent(featureId)}/reject`,
+    `/cad-features/${encodeURIComponent(sessionId)}/features/${encodeURIComponent(featureId)}/reject`,
     { method: 'POST', body: JSON.stringify({}) },
   )
 }
