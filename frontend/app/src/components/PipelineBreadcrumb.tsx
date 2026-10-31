@@ -9,12 +9,13 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePipeline } from '../context/PipelineContext';
+import { useLocale } from '../i18n';
 
 const STEPS = [
-  { key: 'drawing',  label: 'Drawing',  path: '/app/planning-quality/drawing-parser' },
-  { key: 'features', label: 'Features', path: '/app/cad-drawing/cad-features' },
-  { key: 'routes',   label: 'Routes',   path: '/app/planning-quality/process-routes' },
-  { key: 'plan',     label: 'Plan',     path: '/app/planning-quality/manufacturing-plan' },
+  { key: 'drawing',  labelKey: 'breadcrumbDrawing' as const,  path: '/app/planning-quality/drawing-parser' },
+  { key: 'features', labelKey: 'breadcrumbFeatures' as const, path: '/app/cad-drawing/cad-features' },
+  { key: 'routes',   labelKey: 'breadcrumbRoutes' as const,   path: '/app/planning-quality/process-routes' },
+  { key: 'plan',     labelKey: 'breadcrumbPlan' as const,     path: '/app/planning-quality/manufacturing-plan' },
 ];
 
 const STEP_SLUGS = STEPS.map(s => s.path.split('/').pop() || '');
@@ -23,6 +24,7 @@ export function PipelineBreadcrumb() {
   const navigate = useNavigate();
   const location = useLocation();
   const pipeline = usePipeline();
+  const { t } = useLocale();
 
   const currentIdx = STEP_SLUGS.findIndex(slug => location.pathname.includes(slug));
   if (currentIdx === -1) return null;
@@ -50,7 +52,7 @@ export function PipelineBreadcrumb() {
                 transition: 'background 120ms, color 120ms',
               }}
             >
-              {step.label}
+              {t(step.labelKey)}
             </button>
             {idx < STEPS.length - 1 && (
               <span style={{ color: '#2A323B', fontSize: '10px' }}>→</span>

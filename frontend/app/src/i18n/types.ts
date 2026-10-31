@@ -1772,4 +1772,65 @@ export interface TranslationDictionary {
   mfpGenerateFromRoute: string
   mfpSourceId: string
   mfpCalibrationProfiles: string
+
+  // Sidebar navigation — group labels
+  nav_engineering: string
+  nav_processes: string
+  nav_resources: string
+  nav_cadDrawing: string
+  nav_planningQuality: string
+  // Sidebar navigation — item labels
+  nav_dashboard: string
+  nav_machiningAnalysis: string
+  nav_cuttingParameters: string
+  nav_toolLife: string
+  nav_compatibilityCheck: string
+  nav_configurationSelection: string
+  nav_surfaceRoughness: string
+  nav_turning: string
+  nav_milling: string
+  nav_drilling: string
+  nav_threading: string
+  nav_holeFinishing: string
+  nav_honing: string
+  nav_lapping: string
+  nav_machines: string
+  nav_materials: string
+  nav_cuttingTools: string
+  nav_toolHolders: string
+  nav_libraries: string
+  nav_cadImport: string
+  nav_technicalDrawingIntelligence: string
+  nav_cadFeatureRecognition: string
+  nav_processPlanning: string
+  nav_drawingParser: string
+  nav_gdtIntelligence: string
+  nav_routeOptimization: string
+  nav_dfm: string
+  nav_machineCapability: string
+  nav_validationPage: string
+  // Dashboard capability grid
+  dbCapMachines: string
+  dbCapCuttingTools: string
+  dbCapToolHolders: string
+  dbCapCuttingParameters: string
+  dbCapCompatibilityCheck: string
+  dbCapConfigurationSelection: string
+  dbCapDrawingSemanticExtraction: string
+  dbCapGdtIntelligence: string
+  dbCapCadFeatureRecognition: string
+  dbCapRouteOptimization: string
+  dbCapManufacturingPlan: string
+  dbCapInspectionControlPlan: string
+  dbCapProcessCapability: string
+  dbCapTraceability: string
+  dbCapToolLifeExplorer: string
+  // Demo card
+  dbDemoCardTitle: string
+  dbDemoCardSubtitle: string
+  // Pipeline breadcrumb steps
+  breadcrumbDrawing: string
+  breadcrumbFeatures: string
+  breadcrumbRoutes: string
+  breadcrumbPlan: string
 }

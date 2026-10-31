@@ -16,21 +16,21 @@ const WORKFLOW_STEPS = [
 ]
 
 const CAPABILITIES = [
-  { label: 'Machines', path: '/app/resources/machines' },
-  { label: 'Cutting Tools', path: '/app/resources/cutting-tools' },
-  { label: 'Tool Holders', path: '/app/resources/tool-holders' },
-  { label: 'Cutting Parameters', path: '/app/engineering/cutting-parameters' },
-  { label: 'Compatibility Check', path: '/app/engineering/compatibility' },
-  { label: 'Configuration Selection', path: '/app/engineering/configuration-selection' },
-  { label: 'Drawing Semantic Extraction', path: '/app/planning-quality/drawing-parser' },
-  { label: 'GD&T Intelligence', path: '/app/planning-quality/gdt-intelligence' },
-  { label: 'CAD Feature Recognition', path: '/app/cad-drawing/cad-features' },
-  { label: 'Route Optimization (5 strategies)', path: '/app/planning-quality/process-routes' },
-  { label: 'Manufacturing Plan', path: '/app/planning-quality/manufacturing-plan' },
-  { label: 'Inspection + Control Plan', path: '/app/planning-quality/manufacturing-plan' },
-  { label: 'Process Capability', path: '/app/planning-quality/process-capability' },
-  { label: 'Traceability (SHA-256)', path: '/app/planning-quality/manufacturing-plan' },
-  { label: 'Tool Life Explorer', path: '/app/engineering/tool-life' },
+  { labelKey: 'dbCapMachines' as const, path: '/app/resources/machines' },
+  { labelKey: 'dbCapCuttingTools' as const, path: '/app/resources/cutting-tools' },
+  { labelKey: 'dbCapToolHolders' as const, path: '/app/resources/tool-holders' },
+  { labelKey: 'dbCapCuttingParameters' as const, path: '/app/engineering/cutting-parameters' },
+  { labelKey: 'dbCapCompatibilityCheck' as const, path: '/app/engineering/compatibility' },
+  { labelKey: 'dbCapConfigurationSelection' as const, path: '/app/engineering/configuration-selection' },
+  { labelKey: 'dbCapDrawingSemanticExtraction' as const, path: '/app/planning-quality/drawing-parser' },
+  { labelKey: 'dbCapGdtIntelligence' as const, path: '/app/planning-quality/gdt-intelligence' },
+  { labelKey: 'dbCapCadFeatureRecognition' as const, path: '/app/cad-drawing/cad-features' },
+  { labelKey: 'dbCapRouteOptimization' as const, path: '/app/planning-quality/process-routes' },
+  { labelKey: 'dbCapManufacturingPlan' as const, path: '/app/planning-quality/manufacturing-plan' },
+  { labelKey: 'dbCapInspectionControlPlan' as const, path: '/app/planning-quality/manufacturing-plan' },
+  { labelKey: 'dbCapProcessCapability' as const, path: '/app/planning-quality/process-capability' },
+  { labelKey: 'dbCapTraceability' as const, path: '/app/planning-quality/manufacturing-plan' },
+  { labelKey: 'dbCapToolLifeExplorer' as const, path: '/app/engineering/tool-life' },
 ]
 
 export default function DashboardPage() {
@@ -55,9 +55,9 @@ export default function DashboardPage() {
       {/* One-click demo card */}
       <div className="bg-tp-surface border border-tp-accent-light/30 rounded-lg p-5">
         <div className="mb-3">
-          <div className="text-sm font-semibold text-tp-text">One-Click Demo — Hydraulic Valve Spool</div>
+          <div className="text-sm font-semibold text-tp-text">{t('dbDemoCardTitle')}</div>
           <div className="text-xs text-tp-text-3 mt-0.5">
-            Load synthetic demo part MP-DEMO-001 and explore the complete drawing-to-plan pipeline
+            {t('dbDemoCardSubtitle')}
           </div>
         </div>
         <button
@@ -106,7 +106,7 @@ export default function DashboardPage() {
               className="text-left px-3 py-2.5 rounded border border-tp-border bg-tp-surface hover:bg-tp-surface-2 hover:border-tp-border-2 transition-colors group"
             >
               <span className="text-xs font-medium text-tp-text-2 group-hover:text-tp-text transition-colors">
-                {cap.label}
+                {t(cap.labelKey)}
               </span>
             </button>
           ))}

@@ -13,19 +13,20 @@ function AiStatusBadge() {
 
 function Breadcrumb({ pathname }: { pathname: string }) {
   const entry = useMemo(() => BREADCRUMB_MAP[pathname] ?? null, [pathname])
+  const { t } = useLocale()
 
   if (!entry) return <span className="text-xs text-tp-text-3">MachiningPro AI</span>
 
   return (
     <nav className="flex items-center gap-1.5 text-xs">
-      {entry.domain ? (
+      {entry.domainKey ? (
         <>
-          <span className="text-tp-text-3">{entry.domain}</span>
+          <span className="text-tp-text-3">{t(entry.domainKey)}</span>
           <ChevronRight size={11} className="text-tp-text-3 shrink-0" />
-          <span className="text-tp-text-2 font-medium">{entry.page}</span>
+          <span className="text-tp-text-2 font-medium">{t(entry.pageKey)}</span>
         </>
       ) : (
-        <span className="text-tp-text-2 font-medium">{entry.page}</span>
+        <span className="text-tp-text-2 font-medium">{t(entry.pageKey)}</span>
       )}
     </nav>
   )

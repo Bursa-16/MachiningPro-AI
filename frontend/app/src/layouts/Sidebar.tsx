@@ -128,7 +128,7 @@ export default function Sidebar({ role }: { role: string | null }) {
           <span className="shrink-0 w-4 flex justify-center">
             <Icon icon={HOME_ITEM.icon} />
           </span>
-          {effectivelyExpanded && <span className="truncate font-medium">{HOME_ITEM.label}</span>}
+          {effectivelyExpanded && <span className="truncate font-medium">{t(HOME_ITEM.labelKey)}</span>}
         </button>
       </div>
 
@@ -147,7 +147,7 @@ export default function Sidebar({ role }: { role: string | null }) {
                 {group.items.map(item => {
                   const isActive = location.pathname === item.path
                   return (
-                    <CollapseTooltip key={item.id} label={item.label}>
+                    <CollapseTooltip key={item.id} label={t(item.labelKey)}>
                       <button
                         onClick={() => navigate(item.path)}
                         className={`w-full flex items-center justify-center p-2 rounded transition-colors
@@ -172,7 +172,7 @@ export default function Sidebar({ role }: { role: string | null }) {
                 <button className={`w-full flex items-center justify-between px-2 py-1.5 rounded
                     text-[10px] font-semibold uppercase tracking-widest transition-colors
                     ${hasActive ? 'text-tp-accent-light' : 'text-tp-text-3 hover:text-tp-text-2'}`}>
-                  <span>{group.label}</span>
+                  <span>{t(group.labelKey)}</span>
                   <span className="text-tp-text-3">
                     {isOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
                   </span>
@@ -199,7 +199,7 @@ export default function Sidebar({ role }: { role: string | null }) {
                         <span className="shrink-0 w-4 flex justify-center">
                           <Icon icon={item.icon} size={14} />
                         </span>
-                        <span className="truncate flex-1">{item.label}</span>
+                        <span className="truncate flex-1">{t(item.labelKey)}</span>
                         {item.badge === 'preview' && (
                           <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1 py-0.5 rounded bg-tp-border/60 text-tp-text-3">
                             {t('navPreviewBadge')}
